@@ -8,32 +8,70 @@
     :root {
       --bg: #0F1115; --surface-1: #151923; --surface-2: #1B2030; --border: #252D3F;
       --text: #E7E8EA; --text-dim: #A9AFBA;
-      --accent: #7CC8F2; /* vaaleansininen, idean tekijän lempiväri */
+      --accent: #7CC8F2; /* vaaleansininen, idean tekijän lempiväri: pelin väri */
+      --brand: #E85AA5;  /* gerlitek.fi:n pinkki: sivun kehys ja tekijätiedot */
     }
     * { box-sizing: border-box; }
     body {
       margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
-      background: var(--bg); color: var(--text);
+      color: var(--text);
+      /* Matte pink glow around the page, as on gerlitek.fi. The game itself stays light blue. */
+      background:
+        radial-gradient(60% 45% at 0% 0%, rgba(232, 90, 165, 0.16), transparent 70%),
+        radial-gradient(55% 45% at 100% 100%, rgba(232, 90, 165, 0.13), transparent 70%),
+        var(--bg);
+      /* A soft pink line at the top that fades out toward the edges. */
+      border-top: 2px solid transparent;
+      border-image: linear-gradient(90deg, transparent, rgba(232, 90, 165, 0.45) 30%, rgba(232, 90, 165, 0.45) 70%, transparent) 1;
       font-family: Inter, system-ui, sans-serif;
     }
     main { width: 100%; max-width: 680px; }
     h1 { margin: 0 0 4px; font-size: 1.6rem; color: var(--accent); }
-    p { margin: 0 0 16px; color: var(--text-dim); }
+    p { margin: 0 0 8px; color: var(--text-dim); font-size: 0.9rem; }
+    /* Compact on purpose: the instructions must not draw attention away from the game. */
+    .howto { margin: 0 0 12px; padding-left: 18px; color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; columns: 2; column-gap: 28px; }
+    .howto li { break-inside: avoid; }
+    .howto kbd { padding: 0 4px; font-size: 0.72rem; }
+    @media (max-width: 560px) { .howto { columns: 1; } }
+    .howto b { color: var(--text); }
     #game {
       width: 100%; aspect-ratio: 4 / 3; background: var(--surface-1);
       border: 2px solid var(--border); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(232, 90, 165, 0.25), 0 18px 60px -20px rgba(232, 90, 165, 0.35);
     }
     #game canvas { display: block; image-rendering: pixelated; }
-    footer { margin-top: 12px; font-size: 0.8rem; color: var(--text-dim); }
+    .credit { margin: 14px 0 0; font-size: 0.9rem; color: var(--text); }
+    .credit b { color: var(--accent); }
+    /* The publisher line is small and faint on purpose, far below the game:
+       it must not be read together with the credit for the story. */
+    footer {
+      margin-top: 56px; padding-top: 10px; border-top: 1px solid rgba(37, 45, 63, 0.5);
+      display: flex; justify-content: flex-end; gap: 6px;
+      font-size: 0.7rem; color: rgba(169, 175, 186, 0.45);
+    }
+    /* Gerlitek in matte pink: the brand color, toned down. */
+    footer a { color: rgba(232, 90, 165, 0.65); text-decoration: none; }
+    footer a:hover { color: var(--brand); }
+    footer a:hover { text-decoration: underline; }
     kbd { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
   </style>
 </head>
 <body>
   <main>
     <h1>Ylläri-Zombiet</h1>
-    <p>Taistele zombieita vastaan. Liiku <kbd>nuolet</kbd> tai <kbd>WASD</kbd>, aseet iskevät itsestään.</p>
+    <p>Taistele zombieita vastaan.</p>
+    <ol class="howto">
+      <li><b>Liiku</b> nuolilla tai näppäimillä <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>.</li>
+      <li><b>Lyö</b> näppäimellä <kbd>välilyönti</kbd>, kun zombi on vieressä.</li>
+      <li><b>Väistä:</b> zombin kosketus vie sydämen.</li>
+      <li><b>Valitse ja jatka</b>: <kbd>Enter</kbd>. Takaisin alkuun: <kbd>Esc</kbd>.</li>
+    </ol>
     <div id="game"></div>
-    <footer>Pelin idea ja hahmot: lapsen suunnittelemia. Gerlitek Oy.</footer>
+    <p class="credit">Pelin idean, tarinan ja hahmot on suunnitellut <b>Maujazz</b>.</p>
+    <footer>
+      <span>Toteutus ja julkaisu</span>
+      <a href="https://gerlitek.fi">Gerlitek Oy</a>
+    </footer>
   </main>
   <script type="module" src="/src/main.ts"></script>
 </body>

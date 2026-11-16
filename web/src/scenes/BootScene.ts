@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { W, H } from '../size';
 import { Pen } from '../art/pixels';
-import { drawForestGround, drawVipGround } from '../art/scenery';
+import { drawDunesGround, drawForestGround, drawVipGround } from '../art/scenery';
 import { penFor } from '../art/ui';
 
 // No image files: static backgrounds are drawn once with code and baked into textures.
@@ -13,6 +13,9 @@ export class BootScene extends Phaser.Scene {
   create() {
     this.bake('bg-forest', drawForestGround);
     this.bake('bg-vip', drawVipGround);
+    this.bake('bg-dunes', drawDunesGround);
+    // Stop the browser from scrolling the page with the arrow keys and space, in every scene from the first screen on.
+    this.input.keyboard!.addCapture('UP,DOWN,LEFT,RIGHT,SPACE');
     this.scene.start('menu');
   }
 

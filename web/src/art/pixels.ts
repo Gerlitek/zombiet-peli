@@ -61,6 +61,11 @@ export function clipBelow(p: Pen, maxY: number): Pen {
   };
 }
 
+// A pen that mirrors everything around the vertical line x = cx. Used to turn a character to face left.
+export function mirrorX(p: Pen, cx: number): Pen {
+  return { rect: (x, y, w, h, c, a) => p.rect(2 * cx - R(x) - w + 1, y, w, h, c, a) };
+}
+
 // Small seeded random generator (mulberry32): the same seed always gives the same scenery.
 export function rng(seed: number): () => number {
   return () => {

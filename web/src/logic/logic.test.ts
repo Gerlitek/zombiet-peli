@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { rng } from '../art/pixels';
-import { WEAPONS } from '../data/weapons';
+import { WIN_AT } from '../data/rules';
+import { RK_ODDS, WEAPONS } from '../data/weapons';
 import { makePuzzle, PUZZLE_LEVELS, puzzleBonus } from './puzzle';
 import { pickWeighted } from './random';
 import { MAX_SCORE, score } from './score';
@@ -28,7 +29,8 @@ describe('wheel', () => {
     const rand = rng(3);
     let hits = 0;
     for (let i = 0; i < 20000; i++) if (spin('vip', rand) === 'rudikarri') hits++;
-    expect(hits).toBeLessThan(100); // about 1 in 500
+    expect(hits / 20000).toBeGreaterThan(RK_ODDS * 0.7); // rare, and close to the chosen odds
+    expect(hits / 20000).toBeLessThan(RK_ODDS * 1.3);
   });
 });
 
@@ -53,8 +55,8 @@ describe('puzzle', () => {
 
 describe('score', () => {
   it('a perfect run gives the maximum, and nothing can exceed it', () => {
-    expect(score({ kills: 10, hearts: 5, seconds: 0, won: true, puzzleBonus: 400 })).toBe(MAX_SCORE);
-    expect(score({ kills: 10, hearts: 5, seconds: 999, won: true, puzzleBonus: 0 })).toBe(1750);
+    expect(score({ kills: WIN_AT, hearts: 5, seconds: 0, won: true, puzzleBonus: 200 })).toBe(MAX_SCORE);
+    expect(score({ kills: 10, hearts: 5, seconds: 999, won: true, puzzleBonus: 0 })).toBe(1750); // 1000 + 250 + 500
   });
   it('a lost run gets no time bonus', () => {
     expect(score({ kills: 4, hearts: 0, seconds: 10, won: false, puzzleBonus: 0 })).toBe(400);

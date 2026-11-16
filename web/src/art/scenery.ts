@@ -15,9 +15,9 @@ export function drawTree(p: Pen, x: number, y: number, h: number, seed: number, 
   if (burning) for (let i = 0; i < 6; i++) p.rect(top.x - 3 + r() * 6, top.y - ((t * 14 + i * 5) % 12), 1, 1, i % 2 ? P.sand : P.hurt);
 }
 
-export function drawTuft(p: Pen, x: number, y: number, t: number) {
+export function drawTuft(p: Pen, x: number, y: number, t: number, c: number = P.dry) {
   const w = R(sin(t * 2 + x));
-  p.rect(x, y - 2, 1, 3, P.dry); p.rect(x - 2 + w, y - 3, 1, 3, P.dry); p.rect(x + 2 + w, y - 4, 1, 4, P.dry);
+  p.rect(x, y - 2, 1, 3, c); p.rect(x - 2 + w, y - 3, 1, 3, c); p.rect(x + 2 + w, y - 4, 1, 4, c);
 }
 
 // Big crosshatched raindrop, as in the page sketch. Zombies are born from these.
@@ -76,7 +76,7 @@ export function drawForestGround(p: Pen, W: number, H: number) {
   p.rect(222, 199, 3, 2, P.dry); p.rect(251, 192, 2, 2, P.rot);
 }
 
-export const BOARD = { x: 14, y: 16, w: 292, h: 58 };
+export const BOARD = { x: 14, y: 23, w: 292, h: 52 }; // below the hearts, the kill bar and the VIP sign
 
 // Static VIP box background: back board on poles, lit stage floor, light blue rail.
 export function drawVipGround(p: Pen, W: number, H: number) {
@@ -97,10 +97,70 @@ export function drawCatRobot(p: Pen, x: number, y: number, t: number) {
   ell(p, x, y, 7, 1, P.ink, 0.4);
   figure(p, [
     L(x - 6, y - 5, x - 9, y - 11 + tail, 1, P.sand, false), B(x - 5, y - 8, 11, 6, P.rain),
-    B(x - 8, y - 14, 7, 6, P.bone), B(x - 8, y - 16, 2, 2, P.bone), B(x - 3, y - 16, 2, 2, P.bone),
-    B(x + 2, y - 14, 7, 6, P.sand), B(x + 2, y - 16, 2, 2, P.sand), B(x + 7, y - 16, 2, 2, P.sand),
+    B(x - 8, y - 14, 7, 6, P.bone), B(x - 8, y - 16, 2, 2, P.bark), B(x - 3, y - 16, 2, 2, P.bark),   // Rudi: brown
+    B(x + 2, y - 14, 7, 6, P.bone), B(x + 2, y - 16, 2, 2, P.storm), B(x + 7, y - 16, 2, 2, P.storm), // Karri: grey
     B(x - 4, y - 2, 2, 2, P.storm), B(x + 3, y - 2, 2, 2, P.storm),
     E(x, y - 5, 1, 1, P.ice),
   ]);
   for (const hx of [x - 6, x + 4]) { p.rect(hx, y - 12, 1, 2, P.ice); p.rect(hx + 3, y - 12, 1, 2, P.ice); }
+}
+
+// ---------- practice area: the sand dunes of Kalajoki (Hiekkasärkät) ----------
+
+export const SHORE = 84; // y where the sea meets the sand
+
+// Static background: light summer night sky, low sun, sea, beach and dunes.
+export function drawDunesGround(p: Pen, W: number, H: number) {
+  p.rect(0, 0, W, 34, P.rain); p.rect(0, 34, W, 16, P.iceL);
+  for (let x = 0; x < W; x += 2) p.rect(x, 33, 1, 1, P.iceL);
+  ell(p, 70, 50, 13, 13, P.sand); ell(p, 70, 50, 9, 9, P.bone); // the sun stays low over the sea
+  p.rect(0, 50, W, SHORE - 50, P.storm);
+  const s = rng(21);
+  for (let i = 0; i < 40; i++) p.rect(s() * W, 52 + s() * (SHORE - 54), 4 + R(s() * 8), 1, i % 3 ? P.ice : P.rain);
+  for (let i = 0; i < 9; i++) p.rect(60 + s() * 20, 52 + i * 3, 6 + R(s() * 10), 1, P.sand); // sun glitter on the water
+  p.rect(0, SHORE, W, H - SHORE, P.sand);
+  p.rect(0, SHORE, W, 5, P.dry); // wet sand
+  // dunes: a shadow side and a light crest
+  for (const [x, y, rx, ry] of [[250, 124, 60, 16], [60, 150, 70, 14], [200, 196, 80, 15], [20, 222, 60, 12], [300, 226, 50, 10]]) {
+    ell(p, x, y, rx, ry, P.dry); ell(p, x - 2, y - 2, rx - 1, ry - 1, P.sand);
+  }
+  for (let i = 0; i < 60; i++) p.rect(s() * W, SHORE + 8 + s() * (H - SHORE - 10), 1, 1, i % 2 ? P.dry : P.bone);
+}
+
+// Helicopter seen from the side. rotor: 0 = stopped, 1 = full speed.
+export function drawHelicopter(p: Pen, x: number, y: number, t: number, rotor: number) {
+  x = R(x); y = R(y);
+  ell(p, x, y + 1, 16, 2, P.ink, 0.35);
+  figure(p, [
+    L(x - 9, y - 11, x - 26, y - 14, 2, P.storm, false), B(x - 28, y - 19, 2, 7, P.storm),
+    B(x - 9, y - 2, 20, 1, P.cloud), B(x - 5, y - 5, 1, 3, P.cloud), B(x + 6, y - 5, 1, 3, P.cloud),
+    E(x, y - 11, 11, 6, P.storm), B(x - 1, y - 20, 2, 3, P.cloud),
+  ]);
+  ell(p, x + 5, y - 12, 4, 3, P.ice); p.rect(x + 3, y - 14, 2, 1, P.bone);
+  p.rect(x - 9, y - 9, 12, 1, P.sand); // stripe
+  const span = R(20 * Math.abs(Math.cos(t * (4 + rotor * 22))) * (0.35 + rotor * 0.65)) + 3;
+  p.rect(x - span, y - 21, span * 2, 1, P.bone, 0.9);
+  if (rotor > 0.5) p.rect(x - 20, y - 21, 40, 1, P.bone, 0.25); // blur at speed
+  p.rect(x - 28, y - 17 + R(Math.sin(t * 30) * 2), 1, 3, P.bone);
+}
+
+// Ragdoll cat: light fur, darker "points" (face, ears, legs, tail) and blue eyes.
+// mitted = white paws and chin (Karri). Without it the paws are dark too: colorpoint (Rudi).
+export function drawCat(p: Pen, x: number, y: number, t: number, o: { left: boolean; sitting: boolean; points: number; mitted: boolean }) {
+  x = R(x); y = R(y);
+  const pen = o.left ? { rect: (rx: number, ry: number, w: number, h: number, c: number, a?: number) => p.rect(2 * x - R(rx) - w + 1, ry, w, h, c, a) } : p;
+  const run = o.sitting ? 0 : sin(t * 18), hop = o.sitting ? 0 : R(abs(run)), paw = o.mitted ? P.bone : o.points;
+  ell(p, x, y, 6, 1, P.ink, 0.3);
+  const by = y - 4 - hop;
+  const legs = [x - 4 - R(run), x - 2 + R(run), x + 2 - R(run), x + 4 + R(run)];
+  const parts: Part[] = o.sitting
+    ? [L(x - 3, y - 1, x - 8, y - 2 + R(sin(t * 3)), 2, o.points, false), E(x - 1, y - 4, 3, 4, P.bone), B(x, y - 1, 1, 1, paw), B(x + 2, y - 1, 1, 1, paw)]
+    : [L(x - 5, by, x - 10, by - 3 + R(run), 2, o.points, false), E(x, by, 5, 2, P.bone), ...legs.map((lx) => B(lx, y - 2 - hop, 1, 2, o.points))];
+  const hx = x + (o.sitting ? 1 : 5), hy = o.sitting ? y - 10 : by - 3;
+  parts.push(E(hx, hy, 3, 2, P.bone), B(hx - 3, hy - 4, 2, 2, o.points), B(hx + 2, hy - 4, 2, 2, o.points));
+  figure(pen, parts);
+  if (!o.sitting) for (const lx of legs) pen.rect(lx, y - 1 - hop, 1, 1, paw); // the paw is the lowest pixel of the leg
+  pen.rect(hx - 1, hy - 1, 3, 2, o.points); // mask
+  if (o.mitted) pen.rect(hx, hy + 1, 1, 1, P.bone); // white chin
+  pen.rect(hx - 2, hy - 1, 1, 1, P.ice); pen.rect(hx + 2, hy - 1, 1, 1, P.ice); // blue eyes
 }

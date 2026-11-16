@@ -49,7 +49,7 @@ VIP-aitio:
 * onnen pyörän pyöräys täällä
 ** laser miekan voi saada, jossa kolme päätä, keskimmäisessä kristalli -> voi tehdä laser tornadon, sinisen
 ** Rudi-Karri-robotti (nimi on saanut inspiraationsa meidän kodin omista kissoista, joiden nimet ovat Rudi ja Karri), tämä pääsee peliin yhdellä iskulla, tätä on miltei mahdoton saada (000,0000001% mahdollisuus, tämä voisi jotenkin näyttää lukuna enemmänkin kuin käsitellä aitona prosenttina)
-** siniset jääskat, jolla pystyy jäädyttämään vihollisia
+** siniset jäähanskat, jolla pystyy jäädyttämään vihollisia
 ** puristushanskat, siellä puristetaan tyypit yhteen littanaksi -> sitten ne tapetaan
 
 

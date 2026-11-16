@@ -1,0 +1,31 @@
+// The story of the game, from the child's own ideas (docs/tarina-ja-ulkoasu.md).
+// Short on purpose: a primary school child should have the patience to read it.
+// One entry = one line on screen. An empty string is a pause between paragraphs.
+export const STORY: string[] = [
+  'YLLÄRI-ZOMBIET',
+  '',
+  'On yö.',
+  'Taivas on musta. Sataa.',
+  '',
+  'Metsä on mätä.',
+  'Sammal haisee.',
+  'Puut ovat kuivia ja harmaita.',
+  'Ruoho on kuollut ja vesi likaista.',
+  '',
+  'Salama lyö puuhun.',
+  'Sadepisaroista nousee zombeja.',
+  '',
+  'Niitä on kaikenlaisia.',
+  'Osa on ihan ylläreitä.',
+  '',
+  'Kaada kymmenen zombia,',
+  'niin pääset VIP-aitioon.',
+  '',
+  'Kaada kaksikymmentä,',
+  'niin yö on ohi.',
+  '',
+  'Onnea matkaan!',
+  '',
+  '',
+  'Tarinan keksi Maujazz.',
+];

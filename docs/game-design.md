@@ -6,7 +6,7 @@ Visuaalinen konsepti on tiedostossa `visual-concept.html`. Avaa se selaimessa: k
 
 ## 1. Idea yhdellä lauseella
 
-Yöllä mädäntyneessä luonnossa sade synnyttää zombeja. Ritari taistelee niitä vastaan, pääsee VIP-aitioon viiden tapon jälkeen ja läpäisee pelin kymmenellä tapolla.
+Yöllä mädäntyneessä luonnossa sade synnyttää zombeja. Ritari taistelee niitä vastaan, pääsee VIP-aitioon kymmenen tapon jälkeen ja läpäisee pelin kahdellakymmenellä tapolla.
 
 ## 2. Yksi pelikerta
 
@@ -15,22 +15,39 @@ Pelikerta kestää 2 - 4 minuuttia. Lyhyt kierros sopii lapselle, ja onnenpyör�
 | Hetki | Mitä tapahtuu |
 |---|---|
 | Aloitus | Nimimerkki arvotaan (ks. luku 9), hahmon valinta (Ritari tai Minipelaaja) ja hajotelmien vaikeustaso |
-| Alkupyöräytys | Metsän onnenpyörä antaa ensimmäisen aseen |
-| Tapot 1 - 4 | Mätä metsä. Zombeja nousee sateesta. Kolmas tappo antaa toisen pyöräytyksen |
-| Toisen tapon jälkeen | Metsään ilmestyy lukkokivi. Sen hajotelmat ratkaisemalla pääsee Salamaluolaan (vapaaehtoinen, ks. luku 8) |
-| Tappo 5 | VIP-kyltti syttyy, salama iskee ja pelaaja siirtyy VIP-aitioon. VIP-pyöräytys |
-| Tapot 6 - 9 | VIP-aitio. Zombit ovat supervahvoja. Kahdeksas tappo antaa toisen VIP-pyöräytyksen. Aitiossa on toinen, vaikeampi lukkokivi |
-| Tappo 10 | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
+| Tapot 1 - 9 | Mätä metsä. Zombeja nousee sateesta |
+| Tappo 10 | VIP-kyltti muuttuu punaisesta vihreäksi, salama iskee ja pelaaja siirtyy VIP-aitioon. VIP-pyöräytys |
+| Tapot 11 - 19 | VIP-aitio. Zombit ovat supervahvoja. Ensimmäisen VIP-tapon jälkeen aitioon ilmestyy lukkokivi, jonka yllä on nuoli ja teksti HAJOTELMA. Sen hajotelmat ratkaisemalla pääsee Salamaluolaan (vapaaehtoinen, ks. luku 8) |
+| Tappo 20 | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
 | Loppuruutu | Pisteet, aika, saavutukset, pistetaulukko, valmis viesti |
+
+Tapporajat ovat yhdessä tiedostossa (`web/src/data/rules.ts`): VIP-aitio 10 tapolla, läpäisy 20 tapolla. Lapsen alkuperäinen idea oli 5 ja 10. Hän toivoi myöhemmin paljon suurempaa rajaa aitioon, ja 10 on sovittu kompromissi (2026-11-16). Läpäisyraja nostettiin samassa suhteessa.
 
 Häviö: sydämet loppuvat. Loppuruutu näyttää tapot ja tarjoaa uuden pelin.
 
-Pisteet: `tapot x 100 + jäljellä olevat sydämet x 50 + aikabonus + hajotelmat`, jossa aikabonus on `max(0, 300 - sekunnit)`. Läpäisy antaa 500 lisää ja jokainen avattu lukkokivi 100 - 200 nopeuden mukaan. Hajotelman ratkaisuaika ei kuluta pelikelloa. Enimmäispistemäärä on siis rajattu, mikä helpottaa huijausten tunnistamista palvelimella.
+Pisteet: `tapot x 100 + jäljellä olevat sydämet x 50 + aikabonus + hajotelmat`, jossa aikabonus on `max(0, 300 - sekunnit)`. Läpäisy antaa 500 lisää ja avattu lukkokivi 100 - 200 nopeuden mukaan. Hajotelman ratkaisuaika ei kuluta pelikelloa. Enimmäispistemäärä on siis rajattu, mikä helpottaa huijausten tunnistamista palvelimella.
+
+### Tarina
+
+Valikosta pääsee näppäimellä T lukemaan pelin tarinan. Se on lyhyt, noin 20 riviä, jotta alakoululainen jaksaa lukea sen. Pääosassa on lapsen kuvaama luonto: yö, sade, mätä metsä ja salamat. Hahmoja ja aseita ei kuvata erikseen. Teksti liukuu ruudun alareunasta kohti myrskypilviä ja pienenee etääntyessään. Tarinan teksti on tiedostossa `web/src/data/story.ts`, rivi kerrallaan, joten lapsi voi muokata sitä.
+
+### Harjoitus Kalajoen hiekkasärkillä
+
+Valikosta pääsee näppäimellä H harjoittelemaan ennen oikeaa peliä. Harjoitus tapahtuu Kalajoen hiekkasärkillä, koska peli on sieltä lähtöisin: särkät, merenranta, matalalla paistava kesäyön aurinko.
+
+- Helikopteri laskeutuu särkille ja tuo pelaajan paikalle.
+- Zombit nousevat märästä rantahiekasta ja seuraavat pelaajaa, mutta eivät voi vahingoittaa. Sydämiä ei ole.
+- Hiekalla on kahdeksan kylttiä, yksi jokaiselle onnenpyörän aseelle. Kyltin luo kävelemällä saa aseen kokeiltavaksi. Myös Rudi-Karri-robottia voi kokeilla.
+- Rudi ja Karri, perheen ragdoll-kissat, juoksevat ja istuskelevat hiekalla nimet päänsä päällä.
+- Enter aloittaa oikean pelin samalla hahmolla, Esc palaa valikkoon.
 
 ## 3. Ohjaus ja pelaaja
 
 - Liike: nuolet tai WASD. Kosketusnäytöllä raahaus mistä tahansa (virtuaalinen ohjain), versio 2.
-- Pelaaja ei heiluta aseita itse. Hän vain lyö: lyönti lähtee automaattisesti lähimpään zombiin, kun se on kantaman sisällä. Onnenpyörän aseet toimivat itsestään pelaajan ympärillä.
+- Lyönti: välilyönti. Yksi painallus on yksi lyönti lähimpään zombiin kantaman sisällä, ja hahmo heilauttaa asettaan näkyvästi. Mikään ei iske itsestään: ensimmäisessä versiossa aseet toimivat automaattisesti, jolloin zombit kuolivat pelaajan seistessä paikallaan ja peli oli tylsä.
+- Kiertävät terät (katanat, nuntsakot, laser-miekka) pyörivät ja tekevät vahinkoa vain hetken jokaisen painalluksen jälkeen. Silloin hahmo ei lyö vaan heilauttaa käsiään ilmassa.
+- Hahmo kääntyy kävelysuuntaan ja lyödessään kohti zombia. Zombit kääntyvät kohti pelaajaa.
+- Valinta ja jatkaminen: Enter.
 - Viisi sydäntä. Zombin kosketus vie yhden, ja sen jälkeen pelaaja on hetken suojassa.
 
 | Hahmo | Kuvaus | Versio |
@@ -62,17 +79,22 @@ Ase on yksi rivi dataa: nimi, pyörä (metsä tai VIP), paino arvonnassa, vahink
 | Kissarobotti | metsä | helper | Apuri, joka puree zombeja, vahinko 1 | 2 |
 | Galaksi-pyssy | metsä | projectile | Ammus jää mustaksi aukoksi, joka imee zombit yhteen | 2 |
 | Laser-miekka | VIP | orbit | Kolme päätä, keskellä kristalli. Sininen laser-tornado pelaajan ympärillä | 1 |
-| Siniset jääskat | VIP | status | Jäädyttää lähellä olevat zombit jääkuutioon 2 sekunniksi | 1 |
+| Siniset jäähanskat | VIP | status | Jäädyttää lähellä olevat zombit jääkuutioon 2 sekunniksi | 1 |
 | Puristushanskat | VIP | strike | Zombi puristuu littanaksi ja on hetken avuton, seuraava osuma tappaa | 1 |
 | Rudi-Karri-robotti | VIP | helper | Tappaa yhdellä iskulla. Lähes mahdoton saada | 1 |
 
-Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kuusi pyöräytystä (neljä varmaa ja kaksi Salamaluolasta), joten erillistä varustevalikkoa ei tarvita. Sama ase toista kertaa nostaa sen tasoa (vahinko + 1).
+Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kaksi pyöräytystä (VIP-pyörä aitioon päästessä ja peruspyörä Salamaluolan arkusta), joten erillistä varustevalikkoa ei tarvita. Sama ase toista kertaa nostaa sen tasoa (vahinko + 1).
 
 ### Onnenpyörä
 
+- Pyörä on palkinto eikä pelin pääosa. Peli alkaa suoraan metsästä perusaseella. Pyörä ilmestyy vain VIP-aitioon päästessä ja Salamaluolan arkusta (ansaittu hajotelmilla), ja syy lukee aina ruudulla. Pyörähdys on lyhyt ja värit hillityt, jotta pelin maailma pysyy pääosassa. Aiempi versio pyöräytti myös kolmannen ja kahdeksannen tapon jälkeen, mikä tuntui satunnaiselta ja katkoi peliä liian usein.
+- Pyörän vieressä on lista: jokaisella siivulla on oma väri, aseen nimi ja yksi rivi siitä, mitä ase tekee. Rudi-Karrilla on oma laatikko, koska se ei ole tavallinen siivu vaan ohut valkoinen viiva.
+- Pyörä odottaa Enteriä ennen pyörähdystä, jotta lapsi ehtii lukea, mitä aseita on tarjolla.
+- Kun pyörä pysähtyy, se seisoo hetken paikallaan: osoitin näyttää voittaneen siivun ja sen rivi korostuu. Sitten pyörän ja listan alapuolelle tulee kortti, joka kertoo saadun aseen ja mitä se tekee. Kortti ei peitä pyörää eikä listaa, ja se pysyy, kunnes pelaaja painaa Enteriä.
+- Pyörän ja hajotelman jälkeen on kolmen sekunnin rauhallinen hetki: uusia zombeja ei synny eikä pelaaja ota vahinkoa. Pelin viestit näkyvät neljä sekuntia ja jonottavat, jos niitä tulee useita.
 - Metsän pyörä ja VIP-pyörä ovat sama koodi eri datalla.
 - Arvonta on painotettu ja tehdään asiakaspuolella. Sillä ei ole rahallista arvoa, eikä mitään voi ostaa.
-- Rudi-Karrin siivu on pyörässä hiuksenohut. Mahdollisuus näytetään lukuna `0,00000001 %`. Todellinen todennäköisyys on erillinen parametri, ehdotus 1 / 500 VIP-pyöräytystä kohti. Näin se on lähes mahdoton, mutta joku saa sen joskus.
+- Rudi-Karrin siivu on pyörässä hiuksenohut. Mahdollisuus näytetään lukuna `0,00000001 %`. Todellinen todennäköisyys on erillinen parametri: 1 / 10 VIP-pyöräytystä kohti, eli robotti tulee noin joka kymmenennessä pelissä. Näytettävä luku on lapsen päätös, mutta todellinen mahdollisuus ei saa olla mahdoton. Ensin kokeiltiin arvoa 1 / 500, mutta silloin robottia ei nähty kertaakaan.
 - Rudi-Karri on kaksipäinen kissarobotti: toinen pää on Rudi, toinen Karri.
 - Taidot (lapsen toive tulevaisuuteen): versiossa 2 pyörään lisätään taitoja, esim. nopeus, lisäsydän ja pidempi suoja.
 
@@ -123,7 +145,7 @@ Taustataulu on aina näkyvissä, kuten lapsi toivoi:
 
 Ennen kuin API on olemassa (vaihe 5), taulu näyttää oman selaimen parhaat tulokset.
 
-Saavutukset, versio 1: Ensimmäinen tappo, VIP-vieras, Peli läpäisty, Ei naarmuakaan (läpäisy täysillä sydämillä), Salamannopea (alle 90 s), Jättien kaataja, Lordin voittaja, Hajotelmamestari (molemmat lukkokivet avattu), Rudi-Karrin ystävä.
+Saavutukset, versio 1: Ensimmäinen tappo, VIP-vieras, Peli läpäisty, Ei naarmuakaan (läpäisy täysillä sydämillä), Salamannopea (alle 150 s), Jättien kaataja, Lordin voittaja, Hajotelmamestari (lukkokivi avattu), Rudi-Karrin ystävä.
 
 Kaveriporukka: versio 2 toteuttaa porukkakoodin (esim. `KISSA-42`). Koodin jakaneet näkevät oman pistetaulukon ja toistensa valmiit viestit. Vapaa keskustelu vaatisi moderoinnin ja reaaliaikaisen palvelun, eikä sovi yksityisyyslinjaukseen.
 
@@ -132,6 +154,8 @@ Kaveriporukka: versio 2 toteuttaa porukkakoodin (esim. `KISSA-42`). Koodin jakan
 Idea on vanhemman, ja lapsi on hyväksynyt sen. Hajotelmat ovat pelin vauhtipähkinöitä: ratkaisemalla niitä pääsee jännään paikkaan.
 
 Luvun hajotelma tarkoittaa, että luku jaetaan osiin, joiden summa on alkuperäinen luku. Esimerkiksi 5 = 2 + 3.
+
+Hajotelmat ovat vain VIP-aitiossa (päätös 2026-11-16). Metsässä pelaaja keskittyy oppimaan taistelun, ja hajotelma on VIP-aition erikoisuus. Salamaluolan arkku antaa pyöräytyksen peruspyörästä, jotta myös perusaseet (superhanskat, katanat, moukari, nuntsakot) ovat saatavilla pelissä.
 
 ### Miten se toimii
 
@@ -152,16 +176,16 @@ Taso valitaan aloitusruudussa, ja peli muistaa sen. Lapsi toivoi myös vaikeita 
 | Vaikea | `1000 = 640 + 250 + ?` | Luvut 1000 asti, kolme osaa |
 | Mestari | `? + ? = 150` | Pelaaja kerää kaksi pisaraa viidestä niin, että summa täsmää |
 
-Väärät vaihtoehdot eivät ole satunnaisia, vaan tyypillisiä virheitä: oikea vastaus plus tai miinus 1, plus tai miinus 10 ja unohdettu muistinumero. VIP-aition kivi käyttää yhtä tasoa vaikeampaa kuin metsän kivi.
+Väärät vaihtoehdot eivät ole satunnaisia, vaan tyypillisiä virheitä: oikea vastaus plus tai miinus 1, plus tai miinus 10 ja unohdettu muistinumero.
 
 ### Salamaluola
 
 Kiven takana on Salamaluola: pieni huone, jossa salama on jähmettynyt kristalliksi ja valaisee seinät vaaleansinisiksi. Luolassa ei ole zombeja. Siellä on aarrearkku, josta saa:
 
 - yhden sydämen takaisin
-- ylimääräisen pyöräytyksen. Metsän kivestä saa metsän pyörän, VIP-aition kivestä VIP-pyörän.
+- ylimääräisen pyöräytyksen peruspyörästä.
 
-Luola on vapaaehtoinen. Pelin voi läpäistä ilman sitä, mutta paras pistemäärä vaatii molemmat kivet.
+Luola on vapaaehtoinen. Pelin voi läpäistä ilman sitä, mutta paras pistemäärä vaatii sen.
 
 Hajotelmien arvonta ja tarkistus ovat puhdasta logiikkaa ilman Phaseria, joten ne testataan yksikkötesteillä.
 
@@ -206,10 +230,10 @@ Vaaleansininen (`#7CC8F2`) on idean tehneen lapsen lempiväri. Se kuuluu peliss�
 
 ### Käyttöliittymä pelin sisällä
 
-- Vasen yläkulma: sydämet ja kymmenen tapon palkki, jossa viides ja kymmenes ruutu on korostettu.
-- Oikea yläkulma: VIP-kyltti. Punainen ja lukittu, kunnes viides tappo sytyttää sen vaaleansiniseksi.
+- Vasen yläkulma: sydämet ja tappopalkki, jossa on ruutu jokaista tarvittavaa tappoa kohti. VIP-aition ja pelin lopun ruudut on korostettu.
+- Oikea yläkulma: VIP-kyltti, jossa lukee vain VIP. Punainen, kunnes pelaaja pääsee aitioon, sitten vihreä. Kyltissä ei kerrota tarvittavien tappojen määrää.
 - Vasen alakulma: saadut aseet kuvakkeina.
-- Teksti: pikselifontti, jossa on ä ja ö. Fontti tarjoillaan omalta palvelimelta, ja lisenssin on sallittava se (esim. OFL).
+- Teksti: piirretään täydellä tarkkuudella samalla fontilla kuin sivu (Inter), jotta lapsi saa siitä helposti selvää. Pelin kangas on nelinkertainen (1280 x 960), ja kamera suurentaa 320 x 240 pikselin maailman siihen. Grafiikka pysyy pikselisenä, teksti terävänä.
 
 ### Sivu pelin ympärillä
 
@@ -225,7 +249,7 @@ Versio 2. Sade, ukkonen ja iskuäänet tuotetaan Web Audio API:lla ilman äänit
 |---|---|---|
 | Random, hiekka-, tavallinen, jätti-, Darth Vader -zombi, kaikenlaiset | Luku 5 | 1 |
 | Päivityksissä lisää zombeja | Zombi on rivi dataa | 2 + |
-| VIP-aitio 5 tapon jälkeen, läpi 10 tapolla | Luku 2 | 1 |
+| VIP-aitio 5 tapon jälkeen, läpi 10 tapolla | Luku 2. Luvut ovat nyt 10 ja 20: lapsi halusi aitioon pääsyn vaativan paljon enemmän tappoja, ja 10 on sovittu tähän vaiheeseen | 1 |
 | Onnenpyörä, paremmat aseet VIP:ssä | Luku 4 | 1 |
 | Taitoja pyörästä tulevaisuudessa | Luku 4 | 2 |
 | Galaksi-pyssy ja musta aukko, kissarobotti | Luku 4 | 2 |
@@ -236,7 +260,7 @@ Versio 2. Sade, ukkonen ja iskuäänet tuotetaan Web Audio API:lla ilman äänit
 | VIP: kaveriporukka ja juttelu | Porukkakoodi ja valmiit viestit | 2 |
 | Laser-miekka: kolme päätä, kristalli, sininen laser-tornado | Luku 4 | 1 |
 | Rudi-Karri-robotti, lähes mahdoton, luku näkyvissä | Luku 4 | 1 |
-| Siniset jääskat, puristushanskat | Luku 4 | 1 |
+| Siniset jäähanskat, puristushanskat | Luku 4 | 1 |
 | Mätä luonto, sammal, puut, vesi, ruoho, yö, sade, salamat | Luku 6 | 1 |
 | Vesisateessa syntyy zombeja | Luku 5, pisara ja lätäkkö | 1 |
 | Versio 1 -kuva: laiha, kieli ei ulkona, vaatteet, erikoisaseet harvoilla | Luku 5 | 1 |
@@ -272,14 +296,24 @@ Vain nimimerkki ja satunnainen istuntotunniste. Ei IP-osoitteita eikä henkilöt
 - **Versio 1 verkossa**: pistetaulukko, viestit ja telemetria API:n kautta (arkkitehtuurin vaiheet 5 ja 6).
 - **Versio 2**: ammus- ja apuriaseet, taidot, porukkakoodi, kosketusohjaus, äänet, salaman vaikutus peliin.
 
+### Selkeyden periaatteet (pelitestistä 2026-11-16)
+
+Ensimmäinen pelitesti osoitti, että asiat tapahtuivat liian nopeasti. Näistä pidetään kiinni jatkossa:
+
+- Jokainen tärkeä tulos (ase pyörästä, oikea hajotelma, aarre, pelin loppu) pysyy ruudulla, kunnes pelaaja painaa Enteriä, tai vähintään 1,5 sekuntia. Näppäin alkaa toimia vasta hetken kuluttua.
+- Ruutu kertoo aina, miksi jotain tapahtuu ja mitä pelaaja sai.
+- Valinnat näytetään kortteina ja painikkeina, ei koodimaisina merkkeinä. Valitun reunus on vaaleansininen.
+- Pelin maailma on pääosassa. Onnenpyörä on palkinto: hillityt värit, lyhyt pyörähdys, ei koskaan pelin ensimmäinen ruutu.
+
+Tekemättömät työt ja jatko-ohjeet ovat tiedostossa `next-steps.md`.
+
 ## 14. Kysymykset lapselle
 
 1. Mitä superhanskojen "vetää paljon helppiä" tarkoittaa? Ehdotus: zombilta lähtee paljon elämää ja pelaaja saa välillä sydämen.
-2. Mitä "siniset jääskat" ovat: hanskat, luistimet vai jotain muuta? Miltä ne näyttävät?
-3. Minkä värisiä Rudi ja Karri ovat? Robotin kaksi päätä väritetään niiden mukaan.
-4. Sopiiko, että Darth Vader -zombi on Pimeä lordi, jolla on viitta ja kultainen piikkikruunu?
-5. Sopiiko Ylläri-zombi (lahjapaketti) "kaikenlaisiksi zombeiksi"?
-6. Näyttääkö ritari oikealta? Katso `visual-concept.html`.
-7. Mitä lelut tekevät zombeille?
-8. Miltä Salamaluolassa näyttää, ja mitä aarrearkusta pitäisi saada?
-9. Mikä on vaikein hajotelma, jonka haluat peliin?
+2. Minkä värisiä Rudi ja Karri ovat? Robotin kaksi päätä väritetään niiden mukaan.
+3. Sopiiko, että Darth Vader -zombi on Pimeä lordi, jolla on viitta ja kultainen piikkikruunu?
+4. Sopiiko Ylläri-zombi (lahjapaketti) "kaikenlaisiksi zombeiksi"?
+5. Näyttääkö ritari oikealta? Katso `visual-concept.html`.
+6. Mitä lelut tekevät zombeille?
+7. Miltä Salamaluolassa näyttää, ja mitä aarrearkusta pitäisi saada?
+8. Mikä on vaikein hajotelma, jonka haluat peliin?

@@ -18,8 +18,8 @@ const KNIGHT: Look = {
 };
 
 export const HEROES = {
-  knight: { name: 'Ritari', info: 'Musta miekka, isku 2', look: KNIGHT, speed: 70, weapon: 'sword' },
-  mini: { name: 'Minipelaaja', info: 'Nopea, isku 1, parantuu', speed: 92, weapon: 'fist', healEvery: 3,
+  knight: { name: 'Ritari', info: 'Vahva musta miekka', look: KNIGHT, speed: 70, weapon: 'sword' },
+  mini: { name: 'Minipelaaja', info: 'Nopea ja parantuu', speed: 92, weapon: 'fist', healEvery: 3,
     look: { ...KNIGHT, s: 0.68, sword: false, plume: false, headCol: P.ice, shirt: P.iceL, skin: P.iceL, eye: P.ink, pace: 11 } },
 } satisfies Record<string, HeroDef>;
 

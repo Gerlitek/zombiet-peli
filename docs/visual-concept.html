@@ -359,7 +359,7 @@ function vip(g, t) {
   px(g, 232, 22, 1, 34, P.storm);
   text(g, 'VIP 6/10', 240, 23, P.iceL);
   for (let i = 0; i < 5; i++) heart(g, 240 + i * 7, 33, i < 3 ? P.hurt : P.storm);
-  text(g, 'LASERMIEKKA', 240, 43, P.ice); text(g, 'JÄÄSKAT', 240, 51, P.ice);
+  text(g, 'LASERMIEKKA', 240, 43, P.ice); text(g, 'JÄÄHANSKAT', 240, 51, P.ice);
   px(g, 15, 60, 290, 1, P.storm);
   const msg = 'HURJA-KISSA-42: HYVÄ PELI!     MÄRKÄ-SUSI-07: VAROKAA JÄTTIÄ!     ', off = R(t * 22) % (msg.length * 4);
   g.save(); g.beginPath(); g.rect(18, 62, 284, 9); g.clip(); text(g, msg + msg, 18 - off, 64, P.bone); g.restore();
@@ -399,7 +399,7 @@ function wheel(g, t) {
   px(g, 0, 0, W, H, P.sky); rainStreaks(g, t, 30, 0.2);
   textC(g, 'VIP-ONNENPYÖRÄ', 160, 12, P.iceL, 2);
   const cx = 104, cy = 128, rad = 74, rot = t * 0.6 + sin(t * 0.4) * 2;
-  const slices = [['LASERMIEKKA', P.ice], ['JÄÄSKAT', P.iceL], ['PURISTUSHANSKAT', P.storm], ['GALAKSIPYSSY', P.cloud], ['KISSAROBOTTI', P.rain]];
+  const slices = [['LASERMIEKKA', P.ice], ['JÄÄHANSKAT', P.iceL], ['PURISTUSHANSKAT', P.storm], ['GALAKSIPYSSY', P.cloud], ['KISSAROBOTTI', P.rain]];
   ell(g, cx, cy, rad + 3, rad + 3, P.ink); ell(g, cx, cy, rad + 2, rad + 2, P.bone);
   for (let y = -rad; y <= rad; y++) for (let x = -rad; x <= rad; x++) {
     if (x * x + y * y > rad * rad) continue;

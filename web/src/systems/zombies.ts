@@ -73,12 +73,13 @@ export function drawTrail(p: Pen, z: Zombie) {
   z.trail.forEach((s, i) => p.rect(s.x - 1, s.y + (i % 2), 2, 1, P.dry));
 }
 
-export function drawZombie(p: Pen, z: Zombie, clock: number) {
+// faceLeft: zombies turn toward the player.
+export function drawZombie(p: Pen, z: Zombie, clock: number, faceLeft: boolean) {
   const x = Math.round(z.x), y = Math.round(z.y), s = z.look.s ?? 1;
   const frozen = clock < z.frozen, squashed = clock < z.squashed;
   const pose = {
     seed: z.seed, still: isHeld(z, clock), tint: clock < z.flash ? P.bone : undefined,
-    alpha: frozen ? 0.6 : 1, glow: z.vip ? P.sick : undefined, club: z.armed,
+    alpha: frozen ? 0.6 : 1, glow: z.vip ? P.sick : undefined, club: z.armed, left: faceLeft,
   };
   if (frozen) { // ice block
     const h = Math.round((z.look.leg + z.look.tor + z.look.head * 2) * s) + 3, w = Math.round(16 * s);

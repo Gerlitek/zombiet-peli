@@ -188,6 +188,7 @@ Kolme työnkulkua, jokainen käynnistyy vain oman kansionsa muutoksista.
 - GitHub Actions on yksityisessä repossa maksuton kuukausikiintiön rajoissa (2 000 min/kk). Työnkulut käynnistyvät vain oman kansionsa muutoksista, joten kiintiö ei kulu turhaan.
 - Azure-kirjautuminen: `azure/login` OIDC:llä identiteetillä `id-zombies-github`. Repossa on vain kolme tunnistetta (client id, tenant id, subscription id), ei salaisuuksia.
 - Deploy mainiin kulkee GitHub-ympäristön `production` kautta. Siihen voi lisätä manuaalisen hyväksynnän.
+- Palveluntarjoaja on Shellit.org (jaettu webhotelli, Apache), sama kuin AI Radarilla. AI Radar viedään sinne käsin SFTP:llä. Ennen kuin alla oleva SSH-julkaisu toteutetaan, varmista, että Shellit sallii SSH-kirjautumisen avaimella. Ohjeet: `next-steps.md`, luku 3.
 - Front: SSH-avain on GitHubin salaisuus. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
 - Putki tehdään ensin `az`-komennoilla. `azd pipeline config`ia kokeillaan myöhemmin vertailun vuoksi.
 
@@ -217,6 +218,28 @@ Arvio normaalikäytön kuluista: alle 0,10 USD/kk. Functions pysyy ilmaiskiinti�
 
 Versio 1 (pelkkä front gerlitekissä) ei käytä Azurea lainkaan, joten sen kulut ovat nolla.
 
+### Kulutarkistus 2026-11-16
+
+Tilauksen tila tarkistettu `az`-komennoilla: ei yhtään resurssia eikä resurssiryhmää, budjetti `Zombies` (5 USD/kk) on voimassa, eikä Defender for Cloud ole käytössä (palveluntarjoajaa `Microsoft.Security` ei ole rekisteröity). Tällä hetkellä tilauksesta ei siis voi syntyä kuluja.
+
+Azuressa ei ole kovaa kulukattoa pay-as-you-go-tilaukselle. Siksi isompi lasku estetään näillä säännöillä, ja jokainen tarkistetaan ennen kuin mitään luodaan:
+
+| Riski | Sääntö | Missä varmistetaan |
+|---|---|---|
+| Kutsutulva API:in | Instansseja enintään 1, aina valmiina 0, API sammuttaa itsensä vuorokausikaton ylittyessä | `api.bicep`, API:n koodi, kuormatesti ennen julkaisua |
+| Lokien määrä | Päiväkatto 0,1 Gt sekä Log Analyticsissa että Application Insightsissa, säilytys 30 vrk, näytteenotto | `monitoring.bicep` |
+| Tallennustila | LRS, ei versiointia, ei SFTP:tä (tuntihinta), ei hierarkkista nimiavaruutta, raw poistuu 30 vrk, pyynnön enimmäiskoko 16 kt | `storage.bicep` |
+| Maksulliset tietoturvapaketit | Defender for Storage ja Defender for App Service pysyvät pois päältä. Portaali tarjoaa niitä, älä hyväksy | `az security pricing list` ennen ja jälkeen käyttöönoton |
+| Väärä resurssi vahingossa (myös tekoälyn tekemänä) | Azure Policy resurssiryhmälle: vain suunnitelman resurssityypit sallittu. Maksuton | `bootstrap.bicep` |
+| Kalliit lisäpalvelut | Ei API Managementia, Front Dooria, Application Gatewayta, NAT-yhdyskäytävää, yksityisiä päätepisteitä, Premium-suunnitelmaa eikä kiinteää IP:tä | `what-if` jokaisessa pull requestissa |
+| Unohtuneet resurssit | Kaikki yhdessä resurssiryhmässä. `az group delete` poistaa kaiken kerralla | README |
+| GitHub Actions | Tilin kulutusraja 0 USD: minuuttien loputtua ajot pysähtyvät, laskua ei tule | GitHub: Settings, Billing |
+| Shellit | Kiinteä kuukausihinta. Tarkista sopimuksesta, ettei liikenteestä laskuteta erikseen | Shellitin hallintapaneeli |
+
+Pahin realistinen tapaus näiden jälkeen: häirikkö täyttää vuorokausikaton, API sammuu, ja kulu on senttejä. Suurin jäljelle jäävä riski ei ole hyökkääjä vaan oma virhe, eli resurssi, joka luodaan väärällä asetuksella. Sitä vastaan ovat Policy, `what-if` ja budjettihälytys.
+
+Ennen kuin API avataan julkiseksi, ajetaan kuormatesti: skripti lähettää pyyntöjä yli katon, ja varmistetaan, että API sammuu ja Cost Management näyttää seuraavana päivänä nollaa.
+
 ## 8. Yksityisyys
 
 Pelaajat voivat olla lapsia.
@@ -242,7 +265,7 @@ Pelaajat voivat olla lapsia.
 Vaihe 2 jaetaan pieniin, erikseen näytettäviin askeliin:
 
 1. `art/`: paletti, piirtofunktiot ja hahmo konseptisivulta Phaseriin. Ritari liikkuu metsässä.
-2. Zombit datasta, syntyminen pisarasta, peruslyönti, sydämet, 10 tapon läpäisy.
+2. Zombit datasta, syntyminen pisarasta, peruslyönti, sydämet, läpäisy tapporajalla.
 3. Aseiden käyttäytymiset `strike`, `orbit`, `status` ja onnenpyörä.
 4. VIP-aitio, taustataulu, saavutukset, loppuruutu.
 5. Hajotelmat, lukkokivi ja Salamaluola.
@@ -269,7 +292,7 @@ Vaihe 2 jaetaan pieniin, erikseen näytettäviin askeliin:
 2. **Arvottu nimimerkki vapaan tekstin sijaan.** Poistaa moderoinnin ja henkilötietoriskin.
 3. **OIDC hallitulla identiteetillä** sovellusrekisteröinnin sijaan, ja roolit `bootstrap.bicep`issä.
 4. **Rate limit ilman IP-osoitetta**: istuntoraja ja vuorokausikatto.
-5. **Rudi-Karrin todellinen todennäköisyys**: 1 / 500 VIP-pyöräytystä kohti.
+5. **Rudi-Karrin todellinen todennäköisyys**: 1 / 10 VIP-pyöräytystä kohti. Alkuperäinen 1 / 500 oli pelitestissä liian harvinainen.
 6. **Minipelaaja ja hajotelmat kuuluvat versioon 1.**
 7. **Kuvakulma**: vino näkymä, jossa taivas on ylhäällä.
 8. **Alidomain**: oletus `zombit.gerlitek.fi`, vahvistetaan vaiheessa 3.
