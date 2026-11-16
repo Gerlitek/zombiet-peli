@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ylläri-Zombiet: visuaalinen konsepti</title>
+<style>
+  :root {
+    --bg: #0F1115; --surface-1: #151923; --surface-2: #1B2030; --border: #252D3F;
+    --text: #E7E8EA; --text-dim: #A9AFBA; --accent: #7CC8F2; --accent-light: #B5E1F8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 1.9rem; color: var(--accent); }
+  h2 { margin: 48px 0 6px; font-size: 1.2rem; }
+  h3 { margin: 0 0 6px; font-size: 0.95rem; color: var(--accent-light); }
+  p, li { color: var(--text-dim); }
+  p { margin: 0 0 14px; max-width: 70ch; }
+  ul { margin: 0; padding-left: 18px; }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #0B0E14; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .frame { border: 2px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .cols { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+  .page-mock { max-width: 680px; }
+  .page-mock h1 { font-size: 1.6rem; }
+  .page-mock footer { margin-top: 12px; font-size: 0.8rem; color: var(--text-dim); }
+  kbd { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 0.85em; }
+  .swatches { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .sw { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 0.75rem; background: var(--surface-2); }
+  .sw i { display: block; height: 44px; }
+  .sw span { display: block; padding: 6px 8px; color: var(--text-dim); }
+  .sw b { color: var(--text); font-weight: 600; display: block; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--border); color: var(--text-dim); vertical-align: top; }
+  th { color: var(--text); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ylläri-Zombiet: visuaalinen konsepti</h1>
+  <p>Tämä sivu näyttää, miltä peli on tarkoitus saada näyttämään. Kaikki kuvat piirretään koodilla samalla tekniikalla, jota peli käyttää. Kuvat liikkuvat, koska liike on puolet tyylistä. Lisää osoitteeseen <kbd>?t=3.2</kbd>, jos haluat pysäyttää ajan tiettyyn hetkeen.</p>
+
+  <h2>1. Sivu ja peli-ikkuna: mätä metsä</h2>
+  <p>Ikkuna on 320 x 240 pikseliä ja näytetään kaksinkertaisena. Ylhäällä on taivas, pilvet ja isot pisarat kuten sivun luonnoksessa. VIP-kyltti on oikeassa yläkulmassa ja aukeaa viidennellä tapolla.</p>
+  <div class="card page-mock">
+    <h1>Ylläri-Zombiet</h1>
+    <p>Taistele zombieita vastaan. Liiku <kbd>nuolet</kbd> tai <kbd>WASD</kbd>, aseet iskevät itsestään.</p>
+    <div class="frame"><canvas id="forest" width="320" height="240"></canvas></div>
+    <footer>Pelin idea ja hahmot: lapsen suunnittelemia. Gerlitek Oy.</footer>
+  </div>
+
+  <h2>2. Hahmot</h2>
+  <p>Hahmot rakennetaan lehden muotoisista raajoista, kuten piirroksissa. Jokainen hahmo on yksi rivi lukuja (raajojen pituus, kumaruus, huojunta, värit). Siksi uusi zombi on halpa lisätä, ja Random zombi voi arpoa mittansa joka kerta.</p>
+  <div class="frame"><canvas id="lineup" width="340" height="96"></canvas></div>
+  <div class="scroll" style="margin-top:14px">
+  <table>
+    <tr><th>Hahmo</th><th>Piirroksesta tai listasta</th><th>Pelissä</th></tr>
+    <tr><td>Ritari (pelaaja)</td><td>Valkoiset silmät, musta miekka, ritarin varusteet</td><td>Tumma kypärä, josta näkyvät vain valkoiset silmät. Vaaleansininen haarniska. Musta miekka, jolla on vaalea reuna, jotta se erottuu yössä.</td></tr>
+    <tr><td>Minipelaaja</td><td>Vain lyö, lyönti vie 1 elämän, voi parantaa</td><td>Pieni ja nopea erikoishahmo ilman miekkaa.</td></tr>
+    <tr><td>Versio 1 -zombi</td><td>Laiha, kieli ei ulkona, vaatteet päällä</td><td>Ohut vartalo, paita ja housut, isot hehkuvat silmät, suu kiinni.</td></tr>
+    <tr><td>Kauhu-zombi</td><td>Huojuu, raajat tekevät isoja kaaria, kumara, pää notkuu</td><td>Iso munanmuotoinen pää, mutrusuu, maahan asti roikkuvat kädet. Suurin huojunta ja hitain askel.</td></tr>
+    <tr><td>Hiekka, Jätti, Random</td><td>Lapsen lista</td><td>Sama runko eri mitoilla ja väreillä. Hiekkazombi jättää hiekkajäljen.</td></tr>
+    <tr><td>Pimeä lordi</td><td>Darth Vader -zombi</td><td>Musta viitta, kultainen piikkikruunu, vihreät silmät. Oma hahmo, ei tavaramerkin tunnuksia.</td></tr>
+    <tr><td>Ylläri-zombi</td><td>Kaikenlaiset zombit ja pelin nimi</td><td>Lahjapaketti, josta kurkkii silmäpari. Avautuessaan paljastaa satunnaisen zombin.</td></tr>
+  </table>
+  </div>
+
+  <h2>3. VIP-aitio ja onnenpyörä</h2>
+  <div class="cols">
+    <div>
+      <div class="frame"><canvas id="vip" width="320" height="240"></canvas></div>
+      <p style="margin-top:10px">Aitio on valaistu lava myrskyn keskellä. Taustataulussa näkyvät aina vahvin pelaaja, saavutukset ja valmiit viestit. Zombit ovat isompia ja hehkuvat.</p>
+    </div>
+    <div>
+      <div class="frame"><canvas id="wheel" width="320" height="240"></canvas></div>
+      <p style="margin-top:10px">Onnenpyörä antaa aseen. Rudi-Karri-robotin siivu on hiuksenohut, ja sen mahdollisuus näytetään lukuna.</p>
+    </div>
+  </div>
+
+  <h2>4. Hajotelma ja lukkokivi</h2>
+  <div class="cols">
+    <div>
+      <div class="frame"><canvas id="puzzle" width="320" height="240"></canvas></div>
+    </div>
+    <div>
+      <p>Lukkokivi pysäyttää ajan: sade ja zombit jähmettyvät ja himmenevät. Pelaaja kävelee pisaraan, jossa on puuttuva osa. Kolme oikeaa avaa Salamaluolan. Kello ylhäällä tekee tästä vauhtipähkinän.</p>
+      <p>Mitään ei kirjoiteta, joten ohjaus on sama kuin muussa pelissä.</p>
+    </div>
+  </div>
+
+  <h2>5. Paletti (16 väriä)</h2>
+  <p>Koko peli käyttää vain näitä värejä. Vaaleansininen kuuluu pelaajalle, VIP-aitiolle, jäälle ja laserille. Zombit ovat sairaan vihreitä, luonto mätä ja kuiva.</p>
+  <div class="swatches" id="swatches"></div>
+
+  <h2>6. Tekniikka lyhyesti</h2>
+  <ul>
+    <li>Ei kuvatiedostoja versiossa 1. Hahmo piirretään joka ruutu pienistä suorakulmioista: ensin tumma ääriviiva, sitten väri.</li>
+    <li>Liike lasketaan sinikäyrästä: askel, käsien kaari, vartalon huojunta ja pään notkunta. Erillisiä animaatioruutuja ei tarvita.</li>
+    <li>Piirtofunktio tarvitsee vain yhden operaation (täytä suorakulmio), joten sama koodi toimii Phaserin Graphics-oliolla.</li>
+    <li>Hahmot järjestetään y-koordinaatin mukaan, jolloin alempana oleva piirtyy päälle ja maailmaan syntyy syvyys.</li>
+    <li>Teksti on oma 3 x 5 pikselin fontti tässä konseptissa. Peliin valitaan luettavampi pikselifontti, jossa on ä ja ö.</li>
+  </ul>
+</main>
+
+<script>
+// ---------- palette ----------
+const P = {
+  ink: '#0B0E14', sky: '#151B2B', cloud: '#232C44', storm: '#3A4763', rain: '#8FA6C4', bone: '#E7E8EA',
+  ice: '#7CC8F2', iceL: '#B5E1F8', moss0: '#16241A', moss1: '#2C4429', rot: '#5F8F4A', sick: '#B4D46A',
+  dry: '#8A7A4A', sand: '#C9A76A', bark: '#4A3A2A', hurt: '#D96B6B',
+};
+const NAMES = {
+  ink: 'Muste: ääriviivat', sky: 'Yötaivas', cloud: 'Pilvi, likavesi', storm: 'Myrsky, haarniska', rain: 'Sade', bone: 'Salama, silmät, teksti',
+  ice: 'Pelaaja, VIP, jää', iceL: 'Laser, hohde', moss0: 'Maa', moss1: 'Mätä sammal', rot: 'Zombin iho', sick: 'Zombin silmät',
+  dry: 'Kuiva ruoho', sand: 'Hiekka, kulta', bark: 'Kuivat puut', hurt: 'Sydämet, vaara',
+};
+const W = 320, H = 240, R = Math.round, sin = Math.sin, cos = Math.cos;
+
+// ---------- pixel primitives: everything is fillRect ----------
+function px(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(R(x), R(y), w, h); }
+function ell(g, cx, cy, rx, ry, c) {
+  for (let y = -ry; y <= ry; y++) {
+    const hw = Math.floor(rx * Math.sqrt(Math.max(0, 1 - (y * y) / ((ry + 0.5) * (ry + 0.5)))));
+    px(g, R(cx) - hw, R(cy) + y, hw * 2 + 1, 1, c);
+  }
+}
+// A limb is a line with a leaf profile: thin at both ends, thick in the middle (as in the drawings).
+function limb(g, x0, y0, x1, y1, w, c, leaf = true, grow = 0) {
+  const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const th = Math.max(1, R(leaf ? w * sin(Math.PI * (0.14 + 0.72 * t)) : w)) + grow * 2;
+    px(g, x0 + (x1 - x0) * t - th / 2, y0 + (y1 - y0) * t - th / 2, th, th, c);
+  }
+}
+// Draw all parts once in ink (one pixel bigger), then in color. Result: a dark outline around the whole figure.
+function figure(g, parts) {
+  for (const pass of [1, 0]) for (const p of parts) {
+    const [kind, a, b, c, d, e, f] = p;
+    if (kind === 'limb') limb(g, a, b, c, d, e, pass ? P.ink : f, p[7] !== false, pass);
+    else if (kind === 'ell') ell(g, a, b, c + pass, d + pass, pass ? P.ink : e);
+    else if (kind === 'box') px(g, a - pass, b - pass, c + pass * 2, d + pass * 2, pass ? P.ink : e);
+    else if (kind === 'dot' && !pass) px(g, a, b, c, d, e);
+  }
+}
+
+// ---------- 3x5 font ----------
+const GLYPHS = {
+  A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111',
+  F: '111100110100100', G: '011100101101011', H: '101101111101101', I: '111010010010111', J: '001001001101010',
+  K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010',
+  P: '110101110100100', Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010',
+  U: '101101101101111', V: '101101101010010', W: '101101111111101', X: '101101010101101', Y: '101101010010010',
+  Z: '111001010100111', 0: '111101101101111', 1: '010110010010111', 2: '110001010100111', 3: '110001010001110',
+  4: '101101111001001', 5: '111100110001110', 6: '011100110101010', 7: '111001010010010', 8: '010101010101010',
+  9: '010101011001110', '!': '010010010000010', '-': '000000111000000', '/': '001001010100100', ':': '000010000010000',
+  '.': '000000000000010', '=': '000111000111000', '+': '000010111010000', ',': '000000000010100', '%': '101001010100101', '?': '110001010000010',
+};
+function text(g, str, x, y, c, s = 1) {
+  for (const ch0 of str.toUpperCase()) {
+    const dots = ch0 === 'Ä' || ch0 === 'Ö';
+    const bits = GLYPHS[dots ? (ch0 === 'Ä' ? 'A' : 'O') : ch0];
+    if (bits) for (let i = 0; i < 15; i++) if (bits[i] === '1') px(g, x + (i % 3) * s, y + Math.floor(i / 3) * s, s, s, c);
+    if (dots) { px(g, x, y - 2 * s, s, s, c); px(g, x + 2 * s, y - 2 * s, s, s, c); }
+    x += 4 * s;
+  }
+}
+const textW = (str, s = 1) => str.length * 4 * s - s;
+const textC = (g, str, cx, y, c, s = 1) => text(g, str, R(cx - textW(str, s) / 2), y, c, s);
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// ---------- characters: one row of numbers each ----------
+const ZOMBIE = { leg: 8, tor: 7, arm: 10, head: 4, lw: 2, tw: 4, armA: 0.95, swing: 0.6, hunch: 0.22, sway: 0.22, nod: 0.5, pace: 3.5,
+  skin: P.rot, shirt: P.storm, pants: P.bark, eye: P.sick, eyeS: 2 };
+const KNIGHT = { leg: 7, tor: 7, arm: 7, head: 4, lw: 2, tw: 5, armA: 0.55, swing: 0.3, pace: 8,
+  skin: P.rain, shirt: P.ice, pants: P.storm, headCol: P.storm, eye: P.bone, eyeS: 1, sword: true, plume: true };
+const CHARS = {
+  knight: KNIGHT,
+  mini: { ...KNIGHT, s: 0.68, sword: false, plume: false, headCol: P.ice, shirt: P.iceL, skin: P.iceL, eye: P.ink, pace: 11 },
+  zombie: ZOMBIE,
+  kauhu: { ...ZOMBIE, leg: 7, tor: 8, arm: 14, head: 5, tall: 1.25, lw: 3, tw: 6, armA: 0.6, swing: 0.85, hunch: 0.42, sway: 0.34, nod: 0.75, pace: 2.6,
+    shirt: P.moss1, pants: P.moss1, eye: P.ink, frown: true },
+  sand: { ...ZOMBIE, skin: P.sand, shirt: P.dry, pants: P.bark, eye: P.ink, pace: 4.2 },
+  giant: { ...ZOMBIE, s: 1.8, lw: 3, tw: 6, pace: 2, sway: 0.14, shirt: P.bark, pants: P.cloud },
+  lord: { ...ZOMBIE, skin: P.cloud, shirt: P.ink, pants: P.ink, headCol: P.ink, cape: P.cloud, crown: true, hunch: 0.08, sway: 0.08, pace: 4.5, armA: 0.6, swing: 0.3 },
+};
+function randomZombie(seed) {
+  const r = rng(seed), pick = (a) => a[Math.floor(r() * a.length)];
+  return { ...ZOMBIE, leg: 6 + R(r() * 4), tor: 5 + R(r() * 4), arm: 7 + R(r() * 7), head: 3 + R(r() * 2), hunch: r() * 0.5, pace: 2.5 + r() * 3,
+    skin: pick([P.rot, P.sick, P.rain, P.hurt, P.sand]), shirt: pick([P.storm, P.hurt, P.ice, P.dry]), pants: pick([P.bark, P.cloud, P.moss1]) };
+}
+
+// x, y = point between the feet. t = time in seconds. o: { seed, still, glow }
+function character(g, x, y, d, t, o = {}) {
+  const s = d.s || 1, ph = t * d.pace + (o.seed || 0), mv = o.still ? 0 : 1;
+  const leg = d.leg * s, tor = d.tor * s, arm = d.arm * s, hr = R(d.head * s), lw = Math.max(1, R(d.lw * s));
+  const lean = (d.hunch || 0) + sin(ph * 0.5) * (d.sway || 0) * mv;
+  const hip = [x, y - leg], spread = 2 * s;
+  const fl = [x - spread - sin(ph) * s * mv, y - Math.max(0, sin(ph)) * 2 * s * mv];
+  const fr = [x + spread + sin(ph) * s * mv, y - Math.max(0, -sin(ph)) * 2 * s * mv];
+  const neck = [hip[0] + sin(lean) * tor, hip[1] - cos(lean) * tor];
+  const nod = lean * 1.4 + sin(ph * 0.7 + 1) * (d.nod || 0) * mv;
+  const ry = R(hr * (d.tall || 1));
+  const head = [R(neck[0] + sin(nod) * hr), R(neck[1] - cos(nod) * ry * 0.8)];
+  const sh = [neck[0], neck[1] + s];
+  const aL = -d.armA - sin(ph) * d.swing * mv + lean, aR = d.armA + sin(ph + 2) * d.swing * mv + lean;
+  const hL = [sh[0] + sin(aL) * arm, sh[1] + cos(aL) * arm], hR = [sh[0] + sin(aR) * arm, sh[1] + cos(aR) * arm];
+
+  g.globalAlpha = 0.4; ell(g, x, y, R(5 * s), Math.max(1, R(1.5 * s)), P.ink); g.globalAlpha = 1;
+  if (o.glow) { g.globalAlpha = 0.1; ell(g, x, y - leg - tor / 2, R(10 * s), R(13 * s), o.glow); g.globalAlpha = 1; }
+
+  const parts = [];
+  if (d.cape) parts.push(['limb', neck[0], neck[1] + 2, x - sin(ph * 0.5) * 2, y - 1, 12 * s, d.cape]);
+  parts.push(['limb', hip[0], hip[1], fl[0], fl[1], lw + 1, d.pants], ['limb', hip[0], hip[1], fr[0], fr[1], lw + 1, d.pants]);
+  parts.push(['limb', sh[0], sh[1], hL[0], hL[1], lw + 1, d.skin], ['limb', sh[0], sh[1], hR[0], hR[1], lw + 1, d.skin]);
+  parts.push(['limb', hip[0], hip[1], neck[0], neck[1], d.tw * s, d.shirt]);
+  parts.push(['ell', head[0], head[1], hr, ry, d.headCol || d.skin]);
+  if (d.crown) for (const dx of [-3, 0, 3]) parts.push(['box', head[0] + dx, head[1] - ry - (dx ? 2 : 3), 1, dx ? 2 : 3, P.sand]);
+  if (d.plume) parts.push(['limb', head[0], head[1] - ry, head[0] - 3, head[1] - ry - 3, 2, P.iceL, false]);
+  const es = R((d.eyeS || 1) * Math.max(1, s * 0.8)), ex = Math.max(1, R(hr * 0.45));
+  parts.push(['dot', head[0] - ex - es + 1, head[1] - 1, es, es, d.eye], ['dot', head[0] + ex, head[1] - 1, es, es, d.eye]);
+  if (d.frown) parts.push(['dot', head[0] - 1, head[1] + 3, 3, 1, P.ink], ['dot', head[0] - 2, head[1] + 4, 1, 1, P.ink], ['dot', head[0] + 2, head[1] + 4, 1, 1, P.ink]);
+  if (d.shirt === P.ice) parts.push(['dot', R((hip[0] + neck[0]) / 2), R((hip[1] + neck[1]) / 2) - 1, 1, 3, P.iceL]);
+  figure(g, parts);
+
+  if (d.sword) { // black knight sword with a light rim so it reads against the night
+    const a = 0.5 + sin(ph * 0.5) * 0.15 * mv, tip = [hR[0] + sin(a) * 14, hR[1] - cos(a) * 14];
+    limb(g, hR[0], hR[1], tip[0], tip[1], 3, P.rain, false);
+    limb(g, hR[0], hR[1], tip[0] - sin(a), tip[1] + cos(a), 1, P.ink, false);
+    limb(g, hR[0] - cos(a) * 3, hR[1] - sin(a) * 3, hR[0] + cos(a) * 3, hR[1] + sin(a) * 3, 1, P.iceL, false);
+  }
+}
+
+// Surprise zombie: a gift box with eyes. Opens into a random zombie.
+function gift(g, x, y, t) {
+  const hop = Math.abs(sin(t * 5)) * 2, top = y - 11 - hop;
+  g.globalAlpha = 0.4; ell(g, x, y, 6, 1, P.ink); g.globalAlpha = 1;
+  figure(g, [['limb', x - 2, y - 3 - hop, x - 3, y, 2, P.rot], ['limb', x + 2, y - 3 - hop, x + 3, y, 2, P.rot],
+    ['box', x - 5, top + 3, 11, 7, P.ice], ['box', x - 6, top - 1 - sin(t * 5) * 1, 13, 3, P.iceL],
+    ['dot', x, top + 3, 1, 7, P.bone], ['dot', x - 3, top + 2, 2, 1, P.sick], ['dot', x + 2, top + 2, 2, 1, P.sick]]);
+  px(g, x - 2, top - 3 - sin(t * 5), 2, 2, P.bone); px(g, x + 1, top - 3 - sin(t * 5), 2, 2, P.bone);
+}
+
+// ---------- environment ----------
+function tree(g, x, y, h, seed, burning, t) {
+  const r = rng(seed), tilt = (r() - 0.5) * 6, top = [x + tilt, y - h], parts = [['limb', x, y, top[0], top[1], 3, P.bark, false]];
+  for (let i = 0; i < 4; i++) {
+    const k = 0.35 + r() * 0.6, bx = x + tilt * k, by = y - h * k, dir = i % 2 ? 1 : -1, len = 4 + r() * 7;
+    parts.push(['limb', bx, by, bx + dir * len, by - len * (0.3 + r() * 0.7), 1, P.bark, false]);
+  }
+  g.globalAlpha = 0.4; ell(g, x, y, 5, 1, P.ink); g.globalAlpha = 1;
+  figure(g, parts);
+  if (burning) for (let i = 0; i < 5; i++) px(g, top[0] - 3 + r() * 6, top[1] - ((t * 14 + i * 5) % 12), 1, 1, i % 2 ? P.sand : P.hurt);
+}
+function tuft(g, x, y, t, c = P.dry) { const w = R(sin(t * 2 + x) * 1); px(g, x, y - 2, 1, 3, c); px(g, x - 2 + w, y - 3, 1, 3, c); px(g, x + 2 + w, y - 4, 1, 4, c); }
+// Big crosshatched drop, as in the page sketch.
+function drop(g, x, y, r) {
+  for (let dy = -r * 2; dy <= r; dy++) {
+    const hw = dy < 0 ? Math.floor(r * (1 + dy / (r * 2))) : Math.floor(Math.sqrt(r * r - dy * dy));
+    for (let dx = -hw; dx <= hw; dx++) px(g, x + dx, y + dy, 1, 1, Math.abs(dx) === hw ? P.rain : (R(x) + dx + R(y) + dy) % 2 ? P.storm : P.ice);
+  }
+}
+function cloudBank(g, t, seed, yBase, c1, c2) {
+  const r = rng(seed);
+  for (let i = 0; i < 12; i++) {
+    const x = ((r() * 380 + t * (2 + r() * 2)) % 380) - 30, y = yBase + r() * 14, rx = 16 + R(r() * 16), ry = 6 + R(r() * 5);
+    ell(g, x, y, rx, ry, c1); ell(g, x - 3, y - 3, rx - 6, ry - 3, c2);
+  }
+}
+function rainStreaks(g, t, n, alpha) {
+  const r = rng(7); g.globalAlpha = alpha;
+  for (let i = 0; i < n; i++) { const sp = 150 + r() * 80, y = (r() * H + t * sp) % H; px(g, ((r() * (W + 60) - y * 0.2) % (W + 60) + W + 60) % (W + 60) - 30, y, 1, 4, P.rain); }
+  g.globalAlpha = 1;
+}
+function bolt(g, x0, y0, x1, y1, seed) {
+  const r = rng(seed); let x = x0, y = y0;
+  while (y < y1) {
+    const ny = Math.min(y1, y + 6 + r() * 8), nx = x1 + (x - x1) * ((y1 - ny) / (y1 - y0)) + (ny < y1 ? (r() - 0.5) * 16 : 0);
+    limb(g, x, y, nx, ny, 3, P.ice, false); limb(g, x, y, nx, ny, 1, P.bone, false); x = nx; y = ny;
+  }
+}
+function heart(g, x, y, c) { px(g, x + 1, y, 1, 1, c); px(g, x + 3, y, 1, 1, c); px(g, x, y + 1, 5, 2, c); px(g, x + 1, y + 3, 3, 1, c); px(g, x + 2, y + 4, 1, 1, c); }
+function panel(g, x, y, w, h, border, fill = P.ink) { px(g, x, y, w, h, border); px(g, x + 1, y + 1, w - 2, h - 2, fill); }
+
+function hud(g, kills, hp, vipOpen) {
+  for (let i = 0; i < 5; i++) heart(g, 5 + i * 7, 5, i < hp ? P.hurt : P.storm);
+  text(g, 'TAPOT', 5, 14, P.rain);
+  for (let i = 0; i < 10; i++) { px(g, 27 + i * 5, 14, 4, 5, i === 4 || i === 9 ? P.iceL : P.storm); px(g, 28 + i * 5, 15, 2, 3, i < kills ? P.ice : P.ink); }
+  panel(g, 284, 4, 31, 13, vipOpen ? P.ice : P.hurt); text(g, 'VIP', 289, 8, vipOpen ? P.iceL : P.hurt);
+  if (!vipOpen) { text(g, '5', 305, 8, P.hurt); px(g, 310, 8, 1, 5, P.hurt); } else px(g, 303, 9, 8, 3, P.ice);
+  // weapon slots: gloves, mini katanas, empty
+  for (let i = 0; i < 3; i++) panel(g, 5 + i * 17, 220, 15, 15, i < 2 ? P.ice : P.storm);
+  figure(g, [['ell', 12, 228, 3, 3, P.hurt], ['box', 10, 230, 5, 2, P.bone]]);
+  limb(g, 25, 232, 33, 223, 1, P.bone, false); limb(g, 33, 232, 25, 223, 1, P.bone, false); px(g, 25, 231, 2, 2, P.ice); px(g, 32, 231, 2, 2, P.ice);
+  text(g, '?', 45, 225, P.storm);
+}
+
+// ---------- scene 1: rotten forest ----------
+function forest(g, t) {
+  const HOR = 72;
+  px(g, 0, 0, W, HOR, P.sky);
+  for (let x = 0; x < W; x += 2) px(g, x, HOR - 12 + (x / 2 % 2) * 2, 1, 1, P.cloud); // dithered haze
+  cloudBank(g, t, 3, 6, P.cloud, P.storm);
+  const far = rng(11); // far dead trees as silhouettes
+  for (let i = 0; i < 14; i++) { const x = far() * W, h = 10 + far() * 14; px(g, x, HOR - h, 2, h, P.ink); px(g, x - 3, HOR - h * 0.7, 3, 1, P.ink); px(g, x + 2, HOR - h * 0.5, 4, 1, P.ink); }
+  px(g, 0, HOR, W, H - HOR, P.moss0);
+  const gr = rng(5);
+  for (let i = 0; i < 16; i++) ell(g, gr() * W, HOR + 10 + gr() * 160, 10 + R(gr() * 16), 3 + R(gr() * 4), P.moss1); // rotten moss
+  for (let i = 0; i < 40; i++) px(g, gr() * W, HOR + 6 + gr() * 160, 1, 1, i % 3 ? P.rot : P.dry);
+  ell(g, 236, 196, 44, 13, P.ink); ell(g, 236, 195, 42, 12, P.cloud); // dirty water
+  for (let i = 0; i < 5; i++) px(g, 205 + i * 14 + sin(t + i) * 3, 190 + (i % 3) * 5, 6, 1, P.storm);
+  px(g, 222, 199, 3, 2, P.dry); px(g, 251, 192, 2, 2, P.rot);
+  for (let i = 0; i < 26; i++) tuft(g, R(gr() * W), R(HOR + 12 + gr() * 160), t);
+
+  // rain spawns a zombie: drop falls, puddle grows, zombie rises (6 s loop)
+  const c = t % 6, sx = 96, sy = 196;
+  if (c > 1.4) { const k = Math.min(1, (c - 1.4) / 1.2); ell(g, sx, sy, R(3 + k * 9), R(1 + k * 3), P.storm); ell(g, sx, sy, R(1 + k * 6), R(k * 2), P.rain); }
+
+  const strike = t % 5 < 0.35, things = [
+    [118, () => tree(g, 42, 118, 34, 1, false, t)], [104, () => tree(g, 262, 104, 30, 2, t % 5 < 2.2, t)],
+    [176, () => tree(g, 300, 176, 40, 3, false, t)], [226, () => tree(g, 18, 226, 44, 4, false, t)],
+    [150, () => { // player with two orbiting mini katanas
+      const x = 132 + sin(t * 0.8) * 6, y = 150;
+      for (let i = 0; i < 2; i++) { const a = t * 5 + i * Math.PI; for (let k = 1; k < 5; k++) { g.globalAlpha = 0.5 - k * 0.1; px(g, x + cos(a - k * 0.25) * 17, y - 10 + sin(a - k * 0.25) * 8, 1, 1, P.iceL); } g.globalAlpha = 1;
+        const bx = x + cos(a) * 17, by = y - 10 + sin(a) * 8; limb(g, bx - cos(a + 1.5) * 4, by - sin(a + 1.5) * 3, bx + cos(a + 1.5) * 4, by + sin(a + 1.5) * 3, 1, P.bone, false); px(g, bx, by, 1, 1, P.ice); }
+      character(g, x, y, CHARS.knight, t);
+    }],
+    [140, () => character(g, 196 - (t * 4) % 30, 140, CHARS.zombie, t, { seed: 1 })],
+    [128, () => character(g, 78 + (t * 3) % 24, 128, CHARS.kauhu, t, { seed: 4 })],
+    [210, () => { const x = 176 - (t * 5) % 40; for (let i = 1; i < 6; i++) px(g, x + i * 6, 210 + (i % 2), 2, 1, P.dry); character(g, x, 210, CHARS.sand, t, { seed: 2 }); }],
+    [112, () => character(g, 214 - (t * 2) % 16, 112, CHARS.giant, t, { seed: 3 })],
+    [172, () => gift(g, 56, 172, t)],
+  ];
+  if (c > 2.6) things.push([sy, () => { const k = Math.min(1, (c - 2.6) / 1.4); g.save(); g.beginPath(); g.rect(0, 0, W, sy + 1); g.clip(); character(g, sx, sy + (1 - k) * 22, CHARS.zombie, t, { seed: 9, still: k < 1 }); g.restore(); }]);
+  things.sort((a, b) => a[0] - b[0]).forEach((th) => th[1]());
+
+  if (c < 1.4) drop(g, sx + (1.4 - c) * 8, 30 + (c / 1.4) * (sy - 34), 5);
+  drop(g, 150 - ((t * 9) % 40) * 0.2, 28 + ((t * 60) % 190), 4); drop(g, 232, 30 + ((t * 48 + 90) % 150), 6);
+  rainStreaks(g, t, 70, 0.55);
+  if (strike) { bolt(g, 240, 14, 264, 76, Math.floor(t / 5)); g.globalAlpha = 0.22 * (1 - (t % 5) / 0.35); px(g, 0, 0, W, H, P.iceL); g.globalAlpha = 1; }
+  hud(g, 3, 4, false);
+}
+
+// ---------- scene 2: VIP box ----------
+function vip(g, t) {
+  px(g, 0, 0, W, 84, P.sky); cloudBank(g, t, 8, 2, P.cloud, P.storm);
+  // back board on two poles: strongest player, achievements, messages. Always visible.
+  px(g, 30, 60, 4, 30, P.storm); px(g, 286, 60, 4, 30, P.storm);
+  panel(g, 14, 16, 292, 58, P.ice, P.ink);
+  text(g, 'VAHVIN', 22, 23, P.iceL);
+  [['1 HURJA-KISSA-42', '1450', P.bone], ['2 MÄRKÄ-SUSI-07', '1210', P.rain], ['3 OMA NIMI', '980', P.ice]].forEach(([n, sc, c], i) => { text(g, n, 22, 32 + i * 8, c); text(g, sc, 108 - textW(sc), 32 + i * 8, c); });
+  px(g, 116, 22, 1, 34, P.storm);
+  text(g, 'SAAVUTUKSET', 124, 23, P.iceL);
+  for (let i = 0; i < 8; i++) { const on = i < 3; panel(g, 124 + i * 13, 32, 11, 11, on ? P.sand : P.storm, on ? P.cloud : P.ink); if (on) px(g, 128 + i * 13, 35, 3, 5, [P.sand, P.ice, P.sick][i]); }
+  text(g, '3/8', 124, 48, P.rain);
+  px(g, 232, 22, 1, 34, P.storm);
+  text(g, 'VIP 6/10', 240, 23, P.iceL);
+  for (let i = 0; i < 5; i++) heart(g, 240 + i * 7, 33, i < 3 ? P.hurt : P.storm);
+  text(g, 'LASERMIEKKA', 240, 43, P.ice); text(g, 'JÄÄSKAT', 240, 51, P.ice);
+  px(g, 15, 60, 290, 1, P.storm);
+  const msg = 'HURJA-KISSA-42: HYVÄ PELI!     MÄRKÄ-SUSI-07: VAROKAA JÄTTIÄ!     ', off = R(t * 22) % (msg.length * 4);
+  g.save(); g.beginPath(); g.rect(18, 62, 284, 9); g.clip(); text(g, msg + msg, 18 - off, 64, P.bone); g.restore();
+
+  // floor: lit stage with a light blue rail
+  px(g, 0, 84, W, H - 84, P.sky);
+  for (let y = 0; y < 9; y++) px(g, 0, 90 + y * y * 2, W, 1, P.cloud);
+  for (let i = -8; i <= 8; i++) limb(g, 160 + i * 14, 84, 160 + i * 52, H, 1, P.cloud, false);
+  px(g, 0, 84, W, 2, P.ice); for (let x = 6; x < W; x += 24) px(g, x, 78, 2, 8, P.ice); px(g, 0, 78, W, 1, P.iceL);
+  g.globalAlpha = 0.1; ell(g, 160, 160, 120, 50, P.ice); g.globalAlpha = 1;
+  const c = t % 6; if (c > 1.2) { const k = Math.min(1, (c - 1.2)); ell(g, 250, 204, R(3 + k * 8), R(1 + k * 2), P.storm); }
+
+  const things = [
+    [160, () => { // laser tornado around the player
+      const x = 150 + sin(t * 0.7) * 8, y = 160;
+      for (let i = 0; i < 26; i++) { const k = i / 26, a = t * 7 + i * 0.9, rad = 4 + k * 16; g.globalAlpha = 0.35 + k * 0.5; px(g, x + cos(a) * rad, y - k * 34 + sin(a) * 2, k > 0.6 ? 2 : 1, 1, i % 3 ? P.ice : P.iceL); } g.globalAlpha = 1;
+      character(g, x, y, CHARS.knight, t);
+    }],
+    [142, () => character(g, 226 - (t * 4) % 20, 142, { ...CHARS.kauhu, s: 1.3 }, t, { seed: 2, glow: P.sick })],
+    [196, () => character(g, 70 + (t * 4) % 20, 196, { ...CHARS.lord, s: 1.25 }, t, { seed: 5, glow: P.sick })],
+    [124, () => { // frozen zombie: ice skates effect
+      figure(g, [['box', 91, 100, 18, 25, P.iceL]]); px(g, 93, 102, 14, 21, P.ice); g.globalAlpha = 0.55; character(g, 100, 123, CHARS.zombie, 2, { still: true }); g.globalAlpha = 1; px(g, 94, 103, 2, 6, P.bone); px(g, 104, 116, 1, 4, P.bone);
+    }],
+    [214, () => { // cat robot helper
+      const x = 196 + sin(t * 2) * 10, y = 214 - Math.abs(sin(t * 6)) * 2;
+      figure(g, [['limb', x - 6, y - 5, x - 9, y - 11 + sin(t * 4) * 2, 1, P.rain, false], ['box', x - 5, y - 7, 10, 5, P.rain], ['box', x + 3, y - 12, 7, 6, P.bone], ['box', x + 3, y - 14, 2, 2, P.bone], ['box', x + 8, y - 14, 2, 2, P.bone],
+        ['box', x - 4, y - 2, 2, 2, P.storm], ['box', x + 3, y - 2, 2, 2, P.storm], ['dot', x + 5, y - 10, 1, 2, P.ice], ['dot', x + 8, y - 10, 1, 2, P.ice]]);
+    }],
+  ];
+  things.sort((a, b) => a[0] - b[0]).forEach((th) => th[1]());
+  if (c < 1.2) drop(g, 250, 80 + (c / 1.2) * 120, 5);
+  rainStreaks(g, t, 40, 0.4);
+}
+
+// ---------- scene 3: wheel of fortune ----------
+function wheel(g, t) {
+  px(g, 0, 0, W, H, P.sky); rainStreaks(g, t, 30, 0.2);
+  textC(g, 'VIP-ONNENPYÖRÄ', 160, 12, P.iceL, 2);
+  const cx = 104, cy = 128, rad = 74, rot = t * 0.6 + sin(t * 0.4) * 2;
+  const slices = [['LASERMIEKKA', P.ice], ['JÄÄSKAT', P.iceL], ['PURISTUSHANSKAT', P.storm], ['GALAKSIPYSSY', P.cloud], ['KISSAROBOTTI', P.rain]];
+  ell(g, cx, cy, rad + 3, rad + 3, P.ink); ell(g, cx, cy, rad + 2, rad + 2, P.bone);
+  for (let y = -rad; y <= rad; y++) for (let x = -rad; x <= rad; x++) {
+    if (x * x + y * y > rad * rad) continue;
+    let a = (Math.atan2(y, x) - rot) % (Math.PI * 2); if (a < 0) a += Math.PI * 2;
+    const k = a / (Math.PI * 2) * 5, hair = k < 0.035 && x * x + y * y > 100; // the hair-thin Rudi-Karri slice
+    px(g, cx + x, cy + y, 1, 1, hair ? P.sand : (k % 1 < 0.03 ? P.ink : slices[Math.floor(k)][1]));
+  }
+  ell(g, cx, cy, 8, 8, P.ink); ell(g, cx, cy, 6, 6, P.sand);
+  figure(g, [['limb', cx, cy - rad - 9, cx, cy - rad + 6, 7, P.hurt]]);
+  slices.forEach(([n, c], i) => { panel(g, 196, 44 + i * 16, 9, 9, P.ink, c); text(g, n, 210, 46 + i * 16, P.bone); });
+  panel(g, 192, 130, 122, 50, P.sand, P.ink);
+  text(g, 'RUDI-KARRI-ROBOTTI', 198, 136, P.sand); text(g, 'YKSI ISKU RIITTÄÄ', 198, 146, P.rain);
+  text(g, '0,00000001 %', 198, 158, P.bone, 2);
+  textC(g, 'VÄLILYÖNTI: PYÖRÄYTÄ', 160, 222, t % 1 < 0.6 ? P.ice : P.storm);
+}
+
+// ---------- scene 4: decomposition puzzle at the lock stone ----------
+function puzzle(g, t) {
+  const HOR = 72;
+  px(g, 0, 0, W, HOR, P.sky); cloudBank(g, 3, 3, 6, P.cloud, P.storm);
+  px(g, 0, HOR, W, H - HOR, P.moss0);
+  const gr = rng(5); for (let i = 0; i < 12; i++) ell(g, gr() * W, HOR + 10 + gr() * 160, 10 + R(gr() * 16), 3 + R(gr() * 4), P.moss1);
+  for (let i = 0; i < 20; i++) tuft(g, R(gr() * W), R(HOR + 12 + gr() * 160), 0);
+  rainStreaks(g, 1.3, 70, 0.3); // frozen rain
+  tree(g, 30, 150, 40, 4, false, 0);
+  // frozen zombies are drawn with reduced alpha: time has stopped
+  g.globalAlpha = 0.45; character(g, 268, 132, CHARS.kauhu, 3.1, { still: true }); character(g, 60, 208, CHARS.zombie, 1.2, { still: true }); g.globalAlpha = 1;
+  // lock stone with glowing rune frame
+  const pulse = 0.5 + sin(t * 3) * 0.5;
+  g.globalAlpha = 0.12 + pulse * 0.08; ell(g, 160, 100, 62, 30, P.ice); g.globalAlpha = 1;
+  figure(g, [['box', 104, 74, 112, 44, P.storm], ['box', 110, 68, 100, 8, P.storm]]);
+  px(g, 108, 78, 104, 36, P.ink); px(g, 108, 78, 104, 1, P.ice); px(g, 108, 113, 104, 1, P.ice);
+  text(g, '12 = 7 +', 116, 89, P.bone, 2); text(g, '?', 190, 89, t % 0.8 < 0.5 ? P.ice : P.storm, 2);
+  for (let i = 0; i < 3; i++) px(g, 150 + i * 8, 106, 5, 3, i < 1 ? P.ice : P.storm); // 1 of 3 solved
+  // three answer drops hover; the player walks into one
+  [[96, '4'], [160, '5'], [224, '6']].forEach(([x, n], i) => {
+    const y = 172 + sin(t * 2 + i * 2) * 3;
+    g.globalAlpha = 0.4; ell(g, x, 192, 8, 2, P.ink); g.globalAlpha = 1;
+    drop(g, x, y, 11); ell(g, x, y + 1, 7, 6, P.ink); textC(g, n, x + 1, y - 4, P.bone, 2);
+  });
+  character(g, 138 + sin(t * 1.2) * 14, 214, CHARS.knight, t);
+  // timer bar and label
+  textC(g, 'HAJOTELMA 2/3', 160, 8, P.iceL); panel(g, 110, 17, 100, 6, P.storm);
+  px(g, 111, 18, R(98 * (1 - (t % 10) / 10)), 4, P.ice);
+  for (let i = 0; i < 5; i++) heart(g, 5 + i * 7, 5, i < 4 ? P.hurt : P.storm);
+}
+
+// ---------- lineup ----------
+function lineup(g, t) {
+  const w = g.canvas.width, h = g.canvas.height, base = 76;
+  px(g, 0, 0, w, h, P.sky); px(g, 0, base - 14, w, h, P.moss0);
+  for (let i = 0; i < 10; i++) tuft(g, 8 + i * 36, base + 2 + (i % 3) * 2, t);
+  const row = [['RITARI', (x) => character(g, x, base, CHARS.knight, t)], ['MINI', (x) => character(g, x, base, CHARS.mini, t)],
+    ['VERSIO 1', (x) => character(g, x, base, CHARS.zombie, t, { seed: 1 })], ['KAUHU', (x) => character(g, x, base, CHARS.kauhu, t, { seed: 2 })],
+    ['HIEKKA', (x) => character(g, x, base, CHARS.sand, t, { seed: 3 })], ['JÄTTI', (x) => character(g, x, base, CHARS.giant, t, { seed: 4 })],
+    ['RANDOM', (x) => character(g, x, base, randomZombie(Math.floor(t / 2) + 3), t, { seed: 5 })], ['LORDI', (x) => character(g, x, base, CHARS.lord, t, { seed: 6 })],
+    ['YLLÄRI', (x) => gift(g, x, base, t)]];
+  row.forEach(([name, draw], i) => { const x = 20 + i * 37.5; draw(R(x)); textC(g, name, x, base + 10, P.rain); });
+}
+
+// ---------- run ----------
+const fixed = new URLSearchParams(location.search).get('t');
+const scenes = [['forest', forest], ['vip', vip], ['wheel', wheel], ['puzzle', puzzle], ['lineup', lineup]].map(([id, fn]) => [document.getElementById(id).getContext('2d'), fn]);
+function frame(ms) {
+  const t = fixed !== null ? Number(fixed) : ms / 1000 + 2;
+  for (const [g, fn] of scenes) { g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.globalAlpha = 1; fn(g, t); }
+  if (fixed === null) requestAnimationFrame(frame);
+}
+frame(0);
+
+document.getElementById('swatches').innerHTML = Object.entries(P).map(([k, v]) => `<div class="sw"><i style="background:${v}"></i><span><b>${v}</b>${NAMES[k]}</span></div>`).join('');
+</script>
+</body>
+</html>

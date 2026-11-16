@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ylläri-Zombiet</title>
+  <style>
+    :root {
+      --bg: #0F1115; --surface-1: #151923; --surface-2: #1B2030; --border: #252D3F;
+      --text: #E7E8EA; --text-dim: #A9AFBA;
+      --accent: #7CC8F2; /* vaaleansininen, idean tekijän lempiväri */
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+      background: var(--bg); color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+    }
+    main { width: 100%; max-width: 680px; }
+    h1 { margin: 0 0 4px; font-size: 1.6rem; color: var(--accent); }
+    p { margin: 0 0 16px; color: var(--text-dim); }
+    #game {
+      width: 100%; aspect-ratio: 4 / 3; background: var(--surface-1);
+      border: 2px solid var(--border); border-radius: 14px; overflow: hidden;
+    }
+    #game canvas { display: block; image-rendering: pixelated; }
+    footer { margin-top: 12px; font-size: 0.8rem; color: var(--text-dim); }
+    kbd { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Ylläri-Zombiet</h1>
+    <p>Taistele zombieita vastaan. Liiku <kbd>nuolet</kbd> tai <kbd>WASD</kbd>, aseet iskevät itsestään.</p>
+    <div id="game"></div>
+    <footer>Pelin idea ja hahmot: lapsen suunnittelemia. Gerlitek Oy.</footer>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
