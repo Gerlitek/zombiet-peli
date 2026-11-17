@@ -23,7 +23,7 @@ npm run build   # tyyppitarkistus ja tuotantoversio kansioon dist/
 ## Dokumentit
 
 - `docs/game-design.md`: pelisuunnitelma
-- `docs/visual-concept.html`: visuaalinen konsepti (avaa selaimessa)
+- [Visuaalinen konsepti](https://zombit.gerlitek.fi/konsepti/): hahmojen ja ilmeen suunnittelu, liikkuvat kuvat (lähde `web/public/konsepti/`)
 - `docs/architecture.md`: arkkitehtuuri, kustannusrajat ja päätökset
 - `docs/tarina-ja-ulkoasu.md`: lapsen alkuperäiset ideat
 

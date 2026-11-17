@@ -2,7 +2,7 @@
 
 Pelin idea, tarina ja hahmot ovat lapsen. Alkuperäiset muistiinpanot ovat tiedostossa `tarina-ja-ulkoasu.md` ja piirrokset kansiossa `private/pics/`, jota ei viedä repoon. Tämä dokumentti kokoaa ne pelattavaksi suunnitelmaksi. Periaate: jokainen lapsen idea toteutetaan jossain muodossa, jotta hän tunnistaa pelin omakseen. Luvun 11 taulukko näyttää, missä kukin idea on.
 
-Visuaalinen konsepti on tiedostossa `visual-concept.html`. Avaa se selaimessa: kuvat liikkuvat.
+Visuaalinen konsepti on tiedostossa `web/public/konsepti/index.html`. Se on julkaistu osoitteessa https://zombit.gerlitek.fi/konsepti/ (kuvat liikkuvat).
 
 ## 1. Idea yhdellä lauseella
 
@@ -315,7 +315,7 @@ Ensimmäinen pelitesti osoitti, että asiat tapahtuivat liian nopeasti. Näistä
 2. Minkä värisiä Rudi ja Karri ovat? Robotin kaksi päätä väritetään niiden mukaan.
 3. Sopiiko, että Darth Vader -zombi on Pimeä lordi, jolla on viitta ja kultainen piikkikruunu?
 4. Sopiiko Ylläri-zombi (lahjapaketti) "kaikenlaisiksi zombeiksi"?
-5. Näyttääkö ritari oikealta? Katso `visual-concept.html`.
+5. Näyttääkö ritari oikealta? Katso `web/public/konsepti/index.html`.
 6. Mitä lelut tekevät zombeille?
 7. Miltä Salamaluolassa näyttää, ja mitä aarrearkusta pitäisi saada?
 8. Mikä on vaikein hajotelma, jonka haluat peliin?

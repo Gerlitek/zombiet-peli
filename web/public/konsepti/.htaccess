@@ -1,0 +1,6 @@
+# The concept script has no hash in its name, so it must not be cached for a year like the game's files.
+<IfModule mod_headers.c>
+  <FilesMatch "\.js$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>

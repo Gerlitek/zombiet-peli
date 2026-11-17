@@ -56,7 +56,7 @@ Kolme sääntöä pitävät koodin selitettävänä:
 
 ### Grafiikka ilman kuvatiedostoja
 
-Hahmot piirretään koodilla osista joka ruutu (ks. `game-design.md`, luku 10, ja `visual-concept.html`). Konseptisivun piirtofunktiot käyttävät vain operaatiota "täytä suorakulmio", joten ne siirtyvät sellaisinaan Phaserin `Graphics`-oliolle. Tausta (maa, sammal, kaukaiset puut) piirretään kerran tekstuuriksi.
+Hahmot piirretään koodilla osista joka ruutu (ks. `game-design.md`, luku 10, ja `web/public/konsepti/index.html`). Konseptisivun piirtofunktiot käyttävät vain operaatiota "täytä suorakulmio", joten ne siirtyvät sellaisinaan Phaserin `Graphics`-oliolle. Tausta (maa, sammal, kaukaiset puut) piirretään kerran tekstuuriksi.
 
 Riski: noin 10 hahmoa x 250 suorakulmiota ruudussa. WebGL:lle määrä on pieni, mutta se mitataan heti vaiheessa 2 hitaalla laitteella. Varasuunnitelma: hahmon askelsykli piirretään käynnistyksessä valmiiksi tekstuureiksi.
 

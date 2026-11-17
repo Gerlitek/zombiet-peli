@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ylläri-Zombiet: visuaalinen konsepti</title>
+<style>
+  :root {
+    --bg: #0F1115; --surface-1: #151923; --surface-2: #1B2030; --border: #252D3F;
+    --text: #E7E8EA; --text-dim: #A9AFBA; --accent: #7CC8F2; --accent-light: #B5E1F8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 1.9rem; color: var(--accent); }
+  h2 { margin: 48px 0 6px; font-size: 1.2rem; }
+  h3 { margin: 0 0 6px; font-size: 0.95rem; color: var(--accent-light); }
+  p, li { color: var(--text-dim); }
+  p { margin: 0 0 14px; max-width: 70ch; }
+  ul { margin: 0; padding-left: 18px; }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #0B0E14; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .frame { border: 2px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .cols { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+  .page-mock { max-width: 680px; }
+  .page-mock h1 { font-size: 1.6rem; }
+  .page-mock footer { margin-top: 12px; font-size: 0.8rem; color: var(--text-dim); }
+  kbd { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 0.85em; }
+  .swatches { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .sw { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 0.75rem; background: var(--surface-2); }
+  .sw i { display: block; height: 44px; }
+  .sw span { display: block; padding: 6px 8px; color: var(--text-dim); }
+  .sw b { color: var(--text); font-weight: 600; display: block; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--border); color: var(--text-dim); vertical-align: top; }
+  th { color: var(--text); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ylläri-Zombiet: visuaalinen konsepti</h1>
+  <p>Tämä sivu näyttää, miltä peli on tarkoitus saada näyttämään. Kaikki kuvat piirretään koodilla samalla tekniikalla, jota peli käyttää. Kuvat liikkuvat, koska liike on puolet tyylistä. Lisää osoitteeseen <kbd>?t=3.2</kbd>, jos haluat pysäyttää ajan tiettyyn hetkeen.</p>
+
+  <h2>1. Sivu ja peli-ikkuna: mätä metsä</h2>
+  <p>Ikkuna on 320 x 240 pikseliä ja näytetään kaksinkertaisena. Ylhäällä on taivas, pilvet ja isot pisarat kuten sivun luonnoksessa. VIP-kyltti on oikeassa yläkulmassa ja aukeaa viidennellä tapolla.</p>
+  <div class="card page-mock">
+    <h1>Ylläri-Zombiet</h1>
+    <p>Taistele zombieita vastaan. Liiku <kbd>nuolet</kbd> tai <kbd>WASD</kbd>, aseet iskevät itsestään.</p>
+    <div class="frame"><canvas id="forest" width="320" height="240"></canvas></div>
+    <footer>Pelin idea ja hahmot: lapsen suunnittelemia. Gerlitek Oy.</footer>
+  </div>
+
+  <h2>2. Hahmot</h2>
+  <p>Hahmot rakennetaan lehden muotoisista raajoista, kuten piirroksissa. Jokainen hahmo on yksi rivi lukuja (raajojen pituus, kumaruus, huojunta, värit). Siksi uusi zombi on halpa lisätä, ja Random zombi voi arpoa mittansa joka kerta.</p>
+  <div class="frame"><canvas id="lineup" width="340" height="96"></canvas></div>
+  <div class="scroll" style="margin-top:14px">
+  <table>
+    <tr><th>Hahmo</th><th>Piirroksesta tai listasta</th><th>Pelissä</th></tr>
+    <tr><td>Ritari (pelaaja)</td><td>Valkoiset silmät, musta miekka, ritarin varusteet</td><td>Tumma kypärä, josta näkyvät vain valkoiset silmät. Vaaleansininen haarniska. Musta miekka, jolla on vaalea reuna, jotta se erottuu yössä.</td></tr>
+    <tr><td>Minipelaaja</td><td>Vain lyö, lyönti vie 1 elämän, voi parantaa</td><td>Pieni ja nopea erikoishahmo ilman miekkaa.</td></tr>
+    <tr><td>Versio 1 -zombi</td><td>Laiha, kieli ei ulkona, vaatteet päällä</td><td>Ohut vartalo, paita ja housut, isot hehkuvat silmät, suu kiinni.</td></tr>
+    <tr><td>Kauhu-zombi</td><td>Huojuu, raajat tekevät isoja kaaria, kumara, pää notkuu</td><td>Iso munanmuotoinen pää, mutrusuu, maahan asti roikkuvat kädet. Suurin huojunta ja hitain askel.</td></tr>
+    <tr><td>Hiekka, Jätti, Random</td><td>Lapsen lista</td><td>Sama runko eri mitoilla ja väreillä. Hiekkazombi jättää hiekkajäljen.</td></tr>
+    <tr><td>Pimeä lordi</td><td>Darth Vader -zombi</td><td>Musta viitta, kultainen piikkikruunu, vihreät silmät. Oma hahmo, ei tavaramerkin tunnuksia.</td></tr>
+    <tr><td>Ylläri-zombi</td><td>Kaikenlaiset zombit ja pelin nimi</td><td>Lahjapaketti, josta kurkkii silmäpari. Avautuessaan paljastaa satunnaisen zombin.</td></tr>
+  </table>
+  </div>
+
+  <h2>3. VIP-aitio ja onnenpyörä</h2>
+  <div class="cols">
+    <div>
+      <div class="frame"><canvas id="vip" width="320" height="240"></canvas></div>
+      <p style="margin-top:10px">Aitio on valaistu lava myrskyn keskellä. Taustataulussa näkyvät aina vahvin pelaaja, saavutukset ja valmiit viestit. Zombit ovat isompia ja hehkuvat.</p>
+    </div>
+    <div>
+      <div class="frame"><canvas id="wheel" width="320" height="240"></canvas></div>
+      <p style="margin-top:10px">Onnenpyörä antaa aseen. Rudi-Karri-robotin siivu on hiuksenohut, ja sen mahdollisuus näytetään lukuna.</p>
+    </div>
+  </div>
+
+  <h2>4. Hajotelma ja lukkokivi</h2>
+  <div class="cols">
+    <div>
+      <div class="frame"><canvas id="puzzle" width="320" height="240"></canvas></div>
+    </div>
+    <div>
+      <p>Lukkokivi pysäyttää ajan: sade ja zombit jähmettyvät ja himmenevät. Pelaaja kävelee pisaraan, jossa on puuttuva osa. Kolme oikeaa avaa Salamaluolan. Kello ylhäällä tekee tästä vauhtipähkinän.</p>
+      <p>Mitään ei kirjoiteta, joten ohjaus on sama kuin muussa pelissä.</p>
+    </div>
+  </div>
+
+  <h2>5. Paletti (16 väriä)</h2>
+  <p>Koko peli käyttää vain näitä värejä. Vaaleansininen kuuluu pelaajalle, VIP-aitiolle, jäälle ja laserille. Zombit ovat sairaan vihreitä, luonto mätä ja kuiva.</p>
+  <div class="swatches" id="swatches"></div>
+
+  <h2>6. Tekniikka lyhyesti</h2>
+  <ul>
+    <li>Ei kuvatiedostoja versiossa 1. Hahmo piirretään joka ruutu pienistä suorakulmioista: ensin tumma ääriviiva, sitten väri.</li>
+    <li>Liike lasketaan sinikäyrästä: askel, käsien kaari, vartalon huojunta ja pään notkunta. Erillisiä animaatioruutuja ei tarvita.</li>
+    <li>Piirtofunktio tarvitsee vain yhden operaation (täytä suorakulmio), joten sama koodi toimii Phaserin Graphics-oliolla.</li>
+    <li>Hahmot järjestetään y-koordinaatin mukaan, jolloin alempana oleva piirtyy päälle ja maailmaan syntyy syvyys.</li>
+    <li>Teksti on oma 3 x 5 pikselin fontti tässä konseptissa. Peliin valitaan luettavampi pikselifontti, jossa on ä ja ö.</li>
+  </ul>
+</main>
+
+<script src="konsepti.js"></script>
+</body>
+</html>
