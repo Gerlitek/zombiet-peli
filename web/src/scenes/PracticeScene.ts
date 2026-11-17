@@ -67,7 +67,7 @@ export class PracticeScene extends Phaser.Scene implements Combat {
     label(this, W / 2, 4, 'HARJOITUS: Kalajoen hiekkasärkät', P.ink, 12);
     this.info = label(this, W / 2, 20, 'Helikopteri tuo sinut särkille...', P.ink, 8);
     // The attack hint is its own framed line, clearly apart from the weapon description above it.
-    this.hitHint = label(this, W / 2, 36, 'Lyö VÄLILYÖNNILLÄ', P.bone, 8).setVisible(false);
+    this.hitHint = label(this, W / 2, 36, 'Lyö VÄLILYÖNNILLÄ', P.ink, 8).setVisible(false);
     this.count = label(this, 6, SHORE + 2, '', P.ink, 8, 0);
     label(this, W / 2, H - 13, 'ENTER: aloita oikea peli      ESC: takaisin valikkoon', P.bone, 8);
     SHORT.forEach((name, i) => label(this, standX(i), STAND_Y + 4, name, P.ink, 6));
@@ -190,7 +190,10 @@ export class PracticeScene extends Phaser.Scene implements Combat {
     for (const c of this.cats) c.tag.setPosition(Math.round(c.x), Math.round(c.y) - 24);
 
     drawPanel(p, 0, H - 16, W, 16, P.ink, P.ink);
-    if (landed) drawPanel(p, W / 2 - 50, 33, 100, 14, P.ink, P.ink);
+    if (landed) { // only a thin black frame around the attack hint, sized from the text so it always fits
+      const w = Math.ceil(this.hitHint.width) + 8, h = 12, x = Math.round(W / 2 - w / 2), y = 34;
+      p.rect(x, y, w, 1, P.ink); p.rect(x, y + h - 1, w, 1, P.ink); p.rect(x, y, 1, h, P.ink); p.rect(x + w - 1, y, 1, h, P.ink);
+    }
   }
 
   private drawHero(p: Pen) {

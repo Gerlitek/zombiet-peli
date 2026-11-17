@@ -29,7 +29,7 @@ const CALM_TIME = 3;     // seconds without new zombies or damage after the whee
 const DROP_TIME = 1.2, PUDDLE_TIME = 1; // rain drop falls, puddle grows, then the zombie rises
 const FIELD: Field = { x0: 10, x1: W - 10, y0: HORIZON + 18, y1: H - 6 };
 const VIP_SIGN = { x: 284, w: 31 }; // the sign in the top right corner: red = locked, green = open
-const STONE = { x: 160, y: 140 }; // low enough that its label does not touch the VIP board
+const STONE = { x: 160, y: 140 }; // its label sits below it: above it is the message banner of the VIP box
 
 type Zone = 'forest' | 'vip';
 interface Spawn { x: number; y: number; at: number; type: ZombieType; born: boolean }
@@ -97,7 +97,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
     this.banner = label(this, W / 2, HORIZON + 22, '', P.iceL);
     this.vipSign = label(this, VIP_SIGN.x + VIP_SIGN.w / 2, 6, 'VIP', P.hurt);
-    this.stoneTag = label(this, STONE.x, STONE.y - 44, 'HAJOTELMA', P.iceL, 8).setVisible(false);
+    this.stoneTag = label(this, STONE.x, STONE.y + 4, 'HAJOTELMA', P.iceL, 8).setVisible(false);
     this.input.keyboard!.once('keydown-ESC', () => { flush(); this.scene.start('menu'); }); // Esc: back to the start screen
     this.weather = new Weather(W, H);
     this.enterZone('forest');
@@ -399,12 +399,26 @@ export class PlayScene extends Phaser.Scene implements Combat {
     p.rect(x - 1, y - 11, 3, 1, P.ice); p.rect(x + 1, y - 10, 1, 2, P.ice); p.rect(x, y - 8, 1, 2, P.ice); p.rect(x, y - 5, 1, 1, P.ice); // "?"
   }
 
+  // One box per kill while the boxes fit (up to 40 kills). With more kills, a solid bar of the same width.
+  // The light marks show the VIP box and the end.
+  private drawKillBar(p: Pen) {
+    if (WIN_AT <= 40) {
+      for (let i = 0; i < WIN_AT; i++) {
+        p.rect(5 + i * 5, 14, 4, 5, i === VIP_AT - 1 || i === WIN_AT - 1 ? P.iceL : P.storm);
+        p.rect(6 + i * 5, 15, 2, 3, i < this.kills ? P.ice : P.ink);
+      }
+      return;
+    }
+    const w = 199, at = (n: number) => Math.round((n / WIN_AT) * (w - 2));
+    drawPanel(p, 5, 14, w, 5, P.storm);
+    p.rect(6, 15, at(Math.min(this.kills, WIN_AT)), 3, P.ice);
+    p.rect(5 + at(VIP_AT), 13, 1, 7, P.iceL);
+    p.rect(4 + w, 13, 1, 7, P.iceL);
+  }
+
   private drawHud(p: Pen) {
     for (let i = 0; i < MAX_HP; i++) drawHeart(p, 5 + i * 7, 5, i < this.hp ? P.hurt : P.storm);
-    for (let i = 0; i < WIN_AT; i++) { // one box per kill needed. The lighter boxes mark the VIP box and the end.
-      p.rect(5 + i * 5, 14, 4, 5, i === VIP_AT - 1 || i === WIN_AT - 1 ? P.iceL : P.storm);
-      p.rect(6 + i * 5, 15, 2, 3, i < this.kills ? P.ice : P.ink);
-    }
+    this.drawKillBar(p);
     const vip = this.zone === 'vip';
     drawPanel(p, VIP_SIGN.x, 4, VIP_SIGN.w, 13, vip ? P.sick : P.hurt);
     // weapon slots: circle = strike, cross = orbit, square = status
