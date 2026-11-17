@@ -9,17 +9,35 @@ import { PuzzleScene } from './scenes/PuzzleScene';
 import { EndScene } from './scenes/EndScene';
 import { W, H, ZOOM } from './size';
 
+function start() {
+  const game = new Phaser.Game({
+    type: Phaser.AUTO,
+    parent: 'game',
+    width: W * ZOOM,
+    height: H * ZOOM,
+    pixelArt: true,
+    backgroundColor: '#0b0e14',
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    scene: [BootScene, MenuScene, StoryScene, PracticeScene, PlayScene, WheelScene, PuzzleScene, EndScene],
+  });
+  // Development only: lets tests and the browser console reach the running game.
+  if (import.meta.env.DEV) Object.assign(window, { game });
+}
 
-const game = new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: 'game',
-  width: W * ZOOM,
-  height: H * ZOOM,
-  pixelArt: true,
-  backgroundColor: '#0b0e14',
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [BootScene, MenuScene, StoryScene, PracticeScene, PlayScene, WheelScene, PuzzleScene, EndScene],
-});
+// The game needs a keyboard. On a touch-only device (a phone, or a tablet without a keyboard)
+// a note is shown instead, and the game starts only if the player says a keyboard is attached.
+const touchOnly = matchMedia('(hover: none) and (pointer: coarse)').matches;
+const note = document.querySelector<HTMLElement>('.touch-note')!;
+const hideOnTouch = [document.querySelector<HTMLElement>('.howto')!, document.getElementById('game')!];
 
-// Development only: lets tests and the browser console reach the running game.
-if (import.meta.env.DEV) Object.assign(window, { game });
+if (touchOnly) {
+  note.hidden = false;
+  hideOnTouch.forEach((el) => (el.hidden = true));
+  note.querySelector('button')!.addEventListener('click', () => {
+    note.hidden = true;
+    hideOnTouch.forEach((el) => (el.hidden = false));
+    start();
+  }, { once: true });
+} else {
+  start();
+}

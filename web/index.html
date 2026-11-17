@@ -53,6 +53,18 @@
     footer a { color: rgba(232, 90, 165, 0.65); text-decoration: none; }
     footer a:hover { color: var(--brand); }
     footer a:hover { text-decoration: underline; }
+    /* Shown instead of the game on touch-only devices (phones, tablets without a keyboard). */
+    .touch-note {
+      margin: 0 0 12px; padding: 20px; text-align: center;
+      background: var(--surface-1); border: 2px solid var(--border); border-radius: 14px;
+    }
+    .touch-note h2 { margin: 0 0 8px; font-size: 1.1rem; color: var(--accent); }
+    .touch-note p { margin: 0 0 14px; }
+    .touch-note button {
+      font: inherit; font-size: 0.8rem; color: var(--text-dim); cursor: pointer;
+      background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+    }
+    [hidden] { display: none !important; }
     kbd { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
   </style>
 </head>
@@ -60,6 +72,11 @@
   <main>
     <h1>Ylläri-Zombiet</h1>
     <p>Taistele zombieita vastaan.</p>
+    <div class="touch-note" hidden>
+      <h2>Peli toimii tietokoneella</h2>
+      <p>Ylläri-Zombiet pelataan näppäimistöllä. Avaa sivu tietokoneella, niin pääset taistelemaan zombeja vastaan.</p>
+      <button type="button">Minulla on näppäimistö, pelaa silti</button>
+    </div>
     <ol class="howto">
       <li><b>Liiku</b> nuolilla tai näppäimillä <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>.</li>
       <li><b>Lyö</b> näppäimellä <kbd>välilyönti</kbd>, kun zombi on vieressä.</li>
