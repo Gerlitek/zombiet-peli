@@ -141,6 +141,7 @@ Staattinen sivu frontissa (`/tilastot`), Chart.js omalta palvelimelta, lukee `GE
 ```
 infra/
   budget.bicep          tilaustaso, käsin (olemassa)
+  guardrails.bicep      tilaustaso, käsin: Azure Policy ja kustannuspoikkeamahälytys (luku 7)
   bootstrap.bicep       tilaustaso, käsin: resurssiryhmä, identiteetit, roolit
   main.bicep            resurssiryhmän taso: kokoaa moduulit. Tätä ajavat azd ja CI
   main.parameters.json  azd:n parametrit
@@ -152,16 +153,16 @@ infra/
 
 ### Kaksi tasoa, kaksi oikeustasoa
 
-| | `budget.bicep`, `bootstrap.bicep` | `main.bicep` |
+| | `budget.bicep`, `guardrails.bicep`, `bootstrap.bicep` | `main.bicep` |
 |---|---|---|
 | Taso | tilaus | resurssiryhmä |
 | Ajaja | omistaja käsin, harvoin | GitHub Actions ja `azd` |
-| Sisältö | budjetti, resurssiryhmä, kaksi hallittua identiteettiä, roolimääritykset | kaikki muu |
+| Sisältö | budjetti, policyt, poikkeamahälytys, resurssiryhmä, kaksi hallittua identiteettiä, roolimääritykset | kaikki muu |
 
 `bootstrap.bicep` luo:
 
 - resurssiryhmän `rg-zombies`
-- identiteetin `id-zombies-github` ja sille federoidun tunnisteen GitHub-repon `main`-haaralle ja pull requesteille. Rooli: Contributor, laajuus vain `rg-zombies`.
+- identiteetin `id-zombies-github` ja sille federoidun tunnisteen vain GitHub-ympäristölle `production` (subject `repo:Gerlitek/zombiet-peli:environment:production`). Pull requesteilla ei ole pääsyä Azureen. Rooli: Contributor, laajuus vain `rg-zombies`.
 - identiteetin `id-zombies-api` Function Appille. Roolit resurssiryhmässä: Storage Blob Data Contributor, Storage Table Data Contributor ja Monitoring Metrics Publisher.
 
 Perustelu: roolimääritysten luominen vaatii vahvemmat oikeudet kuin Contributor. Kun ne tehdään käsin bootstrapissa, CI-identiteetti ei koskaan saa oikeutta jakaa oikeuksia. OIDC toteutetaan käyttäjän määrittämällä hallitulla identiteetillä eikä sovellusrekisteröinnillä, jolloin kaikki pysyy Bicepissä eikä Entra ID:hen tarvita erillisiä oikeuksia.
@@ -181,13 +182,13 @@ Kolme työnkulkua, jokainen käynnistyy vain oman kansionsa muutoksista.
 | Työnkulku | Pull request | Yhdistäminen mainiin |
 |---|---|---|
 | `web.yml` (tarkistukset käytössä, deploy lisätään vaiheessa 3) | tyyppitarkistus, Vitest, build | sama + rsync gerlitekiin |
-| `infra.yml` | `az bicep build`, `what-if`, tulos PR:n yhteenvetoon | deploy resurssiryhmään |
+| `infra.yml` | `az bicep build` ja linter, ei Azure-kirjautumista | `what-if`, hyväksyntä, deploy resurssiryhmään |
 | `api.yml` | ruff, pytest | sama + koodin deploy Function Appiin |
 
 - Repo: `github.com/Gerlitek/zombiet-peli`. Federoidun tunnisteen subject viittaa tähän nimeen (`repo:Gerlitek/zombiet-peli:...`), joten repon uudelleennimeäminen rikkoo kirjautumisen.
 - GitHub Actions on yksityisessä repossa maksuton kuukausikiintiön rajoissa (2 000 min/kk). Työnkulut käynnistyvät vain oman kansionsa muutoksista, joten kiintiö ei kulu turhaan.
 - Azure-kirjautuminen: `azure/login` OIDC:llä identiteetillä `id-zombies-github`. Repossa on vain kolme tunnistetta (client id, tenant id, subscription id), ei salaisuuksia.
-- Deploy mainiin kulkee GitHub-ympäristön `production` kautta. Siihen voi lisätä manuaalisen hyväksynnän.
+- Deploy mainiin kulkee GitHub-ympäristön `production` kautta, ja ympäristössä on pakollinen manuaalinen hyväksyntä. Federoitu tunniste hyväksyy vain tämän ympäristön, joten Azure-tunnuksen saa vain ajo, jonka omistaja on hyväksynyt. `what-if` ajetaan samassa työssä ennen deployta, ja sen tulos näkyy ennen hyväksyntää.
 - Palveluntarjoaja on Shellit.org (jaettu webhotelli, Apache), sama kuin AI Radarilla. AI Radar viedään sinne käsin SFTP:llä. Ennen kuin alla oleva SSH-julkaisu toteutetaan, varmista, että Shellit sallii SSH-kirjautumisen avaimella. Ohjeet: `next-steps.md`, luku 3.
 - Front: SSH-avain on GitHubin salaisuus. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
 - Putki tehdään ensin `az`-komennoilla. `azd pipeline config`ia kokeillaan myöhemmin vertailun vuoksi.
@@ -208,7 +209,11 @@ Budjetti `Zombies` (5 USD/kk, hälytykset 50, 80 ja 100 % toteutuneesta sekä 10
 
 Budjetin rinnalle tulevat:
 
-- **Kustannuspoikkeamahälytys** (Cost Management, maksuton) Bicepillä `budget.bicep`in viereen. Se huomaa äkillisen muutoksen nopeammin kuin kuukausibudjetin prosenttiraja.
+- **Azure Policy koko tilaukselle** (`guardrails.bicep`, maksuton). Kaksi deny-sääntöä:
+  - *Sallitut resurssityypit*: vain suunnitelman tyypit (tallennustili, Functions-suunnitelma ja Function App, hallittu identiteetti, Log Analytics, Application Insights, hälytykset). Virtuaalikoneet, AKS, tietokannat, IP-osoitteet ja kaikki muu estetään.
+  - *Kalliit asetukset*: sallituistakin tyypeistä vain halvin muoto. Functions-suunnitelma vain Flex Consumption (`FC1`). Function Appissa enintään 1 instanssi, muisti enintään 512 Mt, ei aina valmiina olevia instansseja. Tallennustili vain `Standard_LRS`. Log Analytics vain `PerGB2018` ja päiväkatto enintään 0,1 Gt.
+  - Policy on tilaustasolla, joten CI-identiteetti (Contributor vain resurssiryhmään) ei voi muuttaa sitä. Uusi resurssityyppi lisätään ensin policyyn ja vasta sitten Bicepiin.
+- **Kustannuspoikkeamahälytys** (`guardrails.bicep`, Cost Management, maksuton). Se huomaa äkillisen muutoksen nopeammin kuin kuukausibudjetin prosenttiraja. Hälytyksellä on päättymispäivä, ja se uusitaan vuosittain.
 - **Automaattinen pysäytys** samassa vaiheessa kuin Function App luodaan, ei myöhemmin. API laskee kaikki pyynnöt vuorokausilaskuriin. Kun laskuri ylittää katon, API sammuttaa itsensä (hallitulla identiteetillä on oikeus pysäyttää vain oma Function App). Tämä ei riipu kustannustiedon viiveestä. Peli jatkaa toimintaansa ilman verkkoa, ja omistaja käynnistää API:n uudelleen käsin.
 - **Hätäjarru käsin** kirjattuna README:hen: `az functionapp stop`.
 
@@ -230,13 +235,34 @@ Azuressa ei ole kovaa kulukattoa pay-as-you-go-tilaukselle. Siksi isompi lasku e
 | Lokien määrä | Päiväkatto 0,1 Gt sekä Log Analyticsissa että Application Insightsissa, säilytys 30 vrk, näytteenotto | `monitoring.bicep` |
 | Tallennustila | LRS, ei versiointia, ei SFTP:tä (tuntihinta), ei hierarkkista nimiavaruutta, raw poistuu 30 vrk, pyynnön enimmäiskoko 16 kt | `storage.bicep` |
 | Maksulliset tietoturvapaketit | Defender for Storage ja Defender for App Service pysyvät pois päältä. Portaali tarjoaa niitä, älä hyväksy | `az security pricing list` ennen ja jälkeen käyttöönoton |
-| Väärä resurssi vahingossa (myös tekoälyn tekemänä) | Azure Policy resurssiryhmälle: vain suunnitelman resurssityypit sallittu. Maksuton | `bootstrap.bicep` |
+| Väärä resurssi vahingossa (myös tekoälyn tekemänä) | Azure Policy koko tilaukselle: vain suunnitelman resurssityypit ja niiden halvimmat asetukset sallittu. Maksuton | `guardrails.bicep` |
+| Vuotanut CI-tunnus | Federoitu tunniste vain ympäristölle `production`, jossa manuaalinen hyväksyntä. Ei tallennettuja salaisuuksia | `bootstrap.bicep`, GitHub-ympäristö |
+| Omistajan tunnuksen kaappaus | Microsoft-tilille passkey tai authenticator-sovellus. Tämä on ainoa tunnus, joka voi poistaa policyt | Microsoft-tilin asetukset |
 | Kalliit lisäpalvelut | Ei API Managementia, Front Dooria, Application Gatewayta, NAT-yhdyskäytävää, yksityisiä päätepisteitä, Premium-suunnitelmaa eikä kiinteää IP:tä | `what-if` jokaisessa pull requestissa |
 | Unohtuneet resurssit | Kaikki yhdessä resurssiryhmässä. `az group delete` poistaa kaiken kerralla | README |
 | GitHub Actions | Tilin kulutusraja 0 USD: minuuttien loputtua ajot pysähtyvät, laskua ei tule | GitHub: Settings, Billing |
 | Shellit | Kiinteä kuukausihinta. Tarkista sopimuksesta, ettei liikenteestä laskuteta erikseen | Shellitin hallintapaneeli |
 
 Pahin realistinen tapaus näiden jälkeen: häirikkö täyttää vuorokausikaton, API sammuu, ja kulu on senttejä. Suurin jäljelle jäävä riski ei ole hyökkääjä vaan oma virhe, eli resurssi, joka luodaan väärällä asetuksella. Sitä vastaan ovat Policy, `what-if` ja budjettihälytys.
+
+### Maksukortti ja jäännösriski (2026-11-17)
+
+Kortin tyyppi tai luottoraja ei rajaa vastuuta: Azure laskuttaa kulutuksen, ja maksamaton lasku jää velaksi. Kortti valitaan siksi mukavuuden mukaan (luottokortti on ok, matala raja on hyvä lisä hälytyksenä), ja suojaus tehdään kerroksittain:
+
+1. **Ei Azurea ennen kuin sitä tarvitaan.** Versio 1 on Shellitissä ilman Azurea. Tilauksessa on vain budjetti ja maksuttomat suojaukset siihen asti, kunnes API tehdään.
+2. **Policy**: kalliita resursseja ei voi luoda kukaan muu kuin omistaja, ei edes vahingossa.
+3. **Kovat rajat resursseissa**: yksi 512 Mt:n instanssi, API sammuttaa itsensä vuorokausikaton ylittyessä, lokien päiväkatto.
+4. **Hälytykset**: budjetti ja poikkeamahälytys. Viive 8 - 24 h, siksi vain varaverkko.
+
+Pahimmat tapaukset kerrosten jälkeen (hinnat tarkistettava hinnastosta ennen vaihetta 5):
+
+| Tapaus | Arvio |
+|---|---|
+| Normaali käyttö | alle 0,10 USD/kk |
+| Kutsutulva, automaattinen pysäytys toimii | senttejä |
+| Kutsutulva, pysäytys ei toimi, yksi instanssi täysin kuormitettuna koko kuun | noin 30 USD (0,5 Gt x 2,6 milj. s, josta ilmaiskiintiö vähennetty) |
+| Lokit | 0,1 Gt/vrk katto, eli enintään noin 3 Gt/kk, mikä mahtuu Log Analyticsin kuukausittaiseen ilmaisosuuteen |
+| Omistajan tunnus kaapattu | rajaton. Torjunta: MFA. Hätäjarrut: `az group delete --name rg-zombies`, tilauksen peruutus, Azure-tukipyyntö heti |
 
 Ennen kuin API avataan julkiseksi, ajetaan kuormatesti: skripti lähettää pyyntöjä yli katon, ja varmistetaan, että API sammuu ja Cost Management näyttää seuraavana päivänä nollaa.
 
@@ -254,7 +280,7 @@ Pelaajat voivat olla lapsia.
 
 | Vaihe | Sisältö | Tila |
 |---|---|---|
-| 1 | Budjetti ja työkalut | valmis |
+| 1 | Budjetti ja työkalut. `guardrails.bicep` ajetaan ennen vaihetta 3 | budjetti valmis, guardrails kirjoitettu |
 | 2 | Peli pelattavaksi paikallisesti: grafiikkamoottori, pelaaja, zombit, aseet, pyörä, VIP, hajotelmat | runko olemassa, uusi suunnitelma toteuttamatta |
 | 3 | Julkaisu gerlitekiin: `web.yml`, SSH-avain, alidomain | |
 | 4 | `bootstrap.bicep`, OIDC, `infra.yml`, tyhjä `main.bicep` putken läpi | |
@@ -295,4 +321,10 @@ Vaihe 2 jaetaan pieniin, erikseen näytettäviin askeliin:
 5. **Rudi-Karrin todellinen todennäköisyys**: 1 / 10 VIP-pyöräytystä kohti. Alkuperäinen 1 / 500 oli pelitestissä liian harvinainen.
 6. **Minipelaaja ja hajotelmat kuuluvat versioon 1.**
 7. **Kuvakulma**: vino näkymä, jossa taivas on ylhäällä.
-8. **Alidomain**: oletus `zombit.gerlitek.fi`, vahvistetaan vaiheessa 3.
+8. **Alidomain**: `zombit.gerlitek.fi`, vahvistettu 2026-11-17.
+
+### Ehdotetut 2026-11-17 (odottavat hyväksyntää)
+
+9. **Policy tilaustasolle eikä resurssiryhmään**, ja omana tiedostonaan `guardrails.bicep`. Estää myös muihin resurssiryhmiin luodut resurssit, ja on voimassa jo ennen resurssiryhmää.
+10. **Policy rajaa myös asetukset**, ei vain tyyppejä. Pelkkä tyyppirajaus sallisi esim. Premium-suunnitelman tai 100 instanssia.
+11. **Pull requesteilla ei Azure-pääsyä.** `what-if` siirtyy deploy-työhön ennen manuaalista hyväksyntää. Hinta: muutoksen vaikutuksen näkee vasta yhdistämisen jälkeen, ennen hyväksyntää.
