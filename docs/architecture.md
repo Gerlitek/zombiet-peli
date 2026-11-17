@@ -189,8 +189,9 @@ Kolme työnkulkua, jokainen käynnistyy vain oman kansionsa muutoksista.
 - GitHub Actions on yksityisessä repossa maksuton kuukausikiintiön rajoissa (2 000 min/kk). Työnkulut käynnistyvät vain oman kansionsa muutoksista, joten kiintiö ei kulu turhaan.
 - Azure-kirjautuminen: `azure/login` OIDC:llä identiteetillä `id-zombies-github`. Repossa on vain kolme tunnistetta (client id, tenant id, subscription id), ei salaisuuksia.
 - Deploy mainiin kulkee GitHub-ympäristön `production` kautta, ja ympäristössä on pakollinen manuaalinen hyväksyntä. Federoitu tunniste hyväksyy vain tämän ympäristön, joten Azure-tunnuksen saa vain ajo, jonka omistaja on hyväksynyt. `what-if` ajetaan samassa työssä ennen deployta, ja sen tulos näkyy ennen hyväksyntää.
+- Tilanne 2026-11-17: repo on yksityinen (GitHub Free), eikä siinä ole ympäristöjen hyväksyntäsääntöjä eikä ympäristökohtaisia salaisuuksia. Front-deploy käynnistetään siksi käsin (`workflow_dispatch`, vain `main`), ja push ajaa vain testit ja buildin. Käsin käynnistys on hyväksyntä. Ennen Azure-deployta päätetään: repo julkiseksi, jolloin ympäristö `production` ja sen hyväksyntä toimivat, tai federoidun tunnisteen subject `repo:Gerlitek/zombiet-peli:ref:refs/heads/main` ja käsin käynnistys.
 - Palveluntarjoaja on Shellit.org (jaettu webhotelli, Apache), sama kuin AI Radarilla. AI Radar viedään sinne käsin SFTP:llä. Shellit sallii SSH-kirjautumisen avaimella (vahvistettu 2026-11-17), joten julkaisu tehdään rsyncillä SSH:n yli.
-- Front: SSH-avain on GitHubin salaisuus. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
+- Front: SSH-avain on repon salaisuus `DEPLOY_SSH_KEY` ja palvelimen käyttäjätunnus muuttuja `DEPLOY_USER`. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
 - Putki tehdään ensin `az`-komennoilla. `azd pipeline config`ia kokeillaan myöhemmin vertailun vuoksi.
 
 ## 7. Kustannukset ja rajat

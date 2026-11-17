@@ -1,6 +1,7 @@
 # Front: type check, unit tests, production build and deploy to the web host.
-# Pull requests only build and test. The deploy job runs on main, after the owner
-# approves the run in the "production" environment.
+# Pushes and pull requests only build and test. The deploy runs only when the owner
+# starts the workflow by hand on main (Actions > web > Run workflow, or `gh workflow run web`).
+# A private repo on GitHub Free has no required reviewers, so the manual start is the approval.
 name: web
 
 on:
@@ -9,6 +10,7 @@ on:
     paths: ['web/**', '.github/workflows/web.yml']
   pull_request:
     paths: ['web/**', '.github/workflows/web.yml']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -44,11 +46,9 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # The secret lives in this environment. The owner approves each run here.
-    environment: production
     steps:
       - uses: actions/download-artifact@v4
         with:

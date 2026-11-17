@@ -6,3 +6,11 @@ dist/
 
 # Private material (the child's drawings). Never committed.
 private/
+
+# The owner's personal to-do list (account and security details). Never committed.
+docs/next-steps.md
+
+# Third-party agent skills, installed locally (skills-lock.json), not part of the project.
+.agents/
+.claude/skills/
+skills-lock.json
