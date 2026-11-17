@@ -1,5 +1,9 @@
 // Monthly cost budget with email alerts for the whole subscription.
 // A budget does NOT stop spending. It only sends emails.
+//
+// Deploy from the repo root. The deployment record lives in northeurope, so keep that location:
+//   az deployment sub create --name zombiet-budget --location northeurope --template-file infra/budget.bicep \
+//     --parameters 'contactEmails=["...","..."]'
 targetScope = 'subscription'
 
 @description('Monthly budget in the billing currency of the subscription.')
@@ -19,7 +23,9 @@ var thresholds = [
 ]
 
 resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
-  name: 'Zombies' // same name as the budget first created in the portal, so a deploy updates it in place
+  // The only budget in the subscription. A budget made earlier in the portal with the same name was not
+  // updated by the deploy but kept alongside as a second one, so both were deleted and this one recreated (2026-11-17).
+  name: 'Zombies'
   properties: {
     category: 'Cost'
     amount: amount
