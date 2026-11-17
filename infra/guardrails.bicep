@@ -12,7 +12,7 @@ targetScope = 'subscription'
 @description('Email addresses for the anomaly alert. Passed at deploy time, never committed.')
 param contactEmails array
 
-@description('Resource types the project uses. Add a type here before adding it to Bicep.')
+@description('Resource types the project uses. Add a type here before adding it to Bicep, then run register-providers.sh.')
 param allowedResourceTypes array = [
   'Microsoft.Storage/storageAccounts'
   'Microsoft.Web/serverFarms'

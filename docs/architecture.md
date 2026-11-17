@@ -143,6 +143,7 @@ infra/
   budget.bicep          tilaustaso, käsin (olemassa)
   guardrails.bicep      tilaustaso, käsin: Azure Policy ja kustannuspoikkeamahälytys (luku 7)
   bootstrap.bicep       tilaustaso, käsin: resurssiryhmä, identiteetit, roolit
+  register-providers.sh tilaustaso, käsin: rekisteröi resource providerit (lista luetaan guardrails.bicepistä)
   main.bicep            resurssiryhmän taso: kokoaa moduulit. Tätä ajavat azd ja CI
   main.parameters.json  azd:n parametrit
   modules/
@@ -157,7 +158,9 @@ infra/
 |---|---|---|
 | Taso | tilaus | resurssiryhmä |
 | Ajaja | omistaja käsin, harvoin | GitHub Actions ja `azd` |
-| Sisältö | budjetti, policyt, poikkeamahälytys, resurssiryhmä, kaksi hallittua identiteettiä, roolimääritykset | kaikki muu |
+| Sisältö | budjetti, policyt, poikkeamahälytys, providerien rekisteröinti, resurssiryhmä, kaksi hallittua identiteettiä, roolimääritykset | kaikki muu |
+
+**Resource providerit.** Uudessa tilauksessa palvelut ovat rekisteröimättä, ja resurssin luonti kaatuu harhaanjohtavaan virheeseen `SubscriptionNotFound` (todettu 2026-11-17 policy-testissä). Bicep ei voi rekisteröidä providereita, eikä CI-identiteetillä ole siihen oikeutta tilaustasolla. Siksi omistaja ajaa `infra/register-providers.sh`:n ennen bootstrapia ja aina, kun `guardrails.bicep`in sallittuihin tyyppeihin lisätään uusi palvelu. Skripti lukee nimiavaruudet samasta listasta, joten sallitut tyypit ja rekisteröidyt providerit pysyvät samoina.
 
 `bootstrap.bicep` luo:
 
