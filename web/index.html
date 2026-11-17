@@ -41,8 +41,8 @@
     }
     #game canvas { display: block; image-rendering: pixelated; }
     /* Privacy note: closed by default, small and quiet, but one click away. */
-    .privacy { margin: 18px 0 0; font-size: 0.78rem; color: var(--text-dim); max-width: 70ch; }
-    .privacy summary { cursor: pointer; color: rgba(169, 175, 186, 0.8); }
+    .privacy { margin: 10px 0 0 auto; font-size: 0.72rem; color: var(--text-dim); max-width: 60ch; } /* below the publisher line, so it does not compete with the credit for the idea */
+    .privacy summary { cursor: pointer; text-align: right; color: rgba(169, 175, 186, 0.45); }
     .privacy ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.5; }
     .credit { margin: 14px 0 0; font-size: 0.9rem; color: var(--text); }
     .credit b { color: var(--accent); }
@@ -89,6 +89,10 @@
     </ol>
     <div id="game"></div>
     <p class="credit">Pelin idean, tarinan ja hahmot on suunnitellut <b>Maujazz</b>.</p>
+    <footer>
+      <span>Toteutus ja julkaisu</span>
+      <a href="https://gerlitek.fi">Gerlitek Oy</a>
+    </footer>
     <details class="privacy">
       <summary>Tietosuoja</summary>
       <ul>
@@ -98,10 +102,6 @@
         <li>Selaimen tiedot saat pois tyhjentämällä sivuston tiedot selaimen asetuksista.</li>
       </ul>
     </details>
-    <footer>
-      <span>Toteutus ja julkaisu</span>
-      <a href="https://gerlitek.fi">Gerlitek Oy</a>
-    </footer>
   </main>
   <script type="module" src="/src/main.ts"></script>
 </body>
