@@ -16,6 +16,7 @@ import { score } from '../logic/score';
 import { WheelName } from '../logic/wheel';
 import { addBest, load, unlock } from '../systems/storage';
 import { flush, track } from '../systems/telemetry';
+import { ATTACK_HINT, attackInput } from '../systems/attack';
 import { Arsenal, Combat, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, newArsenal, updateWeapons } from '../systems/weapons';
 import { Tree, Weather } from '../systems/weather';
 import { Field, RISE_TIME, Zombie, drawTrail, drawZombie, isRising, makeZombie, moveZombie } from '../systems/zombies';
@@ -41,6 +42,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
   clock = 0;
   dt = 0;
   attack = false;
+  private attackPressed!: () => boolean;
   px = W / 2; py = 160;
   zombies: Zombie[] = [];
 
@@ -95,6 +97,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.bg = this.add.image(0, 0, 'bg-forest').setOrigin(0);
     this.g = this.add.graphics();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
+    this.attackPressed = attackInput(this, this.keys.SPACE);
     this.banner = label(this, W / 2, HORIZON + 22, '', P.iceL);
     this.vipSign = label(this, VIP_SIGN.x + VIP_SIGN.w / 2, 6, 'VIP', P.hurt);
     this.stoneTag = label(this, STONE.x, STONE.y + 4, 'AARREKIVI', P.iceL, 8).setVisible(false);
@@ -103,7 +106,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.enterZone('forest');
 
     track('game_started', { nickname: this.nick, character: data.hero });
-    this.say('Zombit nousevat sateesta. Lyö VÄLILYÖNNILLÄ!');
+    this.say(`Zombit nousevat sateesta. ${ATTACK_HINT}!`);
   }
 
   update(_: number, deltaMs: number) {
@@ -112,8 +115,8 @@ export class PlayScene extends Phaser.Scene implements Combat {
     const dt = Math.min(deltaMs, 50) / 1000; // clamp so a slow frame cannot teleport anything
     this.clock += dt;
     this.dt = dt;
-    // One press of the space bar = one attack. Holding the key down does nothing more.
-    this.attack = Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && this.clock >= this.arsenal.swingAt + SWING_TIME;
+    // One press or click = one attack. Holding the key down does nothing more.
+    this.attack = this.attackPressed() && this.clock >= this.arsenal.swingAt + SWING_TIME;
     this.movePlayer(dt);
     this.updateSpawns();
     for (const z of this.zombies) moveZombie(z, this.px, this.py, this.clock, dt, FIELD);

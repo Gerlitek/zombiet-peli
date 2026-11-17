@@ -10,6 +10,7 @@ import { WEAPONS, WeaponDef, WeaponId } from '../data/weapons';
 import { ZombieType } from '../data/zombies';
 import { PuzzleLevel } from '../logic/puzzle';
 import { Arsenal, Combat, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, newArsenal, updateWeapons } from '../systems/weapons';
+import { ATTACK_HINT, attackInput } from '../systems/attack';
 import { Field, Zombie, drawTrail, drawZombie, makeZombie, moveZombie } from '../systems/zombies';
 
 // Practice on the sand dunes of Kalajoki (Hiekkasärkät), where this game comes from.
@@ -29,6 +30,7 @@ export class PracticeScene extends Phaser.Scene implements Combat {
   clock = 0;
   dt = 0;
   attack = false;
+  private attackPressed!: () => boolean;
   px = 0; py = 0;
   zombies: Zombie[] = [];
 
@@ -64,10 +66,11 @@ export class PracticeScene extends Phaser.Scene implements Combat {
     this.add.image(0, 0, 'bg-dunes').setOrigin(0);
     this.g = this.add.graphics();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
+    this.attackPressed = attackInput(this, this.keys.SPACE);
     label(this, W / 2, 4, 'HARJOITUS: Kalajoen hiekkasärkät', P.ink, 12);
     this.info = label(this, W / 2, 20, 'Helikopteri tuo sinut särkille...', P.ink, 8);
     // The attack hint is its own framed line, clearly apart from the weapon description above it.
-    this.hitHint = label(this, W / 2, 36, 'Lyö VÄLILYÖNNILLÄ', P.ink, 8).setVisible(false);
+    this.hitHint = label(this, W / 2, 36, ATTACK_HINT, P.ink, 8).setVisible(false);
     this.count = label(this, 6, SHORE + 2, '', P.ink, 8, 0);
     label(this, W / 2, H - 13, 'ENTER: aloita oikea peli      ESC: takaisin valikkoon', P.bone, 8);
     SHORT.forEach((name, i) => label(this, standX(i), STAND_Y + 4, name, P.ink, 6));
@@ -89,7 +92,7 @@ export class PracticeScene extends Phaser.Scene implements Combat {
     const dt = Math.min(deltaMs, 50) / 1000;
     this.clock += dt; this.dt = dt;
     const landed = this.clock > LANDING.time;
-    this.attack = landed && Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && this.clock >= this.arsenal.swingAt + SWING_TIME;
+    this.attack = landed && this.attackPressed() && this.clock >= this.arsenal.swingAt + SWING_TIME;
     if (landed) this.moveHero(dt);
     this.updateZombies(dt);
     updateWeapons(this.arsenal, this);
