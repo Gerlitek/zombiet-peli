@@ -46,6 +46,7 @@ Valikosta pääsee näppäimellä H harjoittelemaan ennen oikeaa peliä. Harjoit
 - Liike: nuolet tai WASD. Kosketusnäytöllä raahaus mistä tahansa (virtuaalinen ohjain), versio 2.
 - Versio 1 tarvitsee näppäimistön. Kosketuslaitteella (ei hiirtä eikä hover-tukea) sivu näyttää pelin sijaan ilmoituksen "Peli toimii tietokoneella" ja napin, jolla näppäimistön omistaja pääsee pelaamaan silti (2026-11-17).
 - Lyönti: välilyönti tai hiiren klikkaus, molemmat toimivat aina ilman asetusta (2026-11-17). Yksi painallus tai klikkaus on yksi lyönti lähimpään zombiin kantaman sisällä, ja hahmo heilauttaa asettaan näkyvästi. Mikään ei iske itsestään: ensimmäisessä versiossa aseet toimivat automaattisesti, jolloin zombit kuolivat pelaajan seistessä paikallaan ja peli oli tylsä.
+- Pyörivät aseet (katanat, nuntsakot, laser) pyörivät, näkyvät ja satuttavat 1,6 s jokaisen lyönnin jälkeen ja häipyvät lopuksi. Lyöntien välillä ne ovat piilossa, jotta ne eivät näytä toimivan itsestään. Ne osuvat myös zombiin, joka on suoraan pelaajan päällä (2026-11-17, pelitestin havainto).
 - Kiertävät terät (katanat, nuntsakot, laser-miekka) pyörivät ja tekevät vahinkoa vain hetken jokaisen painalluksen jälkeen. Silloin hahmo ei lyö vaan heilauttaa käsiään ilmassa.
 - Hahmo kääntyy kävelysuuntaan ja lyödessään kohti zombia. Zombit kääntyvät kohti pelaajaa.
 - Valinta ja jatkaminen: Enter.

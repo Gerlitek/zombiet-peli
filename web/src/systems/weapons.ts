@@ -7,7 +7,8 @@ import { Zombie, isRising, knock } from './zombies';
 // Nothing attacks by itself: every weapon works when the player presses the attack key.
 // (Only the Rudi-Karri robot acts alone, because it is a robot.)
 export const SWING_TIME = 0.3;  // seconds one swing animation lasts
-const ACTIVE_TIME = 0.9;        // seconds the orbiting blades spin after one press
+const ACTIVE_TIME = 1.6;        // seconds the orbiting blades spin and hurt after one press: long enough to be clearly seen
+const FADE_TIME = 0.3;          // the blades fade out during the last part of that time
 
 // What the player owns: weapon level, next allowed use, and what to draw.
 export interface Arsenal {
@@ -119,14 +120,15 @@ export function updateWeapons(a: Arsenal, c: Combat) {
     }
 
     if (def.kind === 'orbit') {
-      const active = bladesActive;
-      a.angle[id] = (a.angle[id] ?? 0) + c.dt * (def.spin ?? 1) * (active ? 1 : 0.15); // idle blades only drift
-      if (active) {
-        for (let i = 0; i < (def.blades ?? 1); i++) {
-          const b = bladePos(a, id, i, c);
-          for (const { z } of near) {
-            if (hypot(z.x - b.x, z.y - 8 - b.y) < 10 && c.clock - (z.hits[id] ?? -9) > 0.4) { z.hits[id] = c.clock; c.hit(z, damage, id); }
-          }
+      // Blades spin and hurt only for a moment after each attack press. Between presses they are put away.
+      if (bladesActive) {
+        a.angle[id] = (a.angle[id] ?? 0) + c.dt * (def.spin ?? 1);
+        for (const { z, d } of near) {
+          if (c.clock - (z.hits[id] ?? -9) <= 0.4) continue; // each blade weapon hits the same zombie at most every 0.4 s
+          // A zombie inside the circle (right next to the player) is swept too: the blades alone would pass around it.
+          const touched = d < def.range || Array.from({ length: def.blades ?? 1 }, (_, i) => bladePos(a, id, i, c))
+            .some((b) => hypot(z.x - b.x, z.y - 8 - b.y) < 10);
+          if (touched) { z.hits[id] = c.clock; c.hit(z, damage, id); }
         }
       }
       if (def.effect === 'whirl' && c.attack && ready && near.some((n) => n.d < 44)) { // whirlwind pushes zombies away
@@ -158,23 +160,24 @@ export function drawWeapons(p: Pen, a: Arsenal, c: Combat) {
     if (def.kind !== 'strike' && fx && age < 0.4) ring(p, fx.x, fx.y, 8 + age * 90, def.color, 1 - age * 2.5);
     if (def.kind !== 'orbit') continue;
     if (isRobot(def)) { if (a.robot) drawCatRobot(p, Math.round(a.robot.x), Math.round(a.robot.y), c.clock); continue; }
-    const active = bladesActive;
-    if (def.effect === 'tornado' && active) { // blue laser tornado around the player
+    if (!bladesActive) continue; // put away between attacks, so they never look like they are working
+    const alpha = Math.min(1, (a.activeUntil - c.clock) / FADE_TIME); // full while hurting, fades just before stopping
+    if (def.effect === 'tornado') { // blue laser tornado around the player
       for (let i = 0; i < 26; i++) {
         const k = i / 26, ang = c.clock * 7 + i * 0.9, r = 4 + k * 16;
-        p.rect(c.px + cos(ang) * r, c.py - k * 34 + sin(ang) * 2, k > 0.6 ? 2 : 1, 1, i % 3 ? P.ice : P.iceL, 0.35 + k * 0.5);
+        p.rect(c.px + cos(ang) * r, c.py - k * 34 + sin(ang) * 2, k > 0.6 ? 2 : 1, 1, i % 3 ? P.ice : P.iceL, (0.35 + k * 0.5) * alpha);
       }
     }
     for (let i = 0; i < (def.blades ?? 1); i++) {
       const b = bladePos(a, id, i, c);
-      const shape = BLADE[id] ?? { len: 4, w: 1 }, alpha = active ? 1 : 0.7; // idle blades are a little dim
+      const shape = BLADE[id] ?? { len: 4, w: 1 };
       const dx = cos(b.ang + 1.5) * shape.len, dy = sin(b.ang + 1.5) * shape.len * 0.75;
       if (id === 'laser') limb(p, b.x - dx, b.y - dy, b.x + dx, b.y + dy, 4, P.ice, false, 0, alpha * 0.35); // glow
       if (id === 'nunchaku') for (let k = 1; k < 5; k++) p.rect(c.px + (b.x - c.px) * (k / 5), c.py - 9 + (b.y - c.py + 9) * (k / 5), 1, 1, P.bone, alpha); // chain to the hand
       limb(p, b.x - dx, b.y - dy, b.x + dx, b.y + dy, shape.w, def.color, false, 0, alpha);
       if (id === 'katanas') p.rect(b.x - dx - 1, b.y - dy - 1, 3, 3, P.ice, alpha); // handle
-      if (active) for (let k = 1; k < 4; k++) p.rect(c.px + cos(b.ang - k * 0.3) * def.range, c.py - 9 + sin(b.ang - k * 0.3) * def.range * 0.5, 1, 1, P.iceL, 0.6 - k * 0.15);
-      p.rect(b.x, b.y, 1, 1, P.ice);
+      for (let k = 1; k < 4; k++) p.rect(c.px + cos(b.ang - k * 0.3) * def.range, c.py - 9 + sin(b.ang - k * 0.3) * def.range * 0.5, 1, 1, P.iceL, (0.6 - k * 0.15) * alpha);
+      p.rect(b.x, b.y, 1, 1, P.ice, alpha);
     }
   }
 }

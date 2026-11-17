@@ -65,6 +65,37 @@ describe('score', () => {
   });
 });
 
+describe('orbiting blades', () => {
+  // The player stands still with one blade weapon and presses attack once at the start.
+  function hitsAfterOnePress(weapon: 'laser' | 'katanas' | 'nunchaku', zombieAt: { x: number; y: number }, seconds: number) {
+    const arsenal = newArsenal();
+    addWeapon(arsenal, weapon);
+    const zombie = makeZombie('normal', zombieAt.x, zombieAt.y, -10, false, rng(3));
+    let hits = 0, i = 0;
+    const c: Combat = { clock: 0, dt: 1 / 60, attack: false, px: 160, py: 150, zombies: [zombie], hit: () => { hits++; }, heal: () => {}, shake: () => {} };
+    for (let t = 0; t < seconds; t += c.dt, i++) { c.clock = t; c.attack = i === 0; updateWeapons(arsenal, c); }
+    return hits;
+  }
+
+  it('the laser also hits a zombie standing right on the player', () => {
+    expect(hitsAfterOnePress('laser', { x: 160, y: 150 }, 1)).toBeGreaterThan(0);
+  });
+
+  it('do nothing without an attack press', () => {
+    const arsenal = newArsenal();
+    addWeapon(arsenal, 'laser');
+    const zombie = makeZombie('normal', 165, 150, -10, false, rng(3));
+    let hits = 0;
+    const c: Combat = { clock: 0, dt: 1 / 60, attack: false, px: 160, py: 150, zombies: [zombie], hit: () => { hits++; }, heal: () => {}, shake: () => {} };
+    for (let t = 0; t < 3; t += c.dt) { c.clock = t; updateWeapons(arsenal, c); }
+    expect(hits).toBe(0);
+  });
+
+  it('stop hurting when the spin ends', () => {
+    expect(hitsAfterOnePress('laser', { x: 160, y: 150 }, 5)).toBe(hitsAfterOnePress('laser', { x: 160, y: 150 }, 2));
+  });
+});
+
 describe('Rudi-Karri robot', () => {
   // A minimal game: the player stands still, the robot is the only weapon, no key is pressed.
   function world(zombieAt: { x: number; y: number }) {

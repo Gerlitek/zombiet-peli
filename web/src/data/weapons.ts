@@ -27,7 +27,7 @@ export const WEAPONS = {
   katanas:   { name: 'Mini-katanat', info: 'Kaksi terää pyörii, kun lyöt', wheel: 'forest', weight: 3, kind: 'orbit', damage: 1, range: 18, cooldown: 5, color: P.bone, blades: 2, spin: 5, effect: 'whirl' },
   hammer:    { name: 'Moukari', info: 'Iskee kaikkiin lähellä oleviin', wheel: 'forest', weight: 2, kind: 'strike', damage: 2, range: 34, cooldown: 1.5, color: P.sand, knock: 140, area: true, effect: 'shake' },
   nunchaku:  { name: 'Nuntsakot', info: 'Pyörii lähelläsi, kun lyöt', wheel: 'forest', weight: 2, kind: 'orbit', damage: 1, range: 11, cooldown: 0, color: P.hurt, blades: 1, spin: 11 },
-  laser:     { name: 'Laser-miekka', info: 'Kolme terää ja sininen tornado', wheel: 'vip', weight: 3, kind: 'orbit', damage: 2, range: 22, cooldown: 0, color: P.iceL, blades: 3, spin: 6, effect: 'tornado' },
+  laser:     { name: 'Laser-miekka', info: 'Kolme terää ja tornado pyörivät, kun lyöt', wheel: 'vip', weight: 3, kind: 'orbit', damage: 2, range: 22, cooldown: 0, color: P.iceL, blades: 3, spin: 6, effect: 'tornado' },
   ice:       { name: 'Siniset jäähanskat', info: 'Lyönti jäädyttää lähellä olevat', wheel: 'vip', weight: 3, kind: 'status', damage: 0, range: 46, cooldown: 3.5, color: P.ice, effect: 'freeze' },
   squeeze:   { name: 'Puristushanskat', info: 'Litistää zombin avuttomaksi', wheel: 'vip', weight: 3, kind: 'strike', damage: 1, range: 26, cooldown: 1.2, color: P.storm, effect: 'squash' },
   rudikarri: { name: 'Rudi-Karri-robotti', info: 'Tappaa zombin yhdellä iskulla', wheel: 'vip', weight: 0, kind: 'orbit', damage: 999, range: 26, cooldown: 0, color: P.sand, blades: 1, spin: 1.6, effect: 'robot' },
