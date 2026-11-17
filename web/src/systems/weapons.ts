@@ -18,7 +18,17 @@ export interface Arsenal {
   punches: number;
   swingAt: number;      // clock of the last attack press: drives the hero's swing animation
   activeUntil: number;  // orbiting blades do damage until this time
+  robot?: Robot;        // the Rudi-Karri robot, once owned
 }
+
+// The Rudi-Karri robot circles the player like a blade, but it hunts: when a zombie comes close
+// to the player, the robot dashes to it, kills it and flies back. A short rest between dashes
+// keeps it from clearing the whole field at once. (A plain orbit could not reach zombies that
+// were already next to the player, inside its circle.)
+export interface Robot { x: number; y: number; target: Zombie | null; restUntil: number }
+const HUNT_RANGE = 44;  // the robot goes after zombies this close to the player
+const ROBOT_SPEED = 220; // pixels per second
+const ROBOT_REST = 0.8;  // seconds between dashes; shorter on higher levels
 
 // What weapons need from the game. PlayScene implements this.
 export interface Combat {
@@ -33,6 +43,25 @@ export interface Combat {
 }
 
 export const newArsenal = (): Arsenal => ({ level: {}, nextAt: {}, fx: {}, angle: {}, punches: 0, swingAt: -9, activeUntil: 0 });
+
+function updateRobot(a: Arsenal, id: WeaponId, c: Combat, near: { z: Zombie; d: number }[]) {
+  const def: WeaponDef = WEAPONS[id];
+  a.angle[id] = (a.angle[id] ?? 0) + c.dt * (def.spin ?? 1);
+  const home = bladePos(a, id, 0, c), homeY = home.y + 9; // the robot stands on the ground: y is its feet, like a zombie's
+  const r = (a.robot ??= { x: home.x, y: homeY, target: null, restUntil: 0 });
+  if (r.target && (r.target.hp <= 0 || !c.zombies.includes(r.target))) r.target = null; // killed by something else
+  if (!r.target && c.clock >= r.restUntil) r.target = near.find((n) => n.d < HUNT_RANGE)?.z ?? null;
+
+  const goal = r.target ?? { x: home.x, y: homeY };
+  const dx = goal.x - r.x, dy = goal.y - r.y, dist = hypot(dx, dy), step = ROBOT_SPEED * c.dt;
+  if (dist <= step) { r.x = goal.x; r.y = goal.y; } else { r.x += (dx / dist) * step; r.y += (dy / dist) * step; }
+
+  if (r.target && hypot(r.target.x - r.x, r.target.y - r.y) < 8) {
+    c.hit(r.target, def.damage, id);
+    r.target = null;
+    r.restUntil = c.clock + ROBOT_REST / a.level[id]!;
+  }
+}
 
 export function addWeapon(a: Arsenal, id: WeaponId) {
   a.level[id] = (a.level[id] ?? 0) + 1; // the same weapon again = one level higher
@@ -69,6 +98,7 @@ export function updateWeapons(a: Arsenal, c: Combat) {
 
   for (const id of owned(a)) {
     const def: WeaponDef = WEAPONS[id];
+    if (isRobot(def)) { updateRobot(a, id, c, near); continue; }
     const damage = def.damage ? def.damage + a.level[id]! - 1 : 0;
     const ready = c.clock >= (a.nextAt[id] ?? 0);
 
@@ -89,7 +119,7 @@ export function updateWeapons(a: Arsenal, c: Combat) {
     }
 
     if (def.kind === 'orbit') {
-      const active = bladesActive || isRobot(def);
+      const active = bladesActive;
       a.angle[id] = (a.angle[id] ?? 0) + c.dt * (def.spin ?? 1) * (active ? 1 : 0.15); // idle blades only drift
       if (active) {
         for (let i = 0; i < (def.blades ?? 1); i++) {
@@ -127,7 +157,8 @@ export function drawWeapons(p: Pen, a: Arsenal, c: Combat) {
     }
     if (def.kind !== 'strike' && fx && age < 0.4) ring(p, fx.x, fx.y, 8 + age * 90, def.color, 1 - age * 2.5);
     if (def.kind !== 'orbit') continue;
-    const active = bladesActive || isRobot(def);
+    if (isRobot(def)) { if (a.robot) drawCatRobot(p, Math.round(a.robot.x), Math.round(a.robot.y), c.clock); continue; }
+    const active = bladesActive;
     if (def.effect === 'tornado' && active) { // blue laser tornado around the player
       for (let i = 0; i < 26; i++) {
         const k = i / 26, ang = c.clock * 7 + i * 0.9, r = 4 + k * 16;
@@ -136,7 +167,6 @@ export function drawWeapons(p: Pen, a: Arsenal, c: Combat) {
     }
     for (let i = 0; i < (def.blades ?? 1); i++) {
       const b = bladePos(a, id, i, c);
-      if (isRobot(def)) { drawCatRobot(p, Math.round(b.x), Math.round(b.y + 9), c.clock); continue; }
       const shape = BLADE[id] ?? { len: 4, w: 1 }, alpha = active ? 1 : 0.7; // idle blades are a little dim
       const dx = cos(b.ang + 1.5) * shape.len, dy = sin(b.ang + 1.5) * shape.len * 0.75;
       if (id === 'laser') limb(p, b.x - dx, b.y - dy, b.x + dx, b.y + dy, 4, P.ice, false, 0, alpha * 0.35); // glow

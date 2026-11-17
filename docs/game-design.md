@@ -97,6 +97,7 @@ Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kak
 - Arvonta on painotettu ja tehdään asiakaspuolella. Sillä ei ole rahallista arvoa, eikä mitään voi ostaa.
 - Rudi-Karrin siivu on pyörässä hiuksenohut. Mahdollisuus näytetään lukuna `0,00000001 %`. Todellinen todennäköisyys on erillinen parametri: 1 / 10 VIP-pyöräytystä kohti, eli robotti tulee noin joka kymmenennessä pelissä. Näytettävä luku on lapsen päätös, mutta todellinen mahdollisuus ei saa olla mahdoton. Ensin kokeiltiin arvoa 1 / 500, mutta silloin robottia ei nähty kertaakaan.
 - Rudi-Karri on kaksipäinen kissarobotti: toinen pää on Rudi, toinen Karri.
+- Robotti metsästää (2026-11-17): se kiertää pelaajaa, ja kun zombi tulee lähelle pelaajaa, se syöksyy zombin luo, tappaa sen yhdellä iskulla ja palaa. Syöksyjen välissä on 0,8 s tauko. Pelkkä kiertorata ei ylettynyt zombeihin, jotka olivat jo pelaajan vieressä.
 - Taidot (lapsen toive tulevaisuuteen): versiossa 2 pyörään lisätään taitoja, esim. nopeus, lisäsydän ja pidempi suoja.
 
 ## 5. Zombit

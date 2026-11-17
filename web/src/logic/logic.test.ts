@@ -6,6 +6,8 @@ import { makePuzzle, PUZZLE_LEVELS, puzzleBonus } from './puzzle';
 import { pickWeighted } from './random';
 import { MAX_SCORE, score } from './score';
 import { slices, spin } from './wheel';
+import { Combat, addWeapon, newArsenal, updateWeapons } from '../systems/weapons';
+import { makeZombie } from '../systems/zombies';
 
 describe('pickWeighted', () => {
   it('never picks weight 0 and follows the weights', () => {
@@ -60,5 +62,34 @@ describe('score', () => {
   });
   it('a lost run gets no time bonus', () => {
     expect(score({ kills: 4, hearts: 0, seconds: 10, won: false, puzzleBonus: 0 })).toBe(400);
+  });
+});
+
+describe('Rudi-Karri robot', () => {
+  // A minimal game: the player stands still, the robot is the only weapon, no key is pressed.
+  function world(zombieAt: { x: number; y: number }) {
+    const arsenal = newArsenal();
+    addWeapon(arsenal, 'rudikarri');
+    const zombie = makeZombie('normal', zombieAt.x, zombieAt.y, -10, true, rng(3)); // risen long ago, VIP strength
+    const kills: string[] = [];
+    const c: Combat = {
+      clock: 0, dt: 1 / 60, attack: false, px: 160, py: 150, zombies: [zombie],
+      hit: (z, damage, weapon) => { z.hp -= damage; if (z.hp <= 0) { kills.push(weapon); c.zombies = c.zombies.filter((o) => o !== z); } },
+      heal: () => {}, shake: () => {},
+    };
+    const run = (seconds: number) => { for (let t = 0; t < seconds; t += c.dt) { c.clock = t; updateWeapons(arsenal, c); } };
+    return { kills, run };
+  }
+
+  it('hunts down a zombie standing right on the player, which a plain orbit could never reach', () => {
+    const w = world({ x: 160, y: 150 });
+    w.run(1);
+    expect(w.kills).toEqual(['rudikarri']);
+  });
+
+  it('leaves zombies far from the player alone', () => {
+    const w = world({ x: 300, y: 220 });
+    w.run(2);
+    expect(w.kills).toEqual([]);
   });
 });
