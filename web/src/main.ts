@@ -8,6 +8,20 @@ import { WheelScene } from './scenes/WheelScene';
 import { PuzzleScene } from './scenes/PuzzleScene';
 import { EndScene } from './scenes/EndScene';
 import { W, H, ZOOM } from './size';
+import { drawCharacter } from './art/character';
+import { css } from './art/palette';
+import { Pen } from './art/pixels';
+import { HEROES } from './data/characters';
+
+// The logo next to the page title: the knight, drawn by the same code as in the game, standing still.
+function drawLogo() {
+  const canvas = document.getElementById('logo') as HTMLCanvasElement | null, g = canvas?.getContext('2d');
+  if (!canvas || !g) return;
+  const pen: Pen = { rect: (x, y, w, h, color, alpha = 1) => { g.globalAlpha = alpha; g.fillStyle = css(color); g.fillRect(Math.round(x), Math.round(y), w, h); } };
+  const look = { ...HEROES.knight.look, s: (HEROES.knight.look.s ?? 1) * 1.6 };
+  drawCharacter(pen, 20, 45, look, 0, { still: true });
+}
+drawLogo();
 
 function start() {
   const game = new Phaser.Game({
