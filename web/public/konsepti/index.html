@@ -21,6 +21,9 @@
   canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #0B0E14; }
   .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
   .frame { border: 2px solid var(--border); border-radius: 14px; overflow: hidden; }
+  /* The wheel and the VIP box have small text: shown at exactly 3x (960 px) and stacked, so it stays sharp and readable. */
+  .frame.big { max-width: 960px; }
+  .cols.one { grid-template-columns: 1fr; }
   .cols { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
   .page-mock { max-width: 680px; }
   .page-mock h1 { font-size: 1.6rem; }
@@ -69,13 +72,13 @@
   <p><b>Miksi "Versio 1"?</b> Piirros tallennettiin nimellä <i>versio 1</i>, ja nimi jäi. Se sopii hahmolle: tämä on pelin ensimmäinen ja perimmäinen zombi, josta muut hahmot ovat muunnelmia. Pelissä siitä käytetään nimeä Tavallinen zombi.</p>
 
   <h2>3. VIP-aitio ja onnenpyörä</h2>
-  <div class="cols">
+  <div class="cols one">
     <div>
-      <div class="frame"><canvas id="vip" width="320" height="240"></canvas></div>
+      <div class="frame big"><canvas id="vip" width="320" height="240"></canvas></div>
       <p style="margin-top:10px">Aitio on valaistu lava myrskyn keskellä. Taustataulussa näkyvät aina vahvin pelaaja, saavutukset ja valmiit viestit. Zombit ovat isompia ja hehkuvat.</p>
     </div>
     <div>
-      <div class="frame"><canvas id="wheel" width="320" height="240"></canvas></div>
+      <div class="frame big"><canvas id="wheel" width="320" height="240"></canvas></div>
       <p style="margin-top:10px">Onnenpyörä antaa aseen. Rudi-Karri-robotin siivu on hiuksenohut, ja sen mahdollisuus näytetään lukuna.</p>
     </div>
   </div>
