@@ -27,5 +27,5 @@ export const STORY: string[] = [
   'Onnea matkaan!',
   '',
   '',
-  'Tarinan keksi Maujazz.',
+  'Tarinan ideoi Maujazz.',
 ];
