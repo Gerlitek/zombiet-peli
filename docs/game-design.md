@@ -305,7 +305,6 @@ Ensimmäinen pelitesti osoitti, että asiat tapahtuivat liian nopeasti. Näistä
 - Valinnat näytetään kortteina ja painikkeina, ei koodimaisina merkkeinä. Valitun reunus on vaaleansininen.
 - Pelin maailma on pääosassa. Onnenpyörä on palkinto: hillityt värit, lyhyt pyörähdys, ei koskaan pelin ensimmäinen ruutu.
 
-Tekemättömät työt ja jatko-ohjeet ovat tiedostossa `next-steps.md`.
 
 ## 14. Kysymykset lapselle
 

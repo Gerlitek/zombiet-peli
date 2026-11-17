@@ -189,7 +189,7 @@ Kolme työnkulkua, jokainen käynnistyy vain oman kansionsa muutoksista.
 - GitHub Actions on yksityisessä repossa maksuton kuukausikiintiön rajoissa (2 000 min/kk). Työnkulut käynnistyvät vain oman kansionsa muutoksista, joten kiintiö ei kulu turhaan.
 - Azure-kirjautuminen: `azure/login` OIDC:llä identiteetillä `id-zombies-github`. Repossa on vain kolme tunnistetta (client id, tenant id, subscription id), ei salaisuuksia.
 - Deploy mainiin kulkee GitHub-ympäristön `production` kautta, ja ympäristössä on pakollinen manuaalinen hyväksyntä. Federoitu tunniste hyväksyy vain tämän ympäristön, joten Azure-tunnuksen saa vain ajo, jonka omistaja on hyväksynyt. `what-if` ajetaan samassa työssä ennen deployta, ja sen tulos näkyy ennen hyväksyntää.
-- Palveluntarjoaja on Shellit.org (jaettu webhotelli, Apache), sama kuin AI Radarilla. AI Radar viedään sinne käsin SFTP:llä. Ennen kuin alla oleva SSH-julkaisu toteutetaan, varmista, että Shellit sallii SSH-kirjautumisen avaimella. Ohjeet: `next-steps.md`, luku 3.
+- Palveluntarjoaja on Shellit.org (jaettu webhotelli, Apache), sama kuin AI Radarilla. AI Radar viedään sinne käsin SFTP:llä. Shellit sallii SSH-kirjautumisen avaimella (vahvistettu 2026-11-17), joten julkaisu tehdään rsyncillä SSH:n yli.
 - Front: SSH-avain on GitHubin salaisuus. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
 - Putki tehdään ensin `az`-komennoilla. `azd pipeline config`ia kokeillaan myöhemmin vertailun vuoksi.
 
