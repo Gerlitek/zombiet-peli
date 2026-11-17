@@ -15,10 +15,10 @@ Pelikerta kestää 2 - 4 minuuttia. Lyhyt kierros sopii lapselle, ja onnenpyör�
 | Hetki | Mitä tapahtuu |
 |---|---|
 | Aloitus | Nimimerkki arvotaan (ks. luku 9), hahmon valinta (Ritari tai Minipelaaja) ja hajotelmien vaikeustaso |
-| Tapot 1 - 9 | Mätä metsä. Zombeja nousee sateesta |
+| Tapot ennen VIP-rajaa | Mätä metsä. Zombeja nousee sateesta |
 | Tappo 50 (kehityksessä 20) | VIP-kyltti muuttuu punaisesta vihreäksi, salama iskee ja pelaaja siirtyy VIP-aitioon. VIP-pyöräytys |
-| Tapot 11 - 19 | VIP-aitio. Zombit ovat supervahvoja. Ensimmäisen VIP-tapon jälkeen aitioon ilmestyy lukkokivi, jonka yllä on nuoli ja teksti HAJOTELMA. Sen hajotelmat ratkaisemalla pääsee Salamaluolaan (vapaaehtoinen, ks. luku 8) |
-| Tappo 20 | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
+| VIP-tapot | VIP-aitio. Zombit ovat supervahvoja. Ensimmäisen VIP-tapon jälkeen aitioon ilmestyy lukkokivi, jonka yllä on nuoli ja alla teksti AARREKIVI (2026-11-17, aiemmin HAJOTELMA: houkuttelevampi, koska kiven takana on aarre). Sen hajotelmat ratkaisemalla pääsee Salamaluolaan (vapaaehtoinen, ks. luku 8) |
+| Viimeinen tappo (100, kehityksessä 40) | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
 | Loppuruutu | Pisteet, aika, saavutukset, pistetaulukko, valmis viesti |
 
 Tapporajat ovat yhdessä tiedostossa (`web/src/data/rules.ts`). Kytkin `RELEASE` valitsee rajat: kehitysvaiheessa VIP-aitio 20 tapolla, julkaisussa 50 tapolla. Läpäisy on aina kaksinkertainen VIP-rajaan nähden (40 tai 100). Lapsen alkuperäinen idea oli 5 ja 10. Hän toivoi myöhemmin paljon vaikeampaa pääsyä aitioon, ja 10 tuntui aikuisestakin nopealta, joten julkaisuraja on 50 (2026-11-17). Kehitysvaiheen pienempi raja on testaamista varten. Julkaisussa kytkin käännetään arvoon `true` ja muutos viedään palvelimelle CI:n kautta.

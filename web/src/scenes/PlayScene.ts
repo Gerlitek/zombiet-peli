@@ -97,7 +97,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
     this.banner = label(this, W / 2, HORIZON + 22, '', P.iceL);
     this.vipSign = label(this, VIP_SIGN.x + VIP_SIGN.w / 2, 6, 'VIP', P.hurt);
-    this.stoneTag = label(this, STONE.x, STONE.y + 4, 'HAJOTELMA', P.iceL, 8).setVisible(false);
+    this.stoneTag = label(this, STONE.x, STONE.y + 4, 'AARREKIVI', P.iceL, 8).setVisible(false);
     this.input.keyboard!.once('keydown-ESC', () => { flush(); this.scene.start('menu'); }); // Esc: back to the start screen
     this.weather = new Weather(W, H);
     this.enterZone('forest');
@@ -264,7 +264,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
       this.say('Viimeinen zombi saapuu!');
       this.cameras.main.flash(250, 181, 225, 248);
     }
-    if (this.kills === STONE_AT && !this.stone.used) { this.stone.open = true; this.say('Lukkokivi ilmestyi! Kävele sen luo ja ratkaise hajotelmat.'); }
+    if (this.kills === STONE_AT && !this.stone.used) { this.stone.open = true; this.say('Aarrekivi ilmestyi! Ratkaise sen arvoitukset, niin pääset aarteelle.'); }
   }
 
   // ---------- overlays: wheel, lock stone ----------
@@ -294,7 +294,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
       level, look: this.hero.look, speed: this.hero.speed,
       done: (bonus: number) => {
         this.calm();
-        if (!bonus) return this.say('Lukkokivi sulkeutui');
+        if (!bonus) return this.say('Aarrekivi sulkeutui');
         this.puzzleBonus += bonus;
         this.heal();
         track('cave_entered', { zone, level, duration_s: Math.floor(this.clock) });
