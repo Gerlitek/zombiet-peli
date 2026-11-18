@@ -165,7 +165,7 @@ infra/
 `bootstrap.bicep` luo:
 
 - resurssiryhmän `rg-zombies`
-- identiteetin `id-zombies-github` ja sille federoidun tunnisteen vain GitHub-ympäristölle `production` (subject `repo:Gerlitek/zombiet-peli:environment:production`). Pull requesteilla ei ole pääsyä Azureen. Rooli: Contributor, laajuus vain `rg-zombies`.
+- identiteetin `id-zombies-github` ja sille federoidun tunnisteen vain GitHub-ympäristölle `production` (subject `repo:Gerlitek@263029107/zombiet-peli@1461639455:environment:production`, GitHubin muuttumaton id-muoto). Pull requesteilla ei ole pääsyä Azureen. Rooli: Contributor, laajuus vain `rg-zombies`.
 - identiteetin `id-zombies-api` Function Appille. Roolit resurssiryhmässä: Storage Blob Data Contributor, Storage Table Data Contributor ja Monitoring Metrics Publisher.
 
 Perustelu: roolimääritysten luominen vaatii vahvemmat oikeudet kuin Contributor. Kun ne tehdään käsin bootstrapissa, CI-identiteetti ei koskaan saa oikeutta jakaa oikeuksia. OIDC toteutetaan käyttäjän määrittämällä hallitulla identiteetillä eikä sovellusrekisteröinnillä, jolloin kaikki pysyy Bicepissä eikä Entra ID:hen tarvita erillisiä oikeuksia.
@@ -188,7 +188,7 @@ Kolme työnkulkua, jokainen käynnistyy vain oman kansionsa muutoksista.
 | `infra.yml` | `az bicep build` ja linter, ei Azure-kirjautumista | `what-if`, hyväksyntä, deploy resurssiryhmään |
 | `api.yml` | ruff, pytest | sama + koodin deploy Function Appiin |
 
-- Repo: `github.com/Gerlitek/zombiet-peli`. Federoidun tunnisteen subject viittaa tähän nimeen (`repo:Gerlitek/zombiet-peli:...`), joten repon uudelleennimeäminen rikkoo kirjautumisen.
+- Repo: `github.com/Gerlitek/zombiet-peli`. Federoidun tunnisteen subject käyttää GitHubin numeerisia id:itä (omistaja ja repo), koska uudet repot saavat oletuksena muuttumattoman subjectin (todettu 2026-11-18, kirjautuminen kaatui nimimuotoon). Uudelleennimeäminen ei riko kirjautumista, ja vapautunutta nimeä ei voi ottaa haltuun. Jos repo poistetaan ja luodaan uudelleen, id:t vaihtuvat ja `bootstrap.bicep` on ajettava uudelleen.
 - GitHub Actions on yksityisessä repossa maksuton kuukausikiintiön rajoissa (2 000 min/kk). Työnkulut käynnistyvät vain oman kansionsa muutoksista, joten kiintiö ei kulu turhaan.
 - Azure-kirjautuminen: `azure/login` OIDC:llä identiteetillä `id-zombies-github`. Repossa on vain kolme tunnistetta (client id, tenant id, subscription id), ei salaisuuksia.
 - Deploy mainiin kulkee GitHub-ympäristön `production` kautta, ja ympäristössä on pakollinen manuaalinen hyväksyntä. Federoitu tunniste hyväksyy vain tämän ympäristön, joten Azure-tunnuksen saa vain ajo, jonka omistaja on hyväksynyt. `what-if` ajetaan samassa työssä ennen deployta, ja sen tulos näkyy ennen hyväksyntää.
