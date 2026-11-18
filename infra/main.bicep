@@ -10,3 +10,10 @@ module monitoring 'modules/monitoring.bicep' = {
     location: location
   }
 }
+
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+  }
+}
