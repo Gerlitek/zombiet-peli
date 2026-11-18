@@ -17,3 +17,16 @@ module storage 'modules/storage.bicep' = {
     location: location
   }
 }
+
+module api 'modules/api.bicep' = {
+  name: 'api'
+  params: {
+    location: location
+    storageAccountName: storage.outputs.accountName
+    blobEndpoint: storage.outputs.blobEndpoint
+    appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
+  }
+}
+
+output AZURE_FUNCTION_APP_NAME string = api.outputs.functionAppName
+output API_HOST_NAME string = api.outputs.functionAppHostName
