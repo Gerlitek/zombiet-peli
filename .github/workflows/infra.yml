@@ -1,8 +1,9 @@
-# Infra: validate the Bicep, then preview the change against Azure.
+# Infra: validate the Bicep, then preview and deploy it to the resource group.
 # Pull requests and pushes only validate and never log in to Azure.
-# The what-if job runs only when the owner starts the workflow by hand on main. It uses
+# The deploy job runs only when the owner starts the workflow by hand on main. It uses
 # the environment "production": the owner must approve the run before it gets an Azure token.
-# There is no deploy step yet. It is added after the what-if has been seen to work.
+# Approving means "I have read the what-if". The owner checks it locally before starting the run.
+# Incremental mode only: resources missing from the template are never deleted.
 name: infra
 
 on:
@@ -29,7 +30,7 @@ jobs:
       # Compiles to ARM JSON and runs the Bicep linter. Fails on errors, not on warnings.
       - run: az bicep build --file infra/main.bicep --stdout > /dev/null
 
-  what-if:
+  deploy:
     needs: validate
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -49,5 +50,13 @@ jobs:
         run: |
           az deployment group what-if \
             --resource-group rg-zombies \
+            --template-file infra/main.bicep \
+            --parameters infra/main.parameters.json
+      - name: Deploy
+        run: |
+          az deployment group create \
+            --name "main-${{ github.run_number }}" \
+            --resource-group rg-zombies \
+            --mode Incremental \
             --template-file infra/main.bicep \
             --parameters infra/main.parameters.json
