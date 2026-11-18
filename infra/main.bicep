@@ -1,4 +1,12 @@
 // Resource group scope: everything the game runs on. Run by GitHub Actions and azd.
-// Empty on purpose for now: it only proves that the pipeline (OIDC login, what-if) works.
-// Modules (monitoring, storage, api) are added one at a time, each reviewed with what-if.
+// Modules are added one at a time, each reviewed with what-if before it is deployed.
 targetScope = 'resourceGroup'
+
+param location string = resourceGroup().location
+
+module monitoring 'modules/monitoring.bicep' = {
+  name: 'monitoring'
+  params: {
+    location: location
+  }
+}

@@ -88,15 +88,16 @@ resource costlySettings 'Microsoft.Authorization/policyDefinitions@2024-05-01' =
             ]
           }
           {
-            // Logs: pay per GB with an explicit daily cap of at most 0.1 GB. No commitment tiers.
+            // Logs: pay per GB with an explicit daily cap of exactly 0.1 GB. No commitment tiers.
+            // Equality, not less/greater: those fail to evaluate when the field is an integer
+            // (-1 means unlimited) and the operand is a float, and then the deployment is denied.
             allOf: [
               { field: 'type', equals: 'Microsoft.OperationalInsights/workspaces' }
               {
                 anyOf: [
                   { field: 'Microsoft.OperationalInsights/workspaces/sku.name', notEquals: 'PerGB2018' }
                   { field: 'Microsoft.OperationalInsights/workspaces/workspaceCapping.dailyQuotaGb', exists: false }
-                  { field: 'Microsoft.OperationalInsights/workspaces/workspaceCapping.dailyQuotaGb', less: 0 }
-                  { field: 'Microsoft.OperationalInsights/workspaces/workspaceCapping.dailyQuotaGb', greater: json('0.1') }
+                  { field: 'Microsoft.OperationalInsights/workspaces/workspaceCapping.dailyQuotaGb', notEquals: json('0.1') }
                 ]
               }
             ]
