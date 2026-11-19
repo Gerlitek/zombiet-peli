@@ -14,3 +14,8 @@ docs/next-steps.md
 .agents/
 .claude/skills/
 skills-lock.json
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+api/local.settings.json

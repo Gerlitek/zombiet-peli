@@ -1,0 +1,11 @@
+# azd: provisions infra/main.bicep and deploys the API. The front is not here (rsync to gerlitek).
+name: zombiet-peli
+infra:
+  provider: bicep
+  path: infra
+  module: main
+services:
+  api:
+    project: ./api
+    language: python
+    host: function
