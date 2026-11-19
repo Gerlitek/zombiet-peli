@@ -113,7 +113,7 @@ Function App käyttää tallennustiliä hallitulla identiteetillä (managed iden
 |---|---|---|---|
 | `scores` | pelin versio, esim. `v1` | `(999999 - pisteet)` nollilla täytettynä + `_` + session_id | nick (indeksit), score, kills, duration_s, hearts, character, created |
 | `messages` | `all` | käänteinen aikaleima + `_` + session_id | nick, message_id |
-| `limits` | `daily` | päivämäärä | count |
+| `limits` | `daily` (kirjoitukset), `requests` (kaikki pyynnöt), `session` (yksi tulos per istunto) | päivämäärä tai session_id | count |
 
 Table Storage ei osaa lajitella. Rivit palautuvat aina RowKeyn mukaisessa järjestyksessä, joten käänteinen pistemäärä avaimessa tekee kyselystä "10 ensimmäistä riviä" suoraan pistetaulun. Sama temppu käänteisellä aikaleimalla antaa uusimmat viestit. Avain suunnitellaan kyselyn mukaan.
 
@@ -166,7 +166,7 @@ infra/
 
 - resurssiryhmän `rg-zombies`
 - identiteetin `id-zombies-github` ja sille federoidun tunnisteen vain GitHub-ympäristölle `production` (subject `repo:Gerlitek@263029107/zombiet-peli@1461639455:environment:production`, GitHubin muuttumaton id-muoto). Pull requesteilla ei ole pääsyä Azureen. Rooli: Contributor, laajuus vain `rg-zombies`.
-- identiteetin `id-zombies-api` Function Appille. Roolit resurssiryhmässä: Storage Blob Data Contributor, Storage Table Data Contributor ja Monitoring Metrics Publisher.
+- identiteetin `id-zombies-api` Function Appille. Roolit resurssiryhmässä: Storage Blob Data Contributor, Storage Table Data Contributor, Monitoring Metrics Publisher ja oma rooli, joka sallii vain toiminnon `Microsoft.Web/sites/stop/action` (kustannusjarru). Aiemmin pysäytykseen käytettiin roolia Website Contributor, mutta se salli myös koodin julkaisun, asetusten muuttamisen ja julkaisutunnusten lukemisen. Vaihdon jälkeen vanha määritys poistetaan kerran käsin: `az role assignment delete --assignee <id-zombies-api:n principalId> --role "Website Contributor" -g rg-zombies`.
 
 Perustelu: roolimääritysten luominen vaatii vahvemmat oikeudet kuin Contributor. Kun ne tehdään käsin bootstrapissa, CI-identiteetti ei koskaan saa oikeutta jakaa oikeuksia. OIDC toteutetaan käyttäjän määrittämällä hallitulla identiteetillä eikä sovellusrekisteröinnillä, jolloin kaikki pysyy Bicepissä eikä Entra ID:hen tarvita erillisiä oikeuksia.
 
@@ -184,16 +184,17 @@ Kolme työnkulkua, jokainen käynnistyy vain oman kansionsa muutoksista.
 
 | Työnkulku | Pull request | Yhdistäminen mainiin |
 |---|---|---|
-| `web.yml` (tarkistukset käytössä, deploy lisätään vaiheessa 3) | tyyppitarkistus, Vitest, build | sama + rsync gerlitekiin |
+| `web.yml` | tyyppitarkistus, Vitest, build | sama + hyväksyntä ja rsync gerlitekiin |
 | `infra.yml` | `az bicep build` ja linter, ei Azure-kirjautumista | `what-if`, hyväksyntä, deploy resurssiryhmään |
-| `api.yml` | ruff, pytest | sama + koodin deploy Function Appiin |
+| `api.yml` | ruff, pytest | sama + hyväksyntä ja koodin deploy Function Appiin |
 
 - Repo: `github.com/Gerlitek/zombiet-peli`. Federoidun tunnisteen subject käyttää GitHubin numeerisia id:itä (omistaja ja repo), koska uudet repot saavat oletuksena muuttumattoman subjectin (todettu 2026-11-18, kirjautuminen kaatui nimimuotoon). Uudelleennimeäminen ei riko kirjautumista, ja vapautunutta nimeä ei voi ottaa haltuun. Jos repo poistetaan ja luodaan uudelleen, id:t vaihtuvat ja `bootstrap.bicep` on ajettava uudelleen.
 - GitHub Actions on yksityisessä repossa maksuton kuukausikiintiön rajoissa (2 000 min/kk). Työnkulut käynnistyvät vain oman kansionsa muutoksista, joten kiintiö ei kulu turhaan.
 - Azure-kirjautuminen: `azure/login` OIDC:llä identiteetillä `id-zombies-github`. Repossa on vain kolme tunnistetta (client id, tenant id, subscription id), ei salaisuuksia.
-- Deploy mainiin kulkee GitHub-ympäristön `production` kautta, ja ympäristössä on pakollinen manuaalinen hyväksyntä. Federoitu tunniste hyväksyy vain tämän ympäristön, joten Azure-tunnuksen saa vain ajo, jonka omistaja on hyväksynyt. `what-if` ajetaan samassa työssä ennen deployta, ja sen tulos näkyy ennen hyväksyntää.
-- Tilanne 2026-11-18: repo on julkinen ja ympäristö `production` on olemassa (pakollinen hyväksyjä omistaja, ajot sallittu vain haaralle `main`). Federoidun tunnisteen subject on päätetty: `environment:production`. Front-deploy (`web.yml`) käynnistetään edelleen käsin (`workflow_dispatch`, vain `main`) eikä käytä ympäristöä, koska se ei kirjaudu Azureen. Azure-työt (`infra.yml`, `api.yml`) käyttävät ympäristöä.
-- Hyväksyjä on yksin omistaja, joten portti ei ole kahden henkilön valvonta vaan pysähdyskohta: `what-if`in tulos luetaan ennen kuin ajo saa Azure-tunnuksen.
+- Deploy mainiin kulkee GitHub-ympäristön `production` kautta, ja ympäristössä on pakollinen manuaalinen hyväksyntä. Federoitu tunniste hyväksyy vain tämän ympäristön, joten Azure-tunnuksen saa vain ajo, jonka omistaja on hyväksynyt. `what-if` ajetaan samassa työssä ennen deployta. Hyväksyntä koskee koko työtä, joten omistaja lukee `what-if`in paikallisesti ennen ajon käynnistämistä, ja putken `what-if` jää lokiin.
+- Tilanne 2026-11-18: repo on julkinen ja ympäristö `production` on olemassa (pakollinen hyväksyjä omistaja, ajot sallittu vain haaralle `main`). Federoidun tunnisteen subject on päätetty: `environment:production`. Kaikki kolme deploya käynnistetään käsin (`workflow_dispatch`, vain `main`) ja käyttävät ympäristöä, myös `web.yml` (2026-11-19).
+- Hyväksyjä on yksin omistaja, joten portti ei ole kahden henkilön valvonta vaan pysähdyskohta ennen kuin ajo saa Azure-tunnuksen tai SSH-avaimen.
+- Actionit on kiinnitetty commit-SHA:han, koska tagin voi siirtää osoittamaan muuta koodia. Dependabot (`.github/dependabot.yml`) avaa kuukausittain pull requestin uusista versioista.
 - Palveluntarjoaja on Shellit.org (jaettu webhotelli, Apache), sama kuin AI Radarilla. AI Radar viedään sinne käsin SFTP:llä. Shellit sallii SSH-kirjautumisen avaimella (vahvistettu 2026-11-17), joten julkaisu tehdään rsyncillä SSH:n yli.
 - Front: SSH-avain on repon salaisuus `DEPLOY_SSH_KEY` ja palvelimen käyttäjätunnus muuttuja `DEPLOY_USER`. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
 - Putki tehdään ensin `az`-komennoilla. `azd pipeline config`ia kokeillaan myöhemmin vertailun vuoksi.
@@ -219,7 +220,7 @@ Budjetin rinnalle tulevat:
   - *Kalliit asetukset*: sallituistakin tyypeistä vain halvin muoto. Functions-suunnitelma vain Flex Consumption (`FC1`). Function Appissa enintään 1 instanssi, muisti enintään 512 Mt, ei aina valmiina olevia instansseja. Tallennustili vain `Standard_LRS`. Log Analytics vain `PerGB2018` ja päiväkatto tasan 0,1 Gt (yhtäsuuruusehto, koska `less`/`greater`-vertailu kaatuu tyyppiristiriitaan, kun kenttä on kokonaisluku, esim. -1 eli rajaton; todettu 2026-11-18, policy epäonnistui turvallisesti eli esti deployn).
   - Policy on tilaustasolla, joten CI-identiteetti (Contributor vain resurssiryhmään) ei voi muuttaa sitä. Uusi resurssityyppi lisätään ensin policyyn ja vasta sitten Bicepiin.
 - **Kustannuspoikkeamahälytys** (`guardrails.bicep`, Cost Management, maksuton). Se huomaa äkillisen muutoksen nopeammin kuin kuukausibudjetin prosenttiraja. Hälytyksellä on päättymispäivä, ja se uusitaan vuosittain.
-- **Automaattinen pysäytys** samassa vaiheessa kuin Function App luodaan, ei myöhemmin. API laskee kaikki pyynnöt vuorokausilaskuriin. Kun laskuri ylittää katon, API sammuttaa itsensä (hallitulla identiteetillä on oikeus pysäyttää vain oma Function App). Tämä ei riipu kustannustiedon viiveestä. Peli jatkaa toimintaansa ilman verkkoa, ja omistaja käynnistää API:n uudelleen käsin.
+- **Automaattinen pysäytys** samassa vaiheessa kuin Function App luodaan, ei myöhemmin. API:lla on kaksi vuorokausilaskuria taulussa `limits`: kirjoitukset (`DAILY_CAP`, 5000) ja kaikki pyynnöt (`REQUEST_CAP`, 50 000). Pyyntölaskuri tallennetaan 100 pyynnön välein, joten uudelleenkäynnistys ei nollaa sitä (aiemmin se oli vain muistissa, ja isoilla pyynnöillä kaadettu instanssi nollasi katon). Isäntä hylkää yli 32 kt:n rungot (`FUNCTIONS_REQUEST_BODY_SIZE_LIMIT`) ennen koodia. Kun laskuri ylittää katon, API sammuttaa itsensä (hallitulla identiteetillä on oikeus vain pysäyttää). Jos omistaja käynnistää API:n samana päivänä, se vastaa 429 UTC-keskiyöhön asti, ellei laskuririviä poisteta. Tämä ei riipu kustannustiedon viiveestä. Peli jatkaa toimintaansa ilman verkkoa, ja omistaja käynnistää API:n uudelleen käsin.
 - **Hätäjarru käsin** kirjattuna README:hen: `az functionapp stop`.
 
 Mitä maksaa, vaikka kukaan ei pelaa: ei mitään kiinteää. Suunnitelmassa ei ole yhtään resurssia, jolla on kuukausimaksu tai vähimmäislaskutus. Ennen jokaista uutta resurssia tarkistetaan hinnastosta, että tämä pätee edelleen.
