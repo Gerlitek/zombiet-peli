@@ -15,7 +15,7 @@ import { pickWeighted } from '../logic/random';
 import { score } from '../logic/score';
 import { WheelName } from '../logic/wheel';
 import { addBest, load, unlock } from '../systems/storage';
-import { submitScore } from '../systems/api';
+import { submitScore, warmUp } from '../systems/api';
 import { currentSession, flush, startSession, track } from '../systems/telemetry';
 import { ATTACK_HINT, attackInput } from '../systems/attack';
 import { Arsenal, Combat, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, newArsenal, updateWeapons } from '../systems/weapons';
@@ -109,6 +109,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.enterZone('forest');
 
     startSession();
+    warmUp();
     track('game_started', { nickname: this.nick, character: data.hero });
     this.say(`Zombit nousevat sateesta. ${ATTACK_HINT}!`);
   }

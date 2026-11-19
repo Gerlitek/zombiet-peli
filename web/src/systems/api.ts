@@ -1,11 +1,19 @@
 // The game's connection to the API (api/function_app.py). The game never waits for the network:
-// every call gives up after a few seconds and returns null on any failure (offline, 429 when the
+// every call gives up after a while and returns null on any failure (offline, 429 when the
 // daily cap is full, 404 when the app is stopped). The caller then falls back to local data.
 import { Nick } from '../data/nicknames';
 
 // The address is public. In dev (npm run dev) there is no API, and CORS allows only the game's own domain anyway.
 const API_URL: string = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? 'https://func-zombies-6254ydxyfcbzi.azurewebsites.net' : '');
-const TIMEOUT_MS = 4000;
+// The Function App scales to zero (no always-on instance: that would cost money), so the first request after
+// a quiet period waits for a cold start. It took about 30 s in a measurement on 2026-11-19. The timeout is
+// generous because nothing waits for it: the game goes on, and the result appears when it arrives.
+const TIMEOUT_MS = 45000;
+
+// Wakes the API up in the background (page load, game start) so that it is warm when the result is sent.
+export function warmUp() {
+  if (API_URL) fetch(`${API_URL}/api/leaderboard`, { signal: AbortSignal.timeout(TIMEOUT_MS) }).catch(() => undefined);
+}
 
 export interface BoardEntry { nick: Nick; score: number; kills: number; won: boolean }
 
