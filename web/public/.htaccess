@@ -22,8 +22,8 @@ Options -Indexes
   </FilesMatch>
 
   # Only this site's own files may run. No third-party scripts, fonts or trackers.
-  # When the Azure API is added, its address must be added to connect-src.
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+  # connect-src lists the game's own API (Azure Function App). Without it the browser blocks every call to the API.
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://func-zombies-6254ydxyfcbzi.azurewebsites.net; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
   Header set X-Content-Type-Options "nosniff"
   Header set Referrer-Policy "no-referrer"
 </IfModule>
