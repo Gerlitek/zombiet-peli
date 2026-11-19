@@ -2,9 +2,9 @@
 
 > **In English:** a small browser game (TypeScript, Phaser 4) built with AI, and a cloud work sample.
 > Azure guardrails come first, as code: a budget, Azure Policy that denies anything outside the plan or its cheapest
-> settings, and a cost anomaly alert, all in Bicep before any resource exists. The game is deployed with GitHub Actions;
-> a Python API on Azure Functions (Flex Consumption) with a score table is next. Play it at
-> [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop, in Finnish). Docs are in Finnish; code and commits in English.
+> settings, and a cost anomaly alert, all in Bicep before any resource exists. The game is deployed with GitHub Actions.
+> A Python API on Azure Functions keeps the score table and the game data in storage, with daily caps on writes and
+> requests so a flood can't run up the bill. Play it at [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop, in Finnish). Docs are in Finnish; code and commits in English.
 
 Pieni selainpeli: taistele zombieita vastaan. Pelin idea, tarina ja hahmot ovat lapsen suunnittelemia.
 
