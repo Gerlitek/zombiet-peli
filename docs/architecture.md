@@ -316,6 +316,7 @@ Vaihe 2 jaetaan pieniin, erikseen näytettäviin askeliin:
 | Salaisuudet repossa | OIDC, SSH-avain vain GitHubin salaisuutena, sähköpostit parametrina |
 | Linux Consumption poistuu | Flex Consumption alusta asti (luku 11) |
 | Yllätyskulut | Ei kiinteähintaisia resursseja, kovat rajat, automaattinen pysäytys (luku 7) |
+| Muisti loppuu, kun pelaajia on paljon yhtä aikaa | Yksi instanssi, 512 Mt, HTTP-rinnakkaisuus 16 (`infra/modules/api.bicep`). Mitattu 2026-11-19: Private Bytes keskimäärin 387 Mt ja enintään 435 Mt (ennen rinnakkaisuuden nostoa enintään 395 Mt), 73 pyyntöä ilman virheitä. Jos muisti lähestyy 512 Mt tai 503-virheitä tulee, pienennä arvo 16:sta esim. 8:aan. Tarkistus: `AppPerformanceCounters` (`Name == 'Private Bytes'`) ja `AppRequests` työtilassa `log-zombies` |
 
 ## 11. Päätökset (hyväksytty 2026-11-16)
 

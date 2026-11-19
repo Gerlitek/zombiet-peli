@@ -7,6 +7,9 @@ dist/
 # Private material (the child's drawings). Never committed.
 private/
 
+# Instructions for Claude Code. Personal working notes, kept local.
+CLAUDE.md
+
 # The owner's personal to-do list (account and security details). Never committed.
 docs/next-steps.md
 
