@@ -195,8 +195,8 @@ Kolme työnkulkua, jokainen käynnistyy vain oman kansionsa muutoksista.
 - Tilanne 2026-11-18: repo on julkinen ja ympäristö `production` on olemassa (pakollinen hyväksyjä omistaja, ajot sallittu vain haaralle `main`). Federoidun tunnisteen subject on päätetty: `environment:production`. Kaikki kolme deploya käynnistetään käsin (`workflow_dispatch`, vain `main`) ja käyttävät ympäristöä, myös `web.yml` (2026-11-19).
 - Hyväksyjä on yksin omistaja, joten portti ei ole kahden henkilön valvonta vaan pysähdyskohta ennen kuin ajo saa Azure-tunnuksen tai SSH-avaimen.
 - Actionit on kiinnitetty commit-SHA:han, koska tagin voi siirtää osoittamaan muuta koodia. Dependabot (`.github/dependabot.yml`) avaa kuukausittain pull requestin uusista versioista.
-- Palveluntarjoaja on Shellit.org (jaettu webhotelli, Apache), sama kuin AI Radarilla. AI Radar viedään sinne käsin SFTP:llä. Shellit sallii SSH-kirjautumisen avaimella (vahvistettu 2026-11-17), joten julkaisu tehdään rsyncillä SSH:n yli.
-- Front: SSH-avain on repon salaisuus `DEPLOY_SSH_KEY` ja palvelimen käyttäjätunnus muuttuja `DEPLOY_USER`. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
+- Front julkaistaan jaetulle webhotellille (Apache) rsyncillä SSH:n yli.
+- SSH-avain on ympäristön `production` salaisuus `DEPLOY_SSH_KEY`, joten sen saa vain hyväksytty ajo. Palvelimen käyttäjätunnus on muuttuja `DEPLOY_USER`. Avain on tehty vain tähän, ja palvelimella se on rajattu pelin kansioon (`command=`-rajoitus `authorized_keys`issa, vain rsync).
 - Putki tehdään ensin `az`-komennoilla. `azd pipeline config`ia kokeillaan myöhemmin vertailun vuoksi.
 
 ## 7. Kustannukset ja rajat
@@ -237,25 +237,25 @@ Azuressa ei ole kovaa kulukattoa pay-as-you-go-tilaukselle. Siksi isompi lasku e
 
 | Riski | Sääntö | Missä varmistetaan |
 |---|---|---|
-| Kutsutulva API:in | Instansseja enintään 1, aina valmiina 0, API sammuttaa itsensä vuorokausikaton ylittyessä | `api.bicep`, API:n koodi, kuormatesti ennen julkaisua |
+| Kutsutulva API:in | Instansseja enintään 1, aina valmiina 0, API sammuttaa itsensä vuorokausikaton ylittyessä | `api.bicep`, API:n koodi ja sen testit (`api/tests/test_caps.py`) |
 | Lokien määrä | Päiväkatto 0,1 Gt sekä Log Analyticsissa että Application Insightsissa, säilytys 30 vrk, näytteenotto | `monitoring.bicep` |
 | Tallennustila | LRS, ei versiointia, ei SFTP:tä (tuntihinta), ei hierarkkista nimiavaruutta, raw poistuu 30 vrk, pyynnön enimmäiskoko 16 kt | `storage.bicep` |
 | Maksulliset tietoturvapaketit | Defender for Storage ja Defender for App Service pysyvät pois päältä. Portaali tarjoaa niitä, älä hyväksy | `az security pricing list` ennen ja jälkeen käyttöönoton |
 | Väärä resurssi vahingossa (myös tekoälyn tekemänä) | Azure Policy koko tilaukselle: vain suunnitelman resurssityypit ja niiden halvimmat asetukset sallittu. Maksuton | `guardrails.bicep` |
 | Vuotanut CI-tunnus | Federoitu tunniste vain ympäristölle `production`, jossa manuaalinen hyväksyntä. Ei tallennettuja salaisuuksia | `bootstrap.bicep`, GitHub-ympäristö |
-| Omistajan tunnuksen kaappaus | Microsoft-tilille passkey tai authenticator-sovellus. Tämä on ainoa tunnus, joka voi poistaa policyt | Microsoft-tilin asetukset |
-| Kalliit lisäpalvelut | Ei API Managementia, Front Dooria, Application Gatewayta, NAT-yhdyskäytävää, yksityisiä päätepisteitä, Premium-suunnitelmaa eikä kiinteää IP:tä | `what-if` jokaisessa pull requestissa |
+| Omistajan tunnuksen kaappaus | Vahva MFA | Tilin asetukset |
+| Kalliit lisäpalvelut | Ei API Managementia, Front Dooria, Application Gatewayta, NAT-yhdyskäytävää, yksityisiä päätepisteitä, Premium-suunnitelmaa eikä kiinteää IP:tä | Policy, `what-if` ennen jokaista infran julkaisua |
 | Unohtuneet resurssit | Kaikki yhdessä resurssiryhmässä. `az group delete` poistaa kaiken kerralla | README |
 | GitHub Actions | Tilin kulutusraja 0 USD: minuuttien loputtua ajot pysähtyvät, laskua ei tule | GitHub: Settings, Billing |
-| Shellit | Kiinteä kuukausihinta. Tarkista sopimuksesta, ettei liikenteestä laskuteta erikseen | Shellitin hallintapaneeli |
+| Webhotelli | Kiinteä kuukausihinta, liikennettä ei laskuteta erikseen | Palveluntarjoajan sopimus |
 
 Pahin realistinen tapaus näiden jälkeen: häirikkö täyttää vuorokausikaton, API sammuu, ja kulu on senttejä. Suurin jäljelle jäävä riski ei ole hyökkääjä vaan oma virhe, eli resurssi, joka luodaan väärällä asetuksella. Sitä vastaan ovat Policy, `what-if` ja budjettihälytys.
 
-### Maksukortti ja jäännösriski (2026-11-17)
+### Jäännösriski (2026-11-17)
 
-Kortin tyyppi tai luottoraja ei rajaa vastuuta: Azure laskuttaa kulutuksen, ja maksamaton lasku jää velaksi. Kortti valitaan siksi mukavuuden mukaan (luottokortti on ok, matala raja on hyvä lisä hälytyksenä), ja suojaus tehdään kerroksittain:
+Pay-as-you-go-tilauksella ei ole kovaa kulukattoa, joten suojaus tehdään kerroksittain:
 
-1. **Ei Azurea ennen kuin sitä tarvitaan.** Versio 1 on Shellitissä ilman Azurea. Tilauksessa on vain budjetti ja maksuttomat suojaukset siihen asti, kunnes API tehdään.
+1. **Ei Azurea ennen kuin sitä tarvitaan.** Versio 1 on webhotellissa ilman Azurea. Tilauksessa on vain budjetti ja maksuttomat suojaukset siihen asti, kunnes API tehdään.
 2. **Policy**: kalliita resursseja ei voi luoda kukaan muu kuin omistaja, ei edes vahingossa.
 3. **Kovat rajat resursseissa**: yksi 512 Mt:n instanssi, API sammuttaa itsensä vuorokausikaton ylittyessä, lokien päiväkatto.
 4. **Hälytykset**: budjetti ja poikkeamahälytys. Viive 8 - 24 h, siksi vain varaverkko.
@@ -270,7 +270,7 @@ Pahimmat tapaukset kerrosten jälkeen (hinnat tarkistettava hinnastosta ennen va
 | Lokit | 0,1 Gt/vrk katto, eli enintään noin 3 Gt/kk, mikä mahtuu Log Analyticsin kuukausittaiseen ilmaisosuuteen |
 | Omistajan tunnus kaapattu | rajaton. Torjunta: MFA. Hätäjarrut: `az group delete --name rg-zombies`, tilauksen peruutus, Azure-tukipyyntö heti |
 
-Ennen kuin API avataan julkiseksi, ajetaan kuormatesti: skripti lähettää pyyntöjä yli katon, ja varmistetaan, että API sammuu ja Cost Management näyttää seuraavana päivänä nollaa.
+Tilanne 2026-11-20: laskurit ja pysäytyksen laukaisu on testattu yksikkötesteillä, mutta pysäytystä ei ole testattu tuotannossa kuormalla. Testi: matala `REQUEST_CAP` app settingiksi, pyyntöjä yli katon, API:n pitää pysähtyä, ja Cost Management näyttää seuraavana päivänä nollaa.
 
 ## 8. Yksityisyys
 
