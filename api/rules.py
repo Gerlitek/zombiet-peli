@@ -14,6 +14,7 @@ WEAPONS = {'sword', 'fist', 'gloves', 'katanas', 'hammer', 'nunchaku', 'laser', 
 ACHIEVEMENTS = {'first', 'vip', 'won', 'flawless', 'fast', 'giant', 'lord', 'puzzle', 'rudikarri'}
 HEROES = {'knight', 'mini'}
 ZONES = {'forest', 'vip'}
+LEVELS = {'easy', 'medium', 'hard'}
 NICK_SIZES = (12, 12, 99)  # adjectives, animals, number: the word lists are on the front
 
 # Kills, score and hearts are bounded by the game rules (web/src/data/rules.ts, logic/score.ts).
@@ -67,9 +68,9 @@ _EVENTS = {
                       'zone': lambda v: _one_of(v, ZONES), 'total_kills': lambda v: _int(v, 0, MAX_KILLS)},
     'player_hit': {'zombie_type': lambda v: _one_of(v, ZOMBIES), 'zone': lambda v: _one_of(v, ZONES), 'hearts_left': lambda v: _int(v, 0, 5)},
     'vip_entered': {'duration_s': lambda v: _int(v, 0, 7200), 'hearts_left': lambda v: _int(v, 0, 5)},
-    'puzzle_answered': {'level': lambda v: _int(v, 0, 20), 'target': lambda v: _int(v, 0, 100), 'parts': lambda v: _int_list(v),
+    'puzzle_answered': {'level': lambda v: _one_of(v, LEVELS), 'target': lambda v: _int(v, 0, 100), 'parts': lambda v: _int_list(v),
                         'answer': lambda v: _int(v, 0, 100), 'correct': lambda v: _bool(v), 'time_ms': lambda v: _int(v, 0, 600000)},
-    'cave_entered': {'zone': lambda v: _one_of(v, ZONES), 'level': lambda v: _int(v, 0, 20), 'duration_s': lambda v: _int(v, 0, 7200)},
+    'cave_entered': {'zone': lambda v: _one_of(v, ZONES), 'level': lambda v: _one_of(v, LEVELS), 'duration_s': lambda v: _int(v, 0, 7200)},
     'achievement_unlocked': {'achievement': lambda v: _one_of(v, ACHIEVEMENTS)},
     'game_ended': {'result': lambda v: _one_of(v, {'won', 'lost'}), 'kills': lambda v: _int(v, 0, MAX_KILLS),
                    'duration_s': lambda v: _int(v, 0, 7200), 'hearts_left': lambda v: _int(v, 0, 5), 'score': lambda v: _int(v, 0, MAX_SCORE)},

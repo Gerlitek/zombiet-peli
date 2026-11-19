@@ -78,3 +78,10 @@ def test_bad_score_is_rejected(bad):
 def test_best_score_sorts_first():
     keys = [rules.score_row_key(p, SID) for p in (100, 5000, 750)]
     assert min(keys) == rules.score_row_key(5000, SID)
+
+
+def test_puzzle_level_is_a_name():
+    base = {'event': 'cave_entered', 'ts': '2026-11-19T10:00:00Z', 'session_id': SID, 'seq': 2, 'version': '0.2.0', 'zone': 'vip', 'duration_s': 80}
+    assert rules.event({**base, 'level': 'hard'})
+    with pytest.raises(rules.Invalid):
+        rules.event({**base, 'level': 3})
