@@ -58,12 +58,12 @@ export class EndScene extends Phaser.Scene {
   private showOnline(board: BoardEntry[], data: EndData, old: Phaser.GameObjects.Text[]) {
     old.forEach((t) => t.destroy());
     const top = board.slice(0, 3), own = top.findIndex((b) => nickText(b.nick) === data.nick && b.score === data.score);
-    label(this, W / 2, 119, own >= 0 ? 'Olet verkon kärjessä! Parhaat:' : 'Verkon parhaat:', own >= 0 ? P.sand : P.iceL);
+    label(this, W / 2, 119, own >= 0 ? 'Olet kaikkien pelaajien kärjessä! Parhaat:' : 'Kaikkien pelaajien parhaat:', own >= 0 ? P.sand : P.iceL);
     top.forEach((b, i) => label(this, W / 2, 134 + i * 12, `${i + 1}. ${nickText(b.nick)}  ${b.score} p${i === own ? '   ← tämä peli' : ''}`, i === own ? P.ice : P.rain));
   }
 
   private showOffline(heading: Phaser.GameObjects.Text) {
-    heading.setText('Verkkotaulu on tauolla. Pisteesi tallentuvat tälle koneelle:');
+    heading.setText('Ennätyslista ei vastaa. Pisteesi tallentuvat tälle koneelle:');
     fit(heading, 230);
     const g = this.add.graphics().setDepth(10);
     drawCharacter(penFor(g), 24, 236, HEROES.knight.look, 0, { still: true });
