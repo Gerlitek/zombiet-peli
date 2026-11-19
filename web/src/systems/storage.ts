@@ -1,4 +1,4 @@
-// Everything the game remembers lives in this browser's localStorage. Nothing is sent anywhere.
+// What the game remembers on this device lives in localStorage. Results and events go to the API separately (systems/api.ts).
 const KEY = 'yllari-zombiet';
 
 export interface Saved {
