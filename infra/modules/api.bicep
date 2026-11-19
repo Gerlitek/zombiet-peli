@@ -22,8 +22,10 @@ resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
   properties: { reserved: true } // Linux
 }
 
+var appName = 'func-zombies-${uniqueString(resourceGroup().id)}'
+
 resource app 'Microsoft.Web/sites@2024-04-01' = {
-  name: 'func-zombies-${uniqueString(resourceGroup().id)}'
+  name: appName
   location: location
   kind: 'functionapp,linux'
   // azd finds the deploy target by this tag.
@@ -64,6 +66,8 @@ resource app 'Microsoft.Web/sites@2024-04-01' = {
         // Read by the API code to reach the data with the same identity.
         { name: 'STORAGE_ACCOUNT_NAME', value: storageAccountName }
         { name: 'AZURE_CLIENT_ID', value: apiIdentity.properties.clientId }
+        // The cost brake: the API stops this app when a daily cap is reached (role in identities.bicep).
+        { name: 'SELF_RESOURCE_ID', value: resourceId('Microsoft.Web/sites', appName) }
       ]
     }
   }

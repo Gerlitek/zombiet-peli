@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+import urllib.request
 from datetime import UTC, datetime
 
 import azure.functions as func
@@ -17,7 +18,8 @@ import rules
 log = logging.getLogger(__name__)
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-DAILY_CAP = 5000  # writes per day, all routes together. Over the cap the API answers 429.
+DAILY_CAP = 5000  # writes per day, all routes together. Over the cap the API answers 429 and stops itself.
+REQUEST_CAP = 50_000  # requests per day and instance, valid or not: bounds the executions bill. Memory only, so a restart resets it.
 SESSION_BATCHES_PER_MINUTE = 10
 GAME_VERSION = 'v1'  # partition key of the score table
 
@@ -27,6 +29,7 @@ _credential = DefaultAzureCredential(managed_identity_client_id=os.environ.get('
 _tables = TableServiceClient(f'https://{_account}.table.core.windows.net', credential=_credential)
 _blobs = BlobServiceClient(f'https://{_account}.blob.core.windows.net', credential=_credential)
 
+_requests = {'day': '', 'count': 0}
 _recent: dict[str, list[float]] = {}  # session id -> batch times. In memory: one instance, so this is enough.
 
 
@@ -34,6 +37,32 @@ def _reply(status: int, body=None, cache: int = 0) -> func.HttpResponse:
     headers = {'Cache-Control': f'public, max-age={cache}' if cache else 'no-store'}
     return func.HttpResponse(json.dumps(body) if body is not None else '', status_code=status,
                              mimetype='application/json', headers=headers)
+
+
+def _stop_self() -> None:
+    """Cost brake: stops this Function App through the Azure management API (the identity has the role from bootstrap).
+    The owner starts it again by hand: az functionapp start. Without SELF_RESOURCE_ID (local run) nothing happens."""
+    resource = os.environ.get('SELF_RESOURCE_ID')
+    if not resource:
+        return
+    log.error('daily cap reached, stopping the Function App')
+    try:
+        token = _credential.get_token('https://management.azure.com/.default').token
+        stop = urllib.request.Request(f'https://management.azure.com{resource}/stop?api-version=2024-04-01', method='POST',
+                                      headers={'Authorization': f'Bearer {token}', 'Content-Length': '0'})
+        urllib.request.urlopen(stop, timeout=10).close()
+    except Exception:
+        log.exception('could not stop the Function App')
+
+
+def _over_request_cap() -> bool:
+    today = datetime.now(UTC).strftime('%Y-%m-%d')
+    if _requests['day'] != today:
+        _requests.update(day=today, count=0)
+    _requests['count'] += 1
+    if _requests['count'] == REQUEST_CAP + 1:  # stop once, not on every later request
+        _stop_self()
+    return _requests['count'] > REQUEST_CAP
 
 
 def _read_json(req: func.HttpRequest):
@@ -53,6 +82,10 @@ def _count_write() -> bool:
         try:
             row = limits.get_entity('daily', today)
             if row['count'] >= DAILY_CAP:
+                if row['count'] == DAILY_CAP:  # first refusal of the day: stop once
+                    row['count'] += 1
+                    limits.update_entity(row, mode=UpdateMode.MERGE)
+                    _stop_self()
                 return False
             row['count'] += 1
             limits.update_entity(row, mode=UpdateMode.MERGE, etag=row.metadata['etag'], match_condition=MatchConditions.IfNotModified)
@@ -81,6 +114,8 @@ def _session_too_busy(sid: str) -> bool:
 
 @app.route(route='events', methods=['POST'])
 def post_events(req: func.HttpRequest) -> func.HttpResponse:
+    if _over_request_cap():
+        return _reply(429)
     try:
         events = rules.batch(_read_json(req))
     except rules.Invalid as err:
@@ -99,6 +134,8 @@ def post_events(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route='scores', methods=['POST'])
 def post_score(req: func.HttpRequest) -> func.HttpResponse:
+    if _over_request_cap():
+        return _reply(429)
     try:
         s = rules.score(_read_json(req))
     except rules.Invalid as err:
@@ -120,6 +157,8 @@ def post_score(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route='leaderboard', methods=['GET'])
 def get_leaderboard(req: func.HttpRequest) -> func.HttpResponse:
+    if _over_request_cap():
+        return _reply(429)
     rows = _tables.get_table_client('scores').query_entities(f"PartitionKey eq '{GAME_VERSION}'", results_per_page=10)
     top = []
     for row in rows:  # rows come back in RowKey order, so the first ten are the best ten

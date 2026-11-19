@@ -8,6 +8,7 @@ param githubSubject string
 var contributor = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 var storageTableDataContributor = '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
+var websiteContributor = 'de139f84-1756-47ae-9be6-808fbbe84772' // can stop and start the app, cannot read keys of other resources
 var monitoringMetricsPublisher = '3913510d-42f4-4e42-8a64-420c390055eb'
 
 // Used by GitHub Actions to deploy into this resource group.
@@ -40,6 +41,7 @@ var assignments = [
   { identity: 'api', role: storageBlobDataContributor, key: 'api-blob' }
   { identity: 'api', role: storageTableDataContributor, key: 'api-table' }
   { identity: 'api', role: monitoringMetricsPublisher, key: 'api-metrics' }
+  { identity: 'api', role: websiteContributor, key: 'api-stop' } // cost brake: the API stops itself over the daily cap
 ]
 
 resource roles 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for a in assignments: {
