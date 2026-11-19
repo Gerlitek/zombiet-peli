@@ -72,9 +72,26 @@ resource app 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'AZURE_CLIENT_ID', value: apiIdentity.properties.clientId }
         // The cost brake: the API stops this app when a daily cap is reached (role in identities.bicep).
         { name: 'SELF_RESOURCE_ID', value: resourceId('Microsoft.Web/sites', appName) }
+        // The host refuses larger bodies before the code runs (default about 210 MB, can only be lowered).
+        // Without this a few huge requests fill the 512 MB instance, it restarts, and memory-only counters are lost.
+        // The API itself accepts at most 16 KB (rules.MAX_BODY_BYTES); 32 KB leaves room for headers and encoding.
+        { name: 'FUNCTIONS_REQUEST_BODY_SIZE_LIMIT', value: '32768' }
       ]
     }
   }
+}
+
+// No user name and password for deployments (Kudu/SCM and FTP). Deploys use Entra ID tokens through OIDC.
+resource scmBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
+  parent: app
+  name: 'scm'
+  properties: { allow: false }
+}
+
+resource ftpBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2024-04-01' = {
+  parent: app
+  name: 'ftp'
+  properties: { allow: false }
 }
 
 output functionAppName string = app.name

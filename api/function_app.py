@@ -20,7 +20,10 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 # Both caps can be lowered with app settings, so the cost brake can be tested without thousands of requests.
 DAILY_CAP = int(os.environ.get('DAILY_CAP', '5000'))  # writes per day, all routes together. Over the cap the API answers 429 and stops itself.
-REQUEST_CAP = int(os.environ.get('REQUEST_CAP', '50000'))  # requests per day and instance, valid or not: bounds the executions bill. Memory only, so a restart resets it.
+REQUEST_CAP = int(os.environ.get('REQUEST_CAP', '50000'))  # requests per day, valid or not: bounds the executions bill.
+# The request counter is saved to the limits table every 100 requests, so a restart loses at most 100.
+# Saving on every request would double the storage calls; a crash or restart must not reset the cap.
+REQUEST_SAVE_EVERY = 100
 SESSION_BATCHES_PER_MINUTE = 10
 GAME_VERSION = 'v1'  # partition key of the score table
 
@@ -30,7 +33,7 @@ _credential = DefaultAzureCredential(managed_identity_client_id=os.environ.get('
 _tables = TableServiceClient(f'https://{_account}.table.core.windows.net', credential=_credential)
 _blobs = BlobServiceClient(f'https://{_account}.blob.core.windows.net', credential=_credential)
 
-_requests = {'day': '', 'count': 0}
+_requests = {'day': '', 'unsaved': 0, 'saved': 0}  # saved: today's total in the table when this instance last wrote it
 _recent: dict[str, list[float]] = {}  # session id -> batch times. In memory: one instance, so this is enough.
 
 
@@ -56,18 +59,42 @@ def _stop_self() -> None:
         log.exception('could not stop the Function App')
 
 
+def _add_to_counter(partition: str, n: int) -> int | None:
+    """Adds n to today's row in the limits table and returns the new total. None if the row keeps changing under us."""
+    limits, today = _tables.get_table_client('limits'), datetime.now(UTC).strftime('%Y-%m-%d')
+    for _ in range(3):  # optimistic concurrency: retry if another request changed the row meanwhile
+        try:
+            row = limits.get_entity(partition, today)
+            row['count'] += n
+            limits.update_entity(row, mode=UpdateMode.MERGE, etag=row.metadata['etag'], match_condition=MatchConditions.IfNotModified)
+            return row['count']
+        except ResourceNotFoundError:
+            try:
+                limits.create_entity({'PartitionKey': partition, 'RowKey': today, 'count': n})
+                return n
+            except ResourceExistsError:
+                continue
+        except ResourceModifiedError:
+            continue
+    return None
+
+
 def _over_request_cap() -> bool:
     today = datetime.now(UTC).strftime('%Y-%m-%d')
     if _requests['day'] != today:
-        _requests.update(day=today, count=0)
-    _requests['count'] += 1
-    if _requests['count'] == REQUEST_CAP + 1:  # stop once, not on every later request
-        _stop_self()
-    return _requests['count'] > REQUEST_CAP
+        _requests.update(day=today, unsaved=0, saved=0)
+    _requests['unsaved'] += 1
+    if _requests['unsaved'] >= REQUEST_SAVE_EVERY:
+        total = _add_to_counter('requests', _requests['unsaved'])
+        if total is not None:  # on contention the requests stay unsaved and go with the next save
+            if total - _requests['unsaved'] <= REQUEST_CAP < total:  # this save crossed the cap: stop once
+                _stop_self()
+            _requests.update(unsaved=0, saved=total)
+    return _requests['saved'] + _requests['unsaved'] > REQUEST_CAP
 
 
 def _read_json(req: func.HttpRequest):
-    body = req.get_body()
+    body = req.get_body()  # the host refuses bodies over FUNCTIONS_REQUEST_BODY_SIZE_LIMIT before this runs
     if len(body) > rules.MAX_BODY_BYTES:
         raise rules.Invalid('body too large')
     try:
@@ -77,29 +104,13 @@ def _read_json(req: func.HttpRequest):
 
 
 def _count_write() -> bool:
-    """Adds one to today's counter in the limits table. False when the daily cap is full."""
-    limits, today = _tables.get_table_client('limits'), datetime.now(UTC).strftime('%Y-%m-%d')
-    for _ in range(3):  # optimistic concurrency: retry if another request changed the row meanwhile
-        try:
-            row = limits.get_entity('daily', today)
-            if row['count'] >= DAILY_CAP:
-                if row['count'] == DAILY_CAP:  # first refusal of the day: stop once
-                    row['count'] += 1
-                    limits.update_entity(row, mode=UpdateMode.MERGE)
-                    _stop_self()
-                return False
-            row['count'] += 1
-            limits.update_entity(row, mode=UpdateMode.MERGE, etag=row.metadata['etag'], match_condition=MatchConditions.IfNotModified)
-            return True
-        except ResourceNotFoundError:
-            try:
-                limits.create_entity({'PartitionKey': 'daily', 'RowKey': today, 'count': 1})
-                return True
-            except ResourceExistsError:
-                continue
-        except ResourceModifiedError:
-            continue
-    return False  # contention that does not settle: refuse, the game goes on offline
+    """Adds one to today's write counter. False when the daily cap is full."""
+    total = _add_to_counter('daily', 1)
+    if total is None:
+        return False  # contention that does not settle: refuse, the game goes on offline
+    if total == DAILY_CAP + 1:  # first refusal of the day: stop once
+        _stop_self()
+    return total <= DAILY_CAP
 
 
 def _session_too_busy(sid: str) -> bool:
