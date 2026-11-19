@@ -53,9 +53,14 @@ jobs:
       - id: app
         run: echo "name=$(az functionapp list -g rg-zombies --query "[?tags.\"azd-service-name\"=='api'].name | [0]" -o tsv)" >> "$GITHUB_OUTPUT"
       # Flex Consumption: the package goes to the app-package container, and Azure builds the dependencies.
-      - uses: Azure/functions-action@c5060b3b8bb1ebbcb531abd00c822ecbaa8ea656 # v1.5.7
-        with:
-          app-name: ${{ steps.app.outputs.name }}
-          package: api
-          sku: flexconsumption
-          remote-build: true
+      # Azure CLI signs in to the deploy endpoint with the Entra ID token from OIDC. Basic auth (user name and
+      # password) is turned off on the app, and Azure/functions-action needs it (401 on 2026-11-19).
+      - name: Package and deploy
+        working-directory: api
+        run: |
+          zip -q ../api.zip function_app.py rules.py host.json requirements.txt # only what runs in Azure
+          az functionapp deployment source config-zip \
+            --resource-group rg-zombies \
+            --name "${{ steps.app.outputs.name }}" \
+            --src ../api.zip \
+            --build-remote true
