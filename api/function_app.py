@@ -18,8 +18,9 @@ import rules
 log = logging.getLogger(__name__)
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-DAILY_CAP = 5000  # writes per day, all routes together. Over the cap the API answers 429 and stops itself.
-REQUEST_CAP = 50_000  # requests per day and instance, valid or not: bounds the executions bill. Memory only, so a restart resets it.
+# Both caps can be lowered with app settings, so the cost brake can be tested without thousands of requests.
+DAILY_CAP = int(os.environ.get('DAILY_CAP', 5000))  # writes per day, all routes together. Over the cap the API answers 429 and stops itself.
+REQUEST_CAP = int(os.environ.get('REQUEST_CAP', 50_000))  # requests per day and instance, valid or not: bounds the executions bill. Memory only, so a restart resets it.
 SESSION_BATCHES_PER_MINUTE = 10
 GAME_VERSION = 'v1'  # partition key of the score table
 
