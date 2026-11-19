@@ -52,6 +52,10 @@ resource app 'Microsoft.Web/sites@2024-04-01' = {
       scaleAndConcurrency: {
         maximumInstanceCount: 1 // hard cost cap: one instance, so no scale-out bill
         instanceMemoryMB: 512
+        // Python's default is 1 request at a time per instance. With one instance, requests then wait for each
+        // other and some time out (503 after 60 s, seen on 2026-11-19). The requests are tiny, so 16 is safe.
+        // This does not add instances or cost: guardrails.bicep still caps instances and memory.
+        triggers: { http: { perInstanceConcurrency: 16 } }
       }
       runtime: { name: 'python', version: '3.12' }
     }
