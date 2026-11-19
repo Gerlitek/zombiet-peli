@@ -15,7 +15,8 @@ import { pickWeighted } from '../logic/random';
 import { score } from '../logic/score';
 import { WheelName } from '../logic/wheel';
 import { addBest, load, unlock } from '../systems/storage';
-import { flush, track } from '../systems/telemetry';
+import { submitScore } from '../systems/api';
+import { currentSession, flush, startSession, track } from '../systems/telemetry';
 import { ATTACK_HINT, attackInput } from '../systems/attack';
 import { Arsenal, Combat, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, newArsenal, updateWeapons } from '../systems/weapons';
 import { Tree, Weather } from '../systems/weather';
@@ -47,6 +48,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
   zombies: Zombie[] = [];
 
   private hero!: HeroDef;
+  private heroId: HeroId = 'knight';
   private nick = '';
   private level: PuzzleLevel = 'easy';
   private zone: Zone = 'forest';
@@ -86,6 +88,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
   create(data: { hero: HeroId; level: PuzzleLevel; nick: string }) {
     zoomCamera(this);
     this.hero = HEROES[data.hero];
+    this.heroId = data.hero;
     this.nick = data.nick;
     this.level = data.level;
     this.clock = 0; this.px = W / 2; this.py = 160; this.zombies = []; this.spawns = [];
@@ -105,6 +108,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.weather = new Weather(W, H);
     this.enterZone('forest');
 
+    startSession();
     track('game_started', { nickname: this.nick, character: data.hero });
     this.say(`Zombit nousevat sateesta. ${ATTACK_HINT}!`);
   }
@@ -323,7 +327,10 @@ export class PlayScene extends Phaser.Scene implements Combat {
     addBest(this.nick, points);
     track('game_ended', { result: won ? 'won' : 'lost', kills: this.kills, duration_s: Math.floor(this.clock), hearts_left: result.hearts, score: points });
     flush();
-    this.scene.start('end', { won, kills: this.kills, seconds: this.clock, score: points, earned: this.earned, nick: this.nick });
+    // The result and the board are fetched while the end screen is already showing: the game never waits for the network.
+    const board = submitScore({ session_id: currentSession(), nick: load().nick, score: points, kills: this.kills, duration_s: Math.floor(this.clock),
+      hearts: result.hearts, character: this.heroId, won });
+    this.scene.start('end', { won, kills: this.kills, seconds: this.clock, score: points, earned: this.earned, nick: this.nick, board });
   }
 
   private achieve(id: AchievementId) {
