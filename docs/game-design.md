@@ -298,6 +298,7 @@ Vain nimimerkki ja satunnainen istuntotunniste. Ei IP-osoitteita eikä henkilöt
 - **Versio 1**: kaikki, missä yllä lukee 1. Toimii kokonaan selaimessa ilman API:a.
 - **Versio 1 verkossa**: pistetaulukko, viestit ja telemetria API:n kautta (arkkitehtuurin vaiheet 5 ja 6).
 - **Versio 2**: ammus- ja apuriaseet, taidot, porukkakoodi, kosketusohjaus, äänet, salaman vaikutus peliin.
+- **Idea: kaudet** (2026-11-19). Pistetaulukko alkaa kauden vaihtuessa tyhjästä, ja vanhat tulokset jäävät talteen. Silloin vanhat huipputulokset eivät tuki listaa vuosiksi, ja samannimisten pelaajien törmäys pysyy epätodennäköisenä. Toteutus on valmiina: taulun `scores` PartitionKey on pelin versio (`v1`), joten uusi kausi on uusi avain. Kauden pituus kysytään lapselta (luku 14).
 
 ### Selkeyden periaatteet (pelitestistä 2026-11-16)
 
@@ -319,3 +320,4 @@ Ensimmäinen pelitesti osoitti, että asiat tapahtuivat liian nopeasti. Näistä
 6. Mitä lelut tekevät zombeille?
 7. Miltä Salamaluolassa näyttää, ja mitä aarrearkusta pitäisi saada?
 8. Mikä on vaikein hajotelma, jonka haluat peliin?
+9. Kuinka pitkä pistetaulukon kausi pitäisi olla? Esimerkiksi kuukausi, vuodenaika tai kouluvuosi.
