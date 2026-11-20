@@ -121,13 +121,14 @@ Table Storage ei osaa lajitella. Rivit palautuvat aina RowKeyn mukaisessa järje
 
 ```
 raw/events/dt=2026-11-16/<session_id>-<erän numero>.ndjson      sellaisenaan vastaanotettu, 30 vrk
-curated/events/dt=2026-11-16/part-000.parquet                   validoitu, tyypitetty, deduplikoitu
-curated/dashboard/summary.json                                  dashboardin valmis aggregaatti
+curated/events/dt=2026-11-16/events.parquet                     validoitu, tyypitetty, deduplikoitu
+curated/summary/dashboard.json                                  dashboardin valmis aggregaatti
 ```
 
 - **raw**: yksi blob per erä, rivi per tapahtuma. API lisää palvelimen aikaleiman. Mitään ei muokata, joten kerroksen voi aina ajaa uudelleen.
-- **curated**: ajastettu funktio lukee eilisen päivän raw-kansion, poistaa kaksoiskappaleet avaimella `session_id + seq`, pakottaa tyypit ja kirjoittaa Parquet-tiedoston (`pyarrow`). Ajo on idempotentti: sama päivä tuottaa saman tiedoston ja korvaa vanhan.
-- **summary.json**: pieniä aggregaatteja, esim. pelikerrat päivässä, läpäisyprosentti, tapot zombityypeittäin, suosituimmat aseet, hajotelmien osumatarkkuus ja ratkaisuaika tasoittain, Rudi-Karrin saaneiden määrä.
+- **curated**: ajastettu funktio `curate_events` (`api/function_app.py`, joka yö 02.30 UTC) käsittelee jokaisen menneen päivän, jolta curated-tiedosto puuttuu. Pysäytyksen jälkeen se käsittelee väliin jääneet päivät, ja uusinta ei muuta mitään. Logiikka on tiedostossa `api/curate.py` testeineen: jokainen rivi validoidaan uudelleen (`rules.event`), kaksoiskappaleet poistetaan avaimella `session_id + seq`, tyypit pakotetaan ja tulos kirjoitetaan yhdeksi leveäksi Parquet-tauluksi päivässä (`pyarrow`, tapahtumatyypille kuulumattomat sarakkeet tyhjiä). Nimimerkki jätetään pois, koska curated säilyy pysyvästi.
+- **Muisti**: `pyarrow` tuodaan vain ajastetun funktion sisällä, joten HTTP-pyynnöt eivät lataa sitä. Moduuli jää prosessiin, kunnes tyhjä instanssi sammuu. Jos muisti lähestyy 512 Mt:tä, HTTP-rinnakkaisuus 16 → 8 (luku 10).
+- **dashboard.json**: lasketaan joka yö kaikista curated-päivistä: pelikerrat ja läpäisyt päivittäin, kestojen ja tappojen mediaani, hahmot, tapot ja osumat zombityypeittäin, pyörän aseet, saavutukset, hajotelmien oikeat vastaukset ja ratkaisuajan mediaani tasoittain.
 - Osiointi `dt=YYYY-MM-DD` on Hive-tyylinen, joten samat tiedostot voi myöhemmin lukea DuckDB:llä, Sparkilla tai Fabricilla ilman muutoksia.
 
 Elinkaarisääntö poistaa raw-kerroksen 30 vuorokauden jälkeen. Curated säilyy. Se ei sisällä henkilötietoja.

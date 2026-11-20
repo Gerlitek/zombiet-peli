@@ -58,7 +58,7 @@ jobs:
       - name: Package and deploy
         working-directory: api
         run: |
-          zip -q ../api.zip function_app.py rules.py host.json requirements.txt # only what runs in Azure
+          zip -q ../api.zip function_app.py rules.py curate.py host.json requirements.txt # only what runs in Azure
           az functionapp deployment source config-zip \
             --resource-group rg-zombies \
             --name "${{ steps.app.outputs.name }}" \

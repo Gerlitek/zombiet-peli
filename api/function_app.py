@@ -1,4 +1,5 @@
 """The game API: Azure Functions, Python v2 model. Rules live in rules.py, storage access here."""
+import io
 import json
 import logging
 import os
@@ -13,6 +14,7 @@ from azure.data.tables import TableServiceClient, UpdateMode
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
+import curate
 import rules
 
 log = logging.getLogger(__name__)
@@ -178,3 +180,35 @@ def get_leaderboard(req: func.HttpRequest) -> func.HttpResponse:
         if len(top) == 10:
             break
     return _reply(200, top, cache=60)
+
+
+# Curated layer (docs/architecture.md, chapter 4). Once a night, when hardly anyone plays: pyarrow needs memory,
+# and the instance (512 MB) is shared with the game's requests.
+@app.timer_trigger(schedule='0 30 2 * * *', arg_name='timer')
+def curate_events(timer: func.TimerRequest) -> None:
+    import pyarrow as pa  # imported here, not at the top: the HTTP functions never load it
+    import pyarrow.parquet as pq
+
+    raw, curated = _blobs.get_container_client('raw'), _blobs.get_container_client('curated')
+    today = datetime.now(UTC).strftime('%Y-%m-%d')
+
+    def days(container) -> set[str]:  # 'events/dt=2026-11-20/...' -> '2026-11-20'
+        return {name.split('/')[1][3:] for name in container.list_blob_names(name_starts_with='events/dt=')}
+
+    # Every past day without a curated file: catches up after a stop, and running twice changes nothing.
+    schema = curate.arrow_schema(pa)
+    for day in sorted(days(raw) - days(curated)):
+        if day >= today:
+            continue
+        blobs = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with=f'events/dt={day}/')]
+        rows, rejected = curate.clean(blobs)
+        out = pa.BufferOutputStream()
+        pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=schema), out)
+        curated.upload_blob(f'events/dt={day}/events.parquet', out.getvalue().to_pybytes(), overwrite=True)
+        log.info('curated %s: %d events, %d rejected', day, len(rows), rejected)
+
+    rows = []
+    for name in curated.list_blob_names(name_starts_with='events/dt='):
+        rows += pq.read_table(io.BytesIO(curated.download_blob(name).readall())).to_pylist()
+    curated.upload_blob('summary/dashboard.json', json.dumps(curate.summary(rows)), overwrite=True)
+
