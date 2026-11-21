@@ -58,7 +58,7 @@
     }
     #game canvas { display: block; image-rendering: pixelated; }
     /* Privacy note: closed by default, small and quiet, but one click away. */
-    .privacy { margin: 10px 0 0 auto; font-size: 0.65rem; color: var(--text-dim); max-width: 60ch; } /* below the publisher line, so it does not compete with the credit for the idea */
+    .privacy { margin: 6px 0 0 auto; font-size: 0.65rem; color: var(--text-dim); max-width: 60ch; } /* below the publisher line, so it does not compete with the credit for the idea */
     .privacy summary { cursor: pointer; text-align: right; color: rgba(169, 175, 186, 0.45); }
     .privacy ul { margin: 6px 0 0; padding-left: 16px; line-height: 1.45; }
     .credit { margin: 14px 0 0; font-size: 0.9rem; color: var(--text); }
@@ -77,6 +77,10 @@
     /* The dashboard link: on the left in the game's blue, so a child notices it. As bright to the eye as the pink link. */
     footer .stats { margin-right: auto; color: rgba(124, 200, 242, 0.55); }
     footer .stats:hover { color: var(--accent); }
+    /* The source code link sits right below the publisher line, just as small and quiet. */
+    .source { margin: 4px 0 0; text-align: right; font-size: 0.7rem; }
+    .source a { color: rgba(232, 90, 165, 0.65); text-decoration: none; }
+    .source a:hover { color: var(--brand); text-decoration: underline; }
     /* Shown instead of the game on touch-only devices (phones, tablets without a keyboard). */
     .touch-note {
       margin: 0 0 12px; padding: 20px; text-align: center;
@@ -119,6 +123,7 @@
       <span>Toteutus ja julkaisu</span>
       <a href="https://gerlitek.fi">Gerlitek Oy</a>
     </footer>
+    <p class="source"><a href="https://github.com/Gerlitek/zombiet-peli">Lähdekoodi</a></p>
     <details class="privacy">
       <summary>Tietosuoja</summary>
       <ul>
