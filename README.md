@@ -13,20 +13,20 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 
 ```mermaid
 flowchart TD
-    Game["Peli selaimessa"] -->|"tapahtumat"| API
-    GH["GitHub Actions"] -->|"OIDC deploy"| API
-    subgraph Azure["Azure, kaikki Bicepillä"]
-        API["Functions API"]
-        Scores[("Table: pisteet")]
-        Raw[("Blob: raw JSON")]
-        Night["Yöajo: siivous"]
-        Cur[("Blob: curated Parquet")]
+    Game["&nbsp;&nbsp;&nbsp;&nbsp;Peli selaimessa&nbsp;&nbsp;&nbsp;&nbsp;"] -->|"&nbsp;&nbsp;&nbsp;&nbsp;tapahtumat&nbsp;&nbsp;&nbsp;&nbsp;"| API
+    GH["&nbsp;&nbsp;&nbsp;&nbsp;GitHub Actions&nbsp;&nbsp;&nbsp;&nbsp;"] -->|"&nbsp;&nbsp;&nbsp;&nbsp;OIDC deploy&nbsp;&nbsp;&nbsp;&nbsp;"| API
+    subgraph Azure["&nbsp;&nbsp;&nbsp;&nbsp;Azure, kaikki Bicepillä&nbsp;&nbsp;&nbsp;&nbsp;"]
+        API["&nbsp;&nbsp;&nbsp;&nbsp;Functions API&nbsp;&nbsp;&nbsp;&nbsp;"]
+        Scores[("&nbsp;&nbsp;&nbsp;&nbsp;Table: pisteet&nbsp;&nbsp;&nbsp;&nbsp;")]
+        Raw[("&nbsp;&nbsp;&nbsp;&nbsp;Blob: raw JSON&nbsp;&nbsp;&nbsp;&nbsp;")]
+        Night["&nbsp;&nbsp;&nbsp;&nbsp;Yöajo: siivous&nbsp;&nbsp;&nbsp;&nbsp;"]
+        Cur[("&nbsp;&nbsp;&nbsp;&nbsp;Blob: curated Parquet&nbsp;&nbsp;&nbsp;&nbsp;")]
         API --> Scores
         API --> Raw
         Raw --> Night
         Night --> Cur
     end
-    Cur -->|"GET /api/stats"| Dash["Tilastosivu"]
+    Cur -->|"&nbsp;&nbsp;&nbsp;&nbsp;GET /api/stats&nbsp;&nbsp;&nbsp;&nbsp;"| Dash["&nbsp;&nbsp;&nbsp;&nbsp;Tilastosivu&nbsp;&nbsp;&nbsp;&nbsp;"]
 ```
 
 Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille sekä lokikatto. Tallennustilaan ei pääse avaimilla, vaan API käyttää hallittua identiteettiä. Perustelut: `docs/architecture.md`.
