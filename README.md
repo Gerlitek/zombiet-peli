@@ -12,21 +12,22 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 ## Arkkitehtuuri
 
 ```mermaid
+%%{init: {"flowchart": {"htmlLabels": false}}}%%
 flowchart TD
-    Game["Peli selaimessa"] -->|pisteet, tapahtumat| API
-    GH["GitHub Actions<br/>OIDC, what-if, hyväksyntä"] -->|Bicep ja deploy| API
-    subgraph Azure["Azure, kaikki Bicepillä"]
-        API["Functions API<br/>Python, Flex Consumption"]
-        Scores[("Table Storage<br/>pistetaulukko")]
-        Raw[("Blob: raw JSON<br/>poistuu 30 vrk")]
-        Night["Yöajo 02.30 UTC<br/>uskottavuussäännöt"]
-        Cur[("Blob: curated Parquet<br/>ja yhteenveto")]
+    Game["&nbsp;Peli selaimessa&nbsp;"] -->|"&nbsp;tapahtumat&nbsp;"| API
+    GH["&nbsp;GitHub Actions, OIDC&nbsp;"] -->|"&nbsp;deploy&nbsp;"| API
+    subgraph Azure["&nbsp;Azure, kaikki Bicepillä&nbsp;"]
+        API["&nbsp;Functions API (Python)&nbsp;"]
+        Scores[("&nbsp;Table: pisteet&nbsp;")]
+        Raw[("&nbsp;Blob: raw JSON&nbsp;")]
+        Night["&nbsp;Yöajo: puhdistus&nbsp;"]
+        Cur[("&nbsp;Blob: curated Parquet&nbsp;")]
         API --> Scores
         API --> Raw
         Raw --> Night
         Night --> Cur
     end
-    Cur -->|GET /api/stats| Dash["Tilastosivu<br/>Chart.js"]
+    Cur -->|"&nbsp;GET /api/stats&nbsp;"| Dash["&nbsp;Tilastosivu&nbsp;"]
 ```
 
 Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille sekä lokikatto. Tallennustilaan ei pääse avaimilla, vaan API käyttää hallittua identiteettiä. Perustelut: `docs/architecture.md`.
