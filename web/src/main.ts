@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+// Inter from the site's own server (bundled by Vite), never from a font service. Latin covers ä and ö.
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-700.css';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
 import { PlayScene } from './scenes/PlayScene';
@@ -23,7 +26,14 @@ function drawLogo() {
 }
 drawLogo();
 
+// Game texts are drawn once into canvases, so the font must be ready before the first scene.
+// If it is slow, the game starts anyway with the fallback font after a second.
 function start() {
+  const ready = document.fonts.load('bold 10px Inter');
+  Promise.race([ready, new Promise((r) => setTimeout(r, 1000))]).finally(startGame);
+}
+
+function startGame() {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',

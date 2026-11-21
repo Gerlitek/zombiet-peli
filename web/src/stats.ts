@@ -1,5 +1,8 @@
 // The dashboard (tilastot/index.html). Reads the summary the nightly curate run writes (GET /api/stats)
 // and draws it with Chart.js. No queries of its own: everything is computed in api/curate.py.
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-600.css';
+import '@fontsource/inter/latin-700.css';
 import { BarController, BarElement, CategoryScale, Chart, Legend, LinearScale, Tooltip } from 'chart.js';
 import { ACHIEVEMENTS } from './data/achievements';
 import { HEROES } from './data/characters';
