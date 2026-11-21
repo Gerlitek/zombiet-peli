@@ -29,7 +29,7 @@ TEST_SESSION = re.compile(r'^[0-9a-f]{8}-0000-4000-8000-')
 
 # Days left out of the dashboard. Days before LAUNCH_DAY were development tests. SKIP_DAYS is the cleanup tool:
 # if a day ever fills with fake games, add it here and raise RULES_VERSION. The raw data stays as it is.
-LAUNCH_DAY: str | None = '2026-11-22'  # first day of real players (UTC); earlier days were tests
+LAUNCH_DAY: str | None = '2026-11-21'  # first day of real players (UTC); earlier days were tests
 SKIP_DAYS: set[str] = set()
 
 
