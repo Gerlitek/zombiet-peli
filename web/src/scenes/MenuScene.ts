@@ -10,7 +10,8 @@ import { ZOMBIES } from '../data/zombies';
 import { PUZZLE_LEVELS, PuzzleLevel } from '../logic/puzzle';
 import { load, save } from '../systems/storage';
 
-const LEVEL_NAMES: Record<PuzzleLevel, string> = { easy: 'Helppo', medium: 'Keski', hard: 'Vaikea', master: 'Mestari' };
+// The levels are shown as sample sums, not as words like "Helppo": players read the words as the difficulty of the zombies.
+const LEVEL_NAMES: Record<PuzzleLevel, string> = { easy: '7 + ?', medium: '38 + ?', hard: '640 + ?', master: '? + ?' };
 const HERO_IDS = Object.keys(HEROES) as HeroId[];
 // Layout in logical pixels. Cards and buttons can be chosen with keys or by clicking.
 const CARD = { y: 86, w: 84, h: 72, xs: [72, 164] };
@@ -52,7 +53,7 @@ export class MenuScene extends Phaser.Scene {
       return texts;
     });
 
-    label(this, W / 2, 163, 'Hajotelmien vaikeus nuolilla  ↑  ↓', P.iceL);
+    label(this, W / 2, 163, 'Laskutehtävät VIP-aitiossa  ↑  ↓', P.iceL);
     this.levelLabels = PUZZLE_LEVELS.map((lv, i) => label(this, PILL.xs[i] + PILL.w / 2, PILL.y + 3, LEVEL_NAMES[lv]));
 
     const start = label(this, W / 2, 202, 'Paina ENTER ja aloita', P.ice, 12);
