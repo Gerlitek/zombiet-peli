@@ -182,6 +182,20 @@ def get_leaderboard(req: func.HttpRequest) -> func.HttpResponse:
     return _reply(200, top, cache=60)
 
 
+@app.route(route='stats', methods=['GET'])
+def get_stats(req: func.HttpRequest) -> func.HttpResponse:
+    """The dashboard: the summary the nightly run wrote. 404 until the first run."""
+    if _over_request_cap():
+        return _reply(429)
+    try:
+        body = _blobs.get_blob_client('curated', 'summary/dashboard.json').download_blob().readall()
+    except ResourceNotFoundError:
+        return _reply(404)
+    # Changes once a night, so browsers may keep it for an hour.
+    return func.HttpResponse(body, status_code=200, mimetype='application/json',
+                             headers={'Cache-Control': 'public, max-age=3600'})
+
+
 # Curated layer (docs/architecture.md, chapter 4). Once a night, when hardly anyone plays: pyarrow needs memory,
 # and the instance (512 MB) is shared with the game's requests.
 @app.timer_trigger(schedule='0 30 2 * * *', arg_name='timer')

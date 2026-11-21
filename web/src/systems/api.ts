@@ -4,7 +4,7 @@
 import { Nick } from '../data/nicknames';
 
 // The address is public. In dev (npm run dev) there is no API, and CORS allows only the game's own domain anyway.
-const API_URL: string = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? 'https://func-zombies-6254ydxyfcbzi.azurewebsites.net' : '');
+export const API_URL: string = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? 'https://func-zombies-6254ydxyfcbzi.azurewebsites.net' : '');
 // The Function App scales to zero (no always-on instance: that would cost money), so the first request after
 // a quiet period waits for a cold start. It took about 30 s in a measurement on 2026-11-19. The timeout is
 // generous because nothing waits for it: the game goes on, and the result appears when it arrives.

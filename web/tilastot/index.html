@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tilastot · Ylläri-Zombiet</title>
+  <meta name="description" content="Ylläri-Zombiet lukuina: pelikerrat, zombit, aseet ja saavutukset." />
+  <style>
+    :root {
+      --bg: #0F1115; --surface-1: #151923; --surface-2: #1B2030; --border: #252D3F;
+      --text: #E7E8EA; --text-dim: #A9AFBA; --accent: #7CC8F2; --brand: #E85AA5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 16px; color: var(--text);
+      background:
+        radial-gradient(60% 45% at 0% 0%, rgba(232, 90, 165, 0.16), transparent 70%),
+        radial-gradient(55% 45% at 100% 100%, rgba(232, 90, 165, 0.13), transparent 70%),
+        var(--bg);
+      border-top: 2px solid transparent;
+      border-image: linear-gradient(90deg, transparent, rgba(232, 90, 165, 0.45) 30%, rgba(232, 90, 165, 0.45) 70%, transparent) 1;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    main { max-width: 960px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 8px 0 4px; }
+    h1 { margin: 0; font-size: 1.6rem; color: var(--accent); }
+    header a { color: var(--text-dim); font-size: 0.85rem; text-decoration: none; }
+    header a:hover { color: var(--accent); }
+    .lead { margin: 0 0 18px; color: var(--text-dim); font-size: 0.85rem; }
+    .status { padding: 24px; text-align: center; color: var(--text-dim); background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; }
+    .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+    .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+    .tile b { display: block; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+    .tile span { font-size: 0.78rem; color: var(--text-dim); }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+    .card.wide { grid-column: 1 / -1; }
+    .card h2 { margin: 0 0 10px; font-size: 0.95rem; font-weight: 600; }
+    .card .plot { position: relative; height: 220px; }
+    .card details { margin-top: 8px; font-size: 0.75rem; color: var(--text-dim); }
+    .card summary { cursor: pointer; }
+    .card table { width: 100%; border-collapse: collapse; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .card th, .card td { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--border); font-weight: 400; }
+    .card td:not(:first-child), .card th:not(:first-child) { text-align: right; }
+    .empty { color: var(--text-dim); font-size: 0.85rem; margin: 0; }
+    footer { margin-top: 32px; font-size: 0.7rem; color: rgba(169, 175, 186, 0.6); }
+    @media (max-width: 720px) {
+      .tiles { grid-template-columns: repeat(2, 1fr); }
+      .grid { grid-template-columns: 1fr; }
+    }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Tilastot</h1>
+      <a href="../">← Takaisin peliin</a>
+    </header>
+    <p class="lead">Ylläri-Zombiet lukuina. Luvut lasketaan kerran yössä nimettömistä pelitapahtumista.</p>
+    <div class="status">Haetaan tilastoja. Palvelin voi herätä hitaasti, jos peliä ei ole hetkeen pelattu.</div>
+    <section class="tiles" hidden></section>
+    <section class="grid" hidden></section>
+    <footer hidden></footer>
+  </main>
+  <script type="module" src="../src/stats.ts"></script>
+</body>
+</html>

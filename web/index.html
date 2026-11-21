@@ -74,6 +74,8 @@
     footer a { color: rgba(232, 90, 165, 0.65); text-decoration: none; }
     footer a:hover { color: var(--brand); }
     footer a:hover { text-decoration: underline; }
+    footer .stats { margin-right: auto; color: rgba(124, 200, 242, 0.6); } /* the dashboard, in the game's color */
+    footer .stats:hover { color: var(--accent); }
     /* Shown instead of the game on touch-only devices (phones, tablets without a keyboard). */
     .touch-note {
       margin: 0 0 12px; padding: 20px; text-align: center;
@@ -112,6 +114,7 @@
     <div id="game"></div>
     <p class="credit">Pelin idean, tarinan ja hahmot on suunnitellut <b>Maujazz</b>.</p>
     <footer>
+      <a class="stats" href="tilastot/">Tilastot</a>
       <span>Toteutus ja julkaisu</span>
       <a href="https://gerlitek.fi">Gerlitek Oy</a>
     </footer>

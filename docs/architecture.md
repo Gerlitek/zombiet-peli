@@ -18,7 +18,7 @@ Selain
     POST /api/scores ──────────► Table scores
     GET  /api/leaderboard ◄───── Table scores
     GET/POST /api/messages ◄───► Table messages
-    GET  /api/stats ◄─────────── Blob  curated/dashboard/summary.json
+    GET  /api/stats ◄─────────── Blob  curated/summary/dashboard.json
     ajastin, kerran vuorokaudessa:
         raw/ (JSON) ──► curated/ (Parquet) ──► summary.json
        │
@@ -135,7 +135,7 @@ Elinkaarisääntö poistaa raw-kerroksen 30 vuorokauden jälkeen. Curated säily
 
 ### Dashboard
 
-Staattinen sivu frontissa (`/tilastot`), Chart.js omalta palvelimelta, lukee `GET /api/stats`. Sivu ei tee omia kyselyjä dataan.
+Staattinen sivu frontissa (`web/tilastot/index.html`, osoite `/tilastot/`, logiikka `web/src/stats.ts`). Chart.js on npm-paketti ja tulee buildissa omalta palvelimelta, joten CSP ei muutu. Sivu lukee `GET /api/stats`, joka palauttaa yöajon `dashboard.json`:n sellaisenaan (välimuisti 1 h, 404 ennen ensimmäistä ajoa). Sivu ei tee omia kyselyjä dataan. Jokaisen kaavion luvut ovat myös taulukkona. Kehitystilassa `/tilastot/?demo` piirtää keksityt luvut (`stats-demo.ts`, ei buildissa).
 
 ## 5. Infra koodina
 
