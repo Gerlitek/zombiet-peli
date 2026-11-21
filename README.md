@@ -1,15 +1,15 @@
-# Ylläri-Zombiet
+# Ylläri-Zombit
 
 [![web](https://github.com/Gerlitek/zombiet-peli/actions/workflows/web.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/web.yml)
 [![api](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml)
 [![infra](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml)
 
-> **In English:** *Ylläri-Zombiet* means "Surprise Zombies". A small browser game (TypeScript, Phaser 4) built with AI, running on Azure. Guardrails as code
+> **In English:** *Ylläri-Zombit* means "Surprise Zombies". A small browser game (TypeScript, Phaser 4) built with AI, running on Azure. Guardrails as code
 > (budget, Azure Policy, cost alert, daily caps), a keyless Python API on Azure Functions, raw JSON events refined nightly
 > into a curated Parquet layer, and a static dashboard. Play it at [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop, in Finnish).
 > Docs are in Finnish; code and commits in English.
 
-Pieni selainpeli: taistele zombieita vastaan. Pelin idea, tarina ja hahmot ovat lapsen suunnittelemia.
+Pieni selainpeli: taistele zombeja vastaan. Pelin idea, tarina ja hahmot ovat lapsen suunnittelemia.
 
 Peli pyörii Azuressa, ja koko ympäristö on koodina: Bicep, CI/CD ja datakerrokset. Pelin tapahtumat tallentuvat raw-kerrokseen (JSON, poistuu 30 vrk:n jälkeen). Yöajo kirjoittaa niistä curated-kerroksen (Parquet) ja yhteenvedon, jota [tilastosivu](https://zombit.gerlitek.fi/tilastot/) näyttää.
 

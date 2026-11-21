@@ -1,8 +1,26 @@
 # Actions are pinned to commit SHAs (a moved tag cannot change what runs).
 # Dependabot opens a pull request when a new version comes out, so the pins do not go stale.
+# npm and pip updates are grouped: at most one pull request per ecosystem per month.
+# Pull requests only run the tests; nothing is deployed without a manual run and an approval.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: monthly
+    groups:
+      web:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /api
+    schedule:
+      interval: monthly
+    groups:
+      api:
+        patterns: ["*"]

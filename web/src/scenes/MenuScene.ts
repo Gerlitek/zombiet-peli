@@ -40,7 +40,7 @@ export class MenuScene extends Phaser.Scene {
 
     this.add.image(0, 0, 'bg-forest').setOrigin(0);
     this.g = this.add.graphics();
-    label(this, W / 2, 8, 'YLLÄRI-ZOMBIET', P.ice, 20);
+    label(this, W / 2, 8, 'YLLÄRI-ZOMBIT', P.ice, 20);
     this.nickLabel = label(this, W / 2, 36, '');
     label(this, W / 2, 49, 'Paina N, jos haluat toisen nimen', P.rain, 7);
 
