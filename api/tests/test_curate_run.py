@@ -1,0 +1,53 @@
+"""curate_events end to end, with in-memory containers in place of Blob Storage."""
+import json
+from types import SimpleNamespace
+
+import function_app as fa
+
+TEST_SID = '10000000-0000-4000-8000-000000000001'
+REAL_SID = '123e4567-e89b-42d3-a456-426614174000'
+
+
+class Container:
+    def __init__(self, blobs=None):
+        self.blobs = dict(blobs or {})  # name -> (bytes, metadata or None, as Azure returns it)
+
+    def list_blob_names(self, name_starts_with=''):
+        return [n for n in self.blobs if n.startswith(name_starts_with)]
+
+    def list_blobs(self, name_starts_with='', include=None):
+        return [SimpleNamespace(name=n, metadata=m) for n, (_, m) in self.blobs.items() if n.startswith(name_starts_with)]
+
+    def download_blob(self, name):
+        return SimpleNamespace(readall=lambda: self.blobs[name][0])
+
+    def upload_blob(self, name, data, overwrite=False, metadata=None):
+        self.blobs[name] = (data.encode() if isinstance(data, str) else data, metadata)
+
+
+def event(sid, seq):
+    return json.dumps({'event': 'game_started', 'ts': '2026-11-19T10:00:00Z', 'session_id': sid, 'seq': seq,
+                       'version': '0.2.0', 'nickname': 'Hurja-Kissa-42', 'character': 'knight', 'received': '2026-11-19T10:00:01+00:00'})
+
+
+def run(monkeypatch, curated_blobs):
+    raw = Container({'events/dt=2026-11-19/a-0.ndjson': ('\n'.join([event(REAL_SID, 0), event(TEST_SID, 0)]).encode(), None)})
+    curated = Container(curated_blobs)
+    monkeypatch.setattr(fa._blobs, 'get_container_client', lambda name: raw if name == 'raw' else curated)
+    fa.curate_events.build().get_user_function()(None)
+    return curated
+
+
+def test_old_file_without_metadata_is_rebuilt_without_test_sessions(monkeypatch):
+    curated = run(monkeypatch, {'events/dt=2026-11-19/events.parquet': (b'old', None)})  # no metadata: None, not {}
+    assert curated.blobs['events/dt=2026-11-19/events.parquet'][1] == {'rules': str(fa.curate.RULES_VERSION)}
+    summary = json.loads(curated.blobs['summary/dashboard.json'][0])
+    assert summary['characters'] == {'knight': 1}  # the test session is gone
+
+
+def test_current_file_is_left_alone(monkeypatch):
+    current = {'rules': str(fa.curate.RULES_VERSION)}
+    raw_file = run(monkeypatch, {})  # first build a valid file
+    parquet = raw_file.blobs['events/dt=2026-11-19/events.parquet'][0]
+    curated = run(monkeypatch, {'events/dt=2026-11-19/events.parquet': (parquet, current)})
+    assert curated.blobs['events/dt=2026-11-19/events.parquet'] == (parquet, current)

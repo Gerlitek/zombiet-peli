@@ -214,7 +214,7 @@ def curate_events(timer: func.TimerRequest) -> None:
 
     # Every past day whose curated file is missing or made with older rules (curate.RULES_VERSION).
     # Catches up after a stop, and running twice changes nothing. Days whose raw data has expired keep their file.
-    done = {day(b.name): b.metadata.get('rules') for b in curated.list_blobs(name_starts_with='events/dt=', include=['metadata'])}
+    done = {day(b.name): (b.metadata or {}).get('rules') for b in curated.list_blobs(name_starts_with='events/dt=', include=['metadata'])}
     todo = sorted({day(n) for n in raw.list_blob_names(name_starts_with='events/dt=')})
     schema = curate.arrow_schema(pa)
     for d in todo:
