@@ -91,18 +91,31 @@ export function drawVipGround(p: Pen, W: number, H: number) {
   ell(p, 160, 160, 120, 50, P.ice, 0.1);
 }
 
-// Rudi-Karri: a two-headed cat robot. One head is Rudi, the other is Karri.
+// Rudi-Karri: a two-headed cat robot. One head is Rudi, the other is Karri, both ragdolls with blue eyes
+// (see drawCat): Rudi has dark ears and a dark mask, Karri grey ears and a white chin. The body is clearly a machine:
+// a metal shell with a lit stripe, rivets, a blinking chest light, an antenna and a segmented tail.
 export function drawCatRobot(p: Pen, x: number, y: number, t: number) {
-  const tail = sin(t * 4) * 2;
-  ell(p, x, y, 7, 1, P.ink, 0.4);
+  x = R(x); y = R(y);
+  const tail = R(sin(t * 4) * 2), step = R(sin(t * 12)), blink = floor(t * 3) % 2 === 0;
+  ell(p, x, y, 8, 1, P.ink, 0.4);
   figure(p, [
-    L(x - 6, y - 5, x - 9, y - 11 + tail, 1, P.sand, false), B(x - 5, y - 8, 11, 6, P.rain),
-    B(x - 8, y - 14, 7, 6, P.bone), B(x - 8, y - 16, 2, 2, P.bark), B(x - 3, y - 16, 2, 2, P.bark),   // Rudi: brown
-    B(x + 2, y - 14, 7, 6, P.bone), B(x + 2, y - 16, 2, 2, P.storm), B(x + 7, y - 16, 2, 2, P.storm), // Karri: grey
-    B(x - 4, y - 2, 2, 2, P.storm), B(x + 3, y - 2, 2, 2, P.storm),
-    E(x, y - 5, 1, 1, P.ice),
+    L(x - 7, y - 6, x - 10, y - 11 + tail, 2, P.storm, false), // tail
+    B(x - 6, y - 3 + step, 2, 3 - step, P.storm), B(x - 2, y - 3 - step, 2, 3 + step, P.storm), // legs
+    B(x + 1, y - 3 + step, 2, 3 - step, P.storm), B(x + 5, y - 3 - step, 2, 3 + step, P.storm),
+    B(x - 7, y - 9, 15, 7, P.rain), // metal body
+    B(x - 1, y - 12, 3, 3, P.storm), // neck
+    E(x - 5, y - 14, 4, 3, P.bone), B(x - 9, y - 19, 2, 3, P.bark), B(x - 3, y - 19, 2, 3, P.bark), // Rudi: dark ears
+    E(x + 6, y - 14, 4, 3, P.bone), B(x + 2, y - 19, 2, 3, P.storm), B(x + 8, y - 19, 2, 3, P.storm), // Karri: grey ears
   ]);
-  for (const hx of [x - 6, x + 4]) { p.rect(hx, y - 12, 1, 2, P.ice); p.rect(hx + 3, y - 12, 1, 2, P.ice); }
+  p.rect(x - 6, y - 8, 13, 1, P.iceL); // light on the top of the shell
+  p.rect(x - 6, y - 5, 13, 1, P.storm); // seam
+  p.rect(x - 5, y - 7, 1, 1, P.storm); p.rect(x + 5, y - 7, 1, 1, P.storm); // rivets
+  p.rect(x, y - 7, 2, 2, blink ? P.ice : P.storm); // chest light
+  p.rect(x - 11, y - 12 + tail, 2, 2, P.ice); // lamp at the tip of the tail
+  p.rect(x - 7, y - 15, 4, 2, P.bark); // Rudi's dark mask
+  p.rect(x + 4, y - 15, 4, 2, P.storm); // Karri's grey mask (the chin below stays white)
+  for (const ex of [x - 7, x - 4, x + 4, x + 7]) p.rect(ex, y - 15, 1, 1, P.ice); // blue eyes
+  p.rect(x, y - 21, 1, 4, P.storm); p.rect(x, y - 22, 1, 1, blink ? P.hurt : P.sand); // antenna
 }
 
 // ---------- practice area: the sand dunes of Kalajoki (Hiekkasärkät) ----------
