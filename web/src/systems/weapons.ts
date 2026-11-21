@@ -92,8 +92,8 @@ export function updateWeapons(a: Arsenal, c: Combat) {
       a.nextAt[id] = c.clock + def.cooldown; // a miss also costs the cooldown
       const inRange = near.filter((n) => n.d < def.range).map((n) => n.z);
       const targets = def.area ? inRange : inRange.slice(0, 1);
-      // The hammer shakes the ground: zombies farther away take a smaller hit and stagger.
-      const shaken = def.quake ? near.filter((n) => n.d >= def.range && n.d < def.quake!).map((n) => n.z) : [];
+      // The hammer shakes the whole ground: zombies farther away take the same hit and stagger.
+      const shaken = def.quake ? near.filter((n) => n.d >= def.range).map((n) => n.z) : [];
       if (!targets.length && !shaken.length) continue;
       // The hammer hits the ground at the hero's feet, other strikes hit the zombie.
       a.fx[id] = def.quake ? { at: c.clock, x: c.px, y: c.py } : { at: c.clock, x: targets[0].x, y: targets[0].y };
@@ -109,7 +109,7 @@ export function updateWeapons(a: Arsenal, c: Combat) {
       for (const z of shaken) {
         knock(z, c.px, c.py, 60);
         z.stun = c.clock + 0.6;
-        c.hit(z, Math.max(1, damage - 1), id);
+        c.hit(z, damage, id); // the same hit as next to the hammer, only without the big knockback
       }
     }
 
@@ -171,9 +171,9 @@ export function drawWeapons(p: Pen, a: Arsenal, c: Combat) {
   const bladesActive = c.clock < a.activeUntil;
   for (const id of owned(a)) {
     const def: WeaponDef = WEAPONS[id], fx = a.fx[id], age = fx ? c.clock - fx.at : 9;
-    if (def.quake && fx && age < 0.4) { // the ground shakes: a ring runs out to the edge of the quake
-      ring(p, fx.x, fx.y + 6, 10 + (age / 0.4) * (def.quake - 10), def.color, 1 - age * 2.2, 64);
-      ring(p, fx.x, fx.y + 6, 6 + (age / 0.4) * (def.quake - 20), P.bone, 0.6 - age * 1.5, 48);
+    if (def.quake && fx && age < 0.5) { // the ground shakes: rings run out over the whole field
+      ring(p, fx.x, fx.y + 6, 10 + age * 640, def.color, 1 - age * 2, 160);
+      ring(p, fx.x, fx.y + 6, 6 + age * 480, P.bone, 0.6 - age * 1.2, 120);
     }
     if (def.kind === 'strike' && fx && age < 0.2) (IMPACT[id] ?? star)(p, fx.x, fx.y - 9, age, def.color);
     if (def.kind !== 'strike' && fx && age < 0.4) ring(p, fx.x, fx.y, 8 + age * 90, def.color, 1 - age * 2.5);

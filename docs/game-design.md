@@ -74,7 +74,7 @@ Ase on yksi rivi dataa: nimi, pyörä (metsä tai VIP), paino arvonnassa, vahink
 | Musta miekka / nyrkki | perus | strike | Peruslyönti, aina käytössä | 1 |
 | Superhanskat | metsä | strike | Zombi lentää kauas. Vahinko 3. Joka kuudes osuma antaa sydämen ("vetää helppiä") | 1 |
 | 2 mini-katanaa | metsä | orbit | Kaksi terää kiertää. Joka viides sekunti pyörremyrsky, joka työntää zombit pois | 1 |
-| Moukari | metsä | strike | Hidas, osuu kaikkiin lähellä oleviin. Maa tärähtää: kauempana olevat zombit saavat pienemmän osuman ja horjuvat (lapsen toive) | 1 |
+| Moukari | metsä | strike | Hidas (1,5 s iskujen välillä). Maa tärähtää: isku osuu jokaiseen kentän zombiin yhtä kovaa, vierellä olevat lentävät kauemmas ja muut horjuvat (lapsen toive) | 1 |
 | Nuntsakot | metsä | orbit | Nopea ja lyhyt kierto, vahinko 1 | 1 |
 | Jalkapallo | metsä | projectile | Potku lähtee itsestään, pallo kimpoaa zombista toiseen | 2 |
 | Lelut | metsä | helper | Vinkulelu, jonka perään zombit lähtevät hetkeksi | 2 |

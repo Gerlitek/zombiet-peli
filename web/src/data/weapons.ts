@@ -15,7 +15,7 @@ export interface WeaponDef {
   color: number;      // icon and effect color
   knock?: number;     // how far a hit throws the zombie
   area?: boolean;     // strike hits every zombie in range
-  quake?: number;     // the blow shakes the ground: zombies up to this far take a smaller hit (the child's idea)
+  quake?: boolean;    // the blow shakes the whole ground: every zombie on the field takes the same hit (the child's idea)
   effect?: 'heal' | 'squash' | 'shake' | 'freeze' | 'whirl' | 'tornado' | 'robot';
   blades?: number;
   spin?: number;      // orbit speed, radians per second
@@ -26,7 +26,7 @@ export const WEAPONS = {
   fist:      { name: 'Nyrkki', info: 'Nopea peruslyönti', wheel: 'base', weight: 0, kind: 'strike', damage: 1, range: 22, cooldown: 0.3, color: P.iceL, knock: 60 },
   gloves:    { name: 'Superhanskat', info: 'Lyö zombin kauas ja antaa sydämiä', wheel: 'forest', weight: 3, kind: 'strike', damage: 3, range: 26, cooldown: 0.8, color: P.hurt, knock: 320, effect: 'heal' },
   katanas:   { name: 'Mini-katanat', info: 'Kaksi terää pyörii, kun lyöt', wheel: 'forest', weight: 3, kind: 'orbit', damage: 1, range: 18, cooldown: 5, color: P.bone, blades: 2, spin: 5, effect: 'whirl' },
-  hammer:    { name: 'Moukari', info: 'Maa tärähtää: osuu kaikkiin lähellä oleviin', wheel: 'forest', weight: 2, kind: 'strike', damage: 2, range: 34, cooldown: 1.5, color: P.sand, knock: 140, area: true, quake: 72, effect: 'shake' },
+  hammer:    { name: 'Moukari', info: 'Maa tärähtää: osuu kaikkiin kentällä', wheel: 'forest', weight: 2, kind: 'strike', damage: 2, range: 34, cooldown: 1.5, color: P.sand, knock: 140, area: true, quake: true, effect: 'shake' },
   nunchaku:  { name: 'Nuntsakot', info: 'Pyörii lähelläsi, kun lyöt', wheel: 'forest', weight: 2, kind: 'orbit', damage: 1, range: 11, cooldown: 0, color: P.hurt, blades: 1, spin: 11 },
   laser:     { name: 'Laser-miekka', info: 'Kolme terää ja tornado pyörivät, kun lyöt', wheel: 'vip', weight: 3, kind: 'orbit', damage: 2, range: 22, cooldown: 0, color: P.iceL, blades: 3, spin: 6, effect: 'tornado' },
   ice:       { name: 'Siniset jäähanskat', info: 'Lyönti jäädyttää lähellä olevat', wheel: 'vip', weight: 3, kind: 'status', damage: 0, range: 46, cooldown: 3.5, color: P.ice, effect: 'freeze' },

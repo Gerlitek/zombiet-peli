@@ -157,3 +157,15 @@ describe('Rudi-Karri robot', () => {
     expect(w.gone).toHaveLength(1);
   });
 });
+
+describe('hammer', () => {
+  it('shakes the whole field: a zombie far away takes the same hit as one next to the hammer', () => {
+    const arsenal = newArsenal();
+    addWeapon(arsenal, 'hammer');
+    const near = makeZombie('giant', 170, 150, -10, false, rng(1)), far = makeZombie('giant', 300, 230, -10, false, rng(2));
+    const c: Combat = { clock: 1, dt: 1 / 60, attack: true, px: 160, py: 150, zombies: [near, far],
+      hit: (z, damage) => { z.hp -= damage; }, heal: () => {}, shake: () => {} };
+    updateWeapons(arsenal, c);
+    expect([near.hp, far.hp]).toEqual([6, 6]); // giants have 8: both lost 2
+  });
+});
