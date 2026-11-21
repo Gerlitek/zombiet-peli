@@ -10,9 +10,6 @@ private/
 # Instructions for Claude Code. Personal working notes, kept local.
 CLAUDE.md
 
-# The owner's personal to-do list (account and security details). Never committed.
-docs/next-steps.md
-
 # Third-party agent skills, installed locally (skills-lock.json), not part of the project.
 .agents/
 .claude/skills/
