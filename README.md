@@ -11,24 +11,9 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 
 ## Arkkitehtuuri
 
-```mermaid
-%%{init: {"flowchart": {"htmlLabels": false}}}%%
-flowchart TD
-    Game["&nbsp;&nbsp;&nbsp;&nbsp;Peli selaimessa&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"] -->|"&nbsp;tapahtumat&nbsp;"| API
-    GH["&nbsp;&nbsp;&nbsp;&nbsp;GitHub Actions&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"] -->|"&nbsp;OIDC deploy&nbsp;"| API
-    subgraph Azure["Azure, kaikki Bicepillä"]
-        API["&nbsp;&nbsp;&nbsp;&nbsp;Functions API&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"]
-        Scores[("&nbsp;&nbsp;&nbsp;&nbsp;Table: pisteet&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;")]
-        Raw[("&nbsp;&nbsp;&nbsp;&nbsp;Blob: raw JSON&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;")]
-        Night["&nbsp;&nbsp;&nbsp;&nbsp;Yöajo: siivous&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"]
-        Cur[("&nbsp;&nbsp;&nbsp;&nbsp;Blob: curated Parquet&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;")]
-        API --> Scores
-        API --> Raw
-        Raw --> Night
-        Night --> Cur
-    end
-    Cur -->|"&nbsp;GET /api/stats&nbsp;"| Dash["&nbsp;&nbsp;&nbsp;&nbsp;Tilastosivu&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"]
-```
+![Arkkitehtuuri: peli, API, raw- ja curated-kerros, yöajo ja tilastosivu](docs/architecture.svg)
+
+Kaavion lähde on Mermaid-tiedostossa `docs/architecture.mmd`.
 
 Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille sekä lokikatto. Tallennustilaan ei pääse avaimilla, vaan API käyttää hallittua identiteettiä. Perustelut: `docs/architecture.md`.
 
