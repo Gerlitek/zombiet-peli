@@ -53,7 +53,7 @@ export class MenuScene extends Phaser.Scene {
       return texts;
     });
 
-    label(this, W / 2, 163, 'Laskutehtävät VIP-aitiossa  ↑  ↓', P.iceL);
+    label(this, W / 2, 163, 'Tehtävät VIP-aitiossa  ↑  ↓', P.iceL);
     this.levelLabels = PUZZLE_LEVELS.map((lv, i) => label(this, PILL.xs[i] + PILL.w / 2, PILL.y + 3, LEVEL_NAMES[lv]));
 
     const start = label(this, W / 2, 202, 'Paina ENTER ja aloita', P.ice, 12);
