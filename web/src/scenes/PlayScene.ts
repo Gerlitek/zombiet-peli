@@ -19,7 +19,7 @@ import { addBest, load, unlock } from '../systems/storage';
 import { submitScore, warmUp } from '../systems/api';
 import { currentSession, flush, startSession, track } from '../systems/telemetry';
 import { ATTACK_HINT, attackInput } from '../systems/attack';
-import { Arsenal, Combat, ROBOT_TIME, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, isRobotForm, newArsenal, updateWeapons } from '../systems/weapons';
+import { Arsenal, Combat, ROBOT_TIME, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, isRobotForm, newArsenal, robotPose, updateWeapons } from '../systems/weapons';
 import { Tree, Weather } from '../systems/weather';
 import { Field, RISE_TIME, Zombie, drawTrail, drawZombie, isRising, makeZombie, moveZombie } from '../systems/zombies';
 
@@ -428,7 +428,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     const blink = this.clock < this.invulnerableUntil && Math.floor(this.clock * 12) % 2 === 0;
     if (isRobotForm(this.arsenal)) { // the hero is the Rudi-Karri robot for a minute
       const alpha = blink ? 0.35 : 1;
-      return drawCatRobot({ rect: (x, y, w, h, c, a = 1) => p.rect(x, y, w, h, c, a * alpha) }, this.px, this.py, this.clock);
+      return drawCatRobot({ rect: (x, y, w, h, c, a = 1) => p.rect(x, y, w, h, c, a * alpha) }, this.px, this.py, this.clock, robotPose(this.arsenal, this.clock, this.facing.left));
     }
     const swing = (this.clock - this.arsenal.swingAt) / SWING_TIME, attacking = swing < 1;
     const blades = hasBlades(this.arsenal); // with blades around, the hero waves the arms instead of striking

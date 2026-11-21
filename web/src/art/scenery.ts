@@ -94,12 +94,20 @@ export function drawVipGround(p: Pen, W: number, H: number) {
 // Rudi-Karri: a two-headed cat robot. One head is Rudi, the other is Karri, both ragdolls with blue eyes
 // (see drawCat): Rudi has dark ears and a dark mask, Karri grey ears and a white chin. The body is clearly a machine:
 // a metal shell with a lit stripe, rivets, a blinking chest light, an antenna and a segmented tail.
-export function drawCatRobot(p: Pen, x: number, y: number, t: number) {
+// The tail is on the left. mirror: the tail is on the right. swing (0..1): the tail whips down at a zombie.
+export function drawCatRobot(p: Pen, x: number, y: number, t: number, o: { mirror?: boolean; swing?: number } = {}) {
   x = R(x); y = R(y);
-  const tail = R(sin(t * 4) * 2), step = R(sin(t * 12)), blink = floor(t * 3) % 2 === 0;
+  if (o.mirror) { const base = p; p = { rect: (rx, ry, w, h, c, a) => base.rect(2 * x - R(rx) - w + 1, ry, w, h, c, a) }; }
+  const step = R(sin(t * 12)), blink = floor(t * 3) % 2 === 0;
+  // Resting, the tail stands up and sways. In a strike it swings out from up to sideways and long, like a whip.
+  // The tail's angle is measured from straight up toward the left: 0.5 = resting, 1.9 = out sideways and a bit down.
+  const k = o.swing === undefined ? 0 : sin(Math.min(1, o.swing) * Math.PI), len = 9 + k * 8, bx = x - 7, by = y - 6;
+  const tip = (an: number) => ({ x: bx - sin(an) * len, y: by - Math.cos(an) * len });
+  const an = 0.5 + k * 1.4, { x: tx, y: ty } = tip(an), sway = k ? 0 : R(sin(t * 4) * 2);
   ell(p, x, y, 8, 1, P.ink, 0.4);
+  if (k > 0.3) for (let i = 1; i < 4; i++) { const m = tip(an - i * 0.3); limb(p, bx, by, m.x, m.y, 1, P.iceL, false, 0, 0.5 - i * 0.12); } // motion lines
   figure(p, [
-    L(x - 7, y - 6, x - 10, y - 11 + tail, 2, P.storm, false), // tail
+    L(bx, by, tx, ty + sway, 2, P.storm, false), // tail
     B(x - 6, y - 3 + step, 2, 3 - step, P.storm), B(x - 2, y - 3 - step, 2, 3 + step, P.storm), // legs
     B(x + 1, y - 3 + step, 2, 3 - step, P.storm), B(x + 5, y - 3 - step, 2, 3 + step, P.storm),
     B(x - 7, y - 9, 15, 7, P.rain), // metal body
@@ -111,7 +119,7 @@ export function drawCatRobot(p: Pen, x: number, y: number, t: number) {
   p.rect(x - 6, y - 5, 13, 1, P.storm); // seam
   p.rect(x - 5, y - 7, 1, 1, P.storm); p.rect(x + 5, y - 7, 1, 1, P.storm); // rivets
   p.rect(x, y - 7, 2, 2, blink ? P.ice : P.storm); // chest light
-  p.rect(x - 11, y - 12 + tail, 2, 2, P.ice); // lamp at the tip of the tail
+  p.rect(R(tx) - 1, R(ty + sway) - 1, 2, 2, k > 0.3 ? P.bone : P.ice); // lamp at the tip of the tail
   p.rect(x - 7, y - 15, 4, 2, P.bark); // Rudi's dark mask
   p.rect(x + 4, y - 15, 4, 2, P.storm); // Karri's grey mask (the chin below stays white)
   for (const ex of [x - 7, x - 4, x + 4, x + 7]) p.rect(ex, y - 15, 1, 1, P.ice); // blue eyes

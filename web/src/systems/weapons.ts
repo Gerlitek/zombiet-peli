@@ -24,6 +24,12 @@ export interface Arsenal {
 // the nearest zombie at once (damage 999 in data/weapons.ts). After that the robot goes home.
 export const ROBOT_TIME = 60;
 export const isRobotForm = (a: Arsenal) => a.level.rudikarri !== undefined;
+// The robot strikes with its tail: it turns its back to the zombie and the tail whips out to that side.
+// Walking, it faces the way it goes, so the tail is behind it.
+export function robotPose(a: Arsenal, clock: number, faceLeft: boolean) {
+  const swing = (clock - a.swingAt) / SWING_TIME;
+  return swing < 1 ? { swing, mirror: !faceLeft } : { mirror: faceLeft };
+}
 
 // What weapons need from the game. PlayScene implements this.
 export interface Combat {
@@ -84,7 +90,9 @@ export function updateWeapons(a: Arsenal, c: Combat) {
     if (def.kind === 'strike' && c.attack && ready) {
       a.nextAt[id] = c.clock + def.cooldown; // a miss also costs the cooldown
       const inRange = near.filter((n) => n.d < def.range).map((n) => n.z);
-      const targets = def.area ? inRange : inRange.slice(0, 1);
+      // The robot's tail sweeps one side: every zombie in reach on the side of the nearest one is hit.
+      const side = (z: Zombie) => Math.sign(z.x - c.px) || 1;
+      const targets = def.area ? inRange : def.effect === 'robot' && inRange.length ? inRange.filter((z) => side(z) === side(inRange[0])) : inRange.slice(0, 1);
       // The hammer shakes the ground: zombies farther away take a smaller hit and stagger.
       const shaken = def.quake ? near.filter((n) => n.d >= def.range && n.d < def.quake!).map((n) => n.z) : [];
       if (!targets.length && !shaken.length) continue;

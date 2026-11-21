@@ -125,7 +125,7 @@ describe('Rudi-Karri robot', () => {
       const end = c.clock + seconds;
       for (; c.clock < end; c.clock += c.dt) { c.attack = press; updateWeapons(arsenal, c); press = false; }
     };
-    return { arsenal, kills, gone, run };
+    return { arsenal, kills, gone, run, get zombies() { return c.zombies; } };
   }
 
   it('does nothing by itself: the player is the robot', () => {
@@ -138,6 +138,14 @@ describe('Rudi-Karri robot', () => {
     const w = world();
     w.run(0.1, true);
     expect(w.kills).toEqual(['rudikarri']);
+  });
+
+  it('the tail sweeps one side: all zombies in reach there fall, the other side is left alone', () => {
+    const w = world();
+    w.zombies.push(makeZombie('normal', 180, 160, -10, true, rng(4)), makeZombie('normal', 140, 150, -10, true, rng(5)));
+    w.run(0.1, true);
+    expect(w.kills).toHaveLength(2);
+    expect(w.zombies.map((z) => z.x)).toEqual([140]);
   });
 
   it('lasts one minute, then the player is back to normal', () => {

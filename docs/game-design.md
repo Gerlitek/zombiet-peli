@@ -98,7 +98,7 @@ Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kak
 - Arvonta on painotettu ja tehdään asiakaspuolella. Sillä ei ole rahallista arvoa, eikä mitään voi ostaa.
 - Rudi-Karrin siivu on pyörässä hiuksenohut. Mahdollisuus näytetään lukuna `0,00000001 %`. Todellinen todennäköisyys on erillinen parametri: 1 / 10 VIP-pyöräytystä kohti, eli robotti tulee noin joka kymmenennessä pelissä. Näytettävä luku on lapsen päätös, mutta todellinen mahdollisuus ei saa olla mahdoton. Ensin kokeiltiin arvoa 1 / 500, mutta silloin robottia ei nähty kertaakaan.
 - Rudi-Karri on kaksipäinen kissarobotti: toinen pää on Rudi, toinen Karri.
-- Pelaaja muuttuu robotiksi (2026-11-21, korvasi metsästävän apurin): 60 sekunnin ajan pelaaja on itse kaksipäinen kissarobotti, ja jokainen isku kaataa lähimmän zombin, myös supervahvan VIP-zombin. Jäljellä oleva aika näkyy palkkina asepaikkojen yläpuolella. Minuutin jälkeen robotti lähtee kotiin ja pelaaja on taas oma hahmonsa. Harjoitusalueella robottia voi kokeilla samoin.
+- Pelaaja muuttuu robotiksi (2026-11-21, korvasi metsästävän apurin): 60 sekunnin ajan pelaaja on itse kaksipäinen kissarobotti, ja jokainen isku on hännän sivallus: robotti kääntää selkänsä lähimpään zombiin, häntä venyy ja kaataa kaikki sillä puolella ulottuvilla olevat zombit, myös supervahvat VIP-zombit. Jäljellä oleva aika näkyy palkkina asepaikkojen yläpuolella. Minuutin jälkeen robotti lähtee kotiin ja pelaaja on taas oma hahmonsa. Harjoitusalueella robottia voi kokeilla samoin.
 - Taidot (lapsen toive tulevaisuuteen): versiossa 2 pyörään lisätään taitoja, esim. nopeus, lisäsydän ja pidempi suoja.
 
 ## 5. Zombit
