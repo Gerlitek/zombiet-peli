@@ -31,7 +31,7 @@ export const WEAPONS = {
   laser:     { name: 'Laser-miekka', info: 'Kolme terää ja tornado pyörivät, kun lyöt', wheel: 'vip', weight: 3, kind: 'orbit', damage: 2, range: 22, cooldown: 0, color: P.iceL, blades: 3, spin: 6, effect: 'tornado' },
   ice:       { name: 'Siniset jäähanskat', info: 'Lyönti jäädyttää lähellä olevat', wheel: 'vip', weight: 3, kind: 'status', damage: 0, range: 46, cooldown: 3.5, color: P.ice, effect: 'freeze' },
   squeeze:   { name: 'Puristushanskat', info: 'Litistää zombin avuttomaksi', wheel: 'vip', weight: 3, kind: 'strike', damage: 1, range: 26, cooldown: 1.2, color: P.storm, effect: 'squash' },
-  rudikarri: { name: 'Rudi-Karri-robotti', info: 'Tappaa zombin yhdellä iskulla', wheel: 'vip', weight: 0, kind: 'orbit', damage: 999, range: 26, cooldown: 0, color: P.sand, blades: 1, spin: 1.6, effect: 'robot' },
+  rudikarri: { name: 'Rudi-Karri-robotti', info: 'Olet robotti minuutin: isku kaataa kenet vain', wheel: 'vip', weight: 0, kind: 'strike', damage: 999, range: 30, cooldown: 0.25, color: P.sand, knock: 160, effect: 'robot' },
 } satisfies Record<string, WeaponDef>;
 
 export type WeaponId = keyof typeof WEAPONS;

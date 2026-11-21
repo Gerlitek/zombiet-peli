@@ -83,7 +83,7 @@ Ase on yksi rivi dataa: nimi, pyörä (metsä tai VIP), paino arvonnassa, vahink
 | Laser-miekka | VIP | orbit | Kolme päätä, keskellä kristalli. Sininen laser-tornado pelaajan ympärillä | 1 |
 | Siniset jäähanskat | VIP | status | Jäädyttää lähellä olevat zombit jääkuutioon 2 sekunniksi | 1 |
 | Puristushanskat | VIP | strike | Zombi puristuu littanaksi ja on hetken avuton, seuraava osuma tappaa | 1 |
-| Rudi-Karri-robotti | VIP | helper | Tappaa yhdellä iskulla. Lähes mahdoton saada | 1 |
+| Rudi-Karri-robotti | VIP | strike | Pelaaja muuttuu robotiksi minuutiksi, ja isku kaataa minkä tahansa zombin. Lähes mahdoton saada | 1 |
 
 Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kaksi pyöräytystä (VIP-pyörä aitioon päästessä ja peruspyörä Salamaluolan arkusta), joten erillistä varustevalikkoa ei tarvita. Sama ase toista kertaa nostaa sen tasoa (vahinko + 1).
 
@@ -98,7 +98,7 @@ Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kak
 - Arvonta on painotettu ja tehdään asiakaspuolella. Sillä ei ole rahallista arvoa, eikä mitään voi ostaa.
 - Rudi-Karrin siivu on pyörässä hiuksenohut. Mahdollisuus näytetään lukuna `0,00000001 %`. Todellinen todennäköisyys on erillinen parametri: 1 / 10 VIP-pyöräytystä kohti, eli robotti tulee noin joka kymmenennessä pelissä. Näytettävä luku on lapsen päätös, mutta todellinen mahdollisuus ei saa olla mahdoton. Ensin kokeiltiin arvoa 1 / 500, mutta silloin robottia ei nähty kertaakaan.
 - Rudi-Karri on kaksipäinen kissarobotti: toinen pää on Rudi, toinen Karri.
-- Robotti metsästää (2026-11-17): se kiertää pelaajaa, ja kun zombi tulee lähelle pelaajaa, se syöksyy zombin luo, tappaa sen yhdellä iskulla ja palaa. Syöksyjen välissä on 0,8 s tauko. Pelkkä kiertorata ei ylettynyt zombeihin, jotka olivat jo pelaajan vieressä.
+- Pelaaja muuttuu robotiksi (2026-11-21, korvasi metsästävän apurin): 60 sekunnin ajan pelaaja on itse kaksipäinen kissarobotti, ja jokainen isku kaataa lähimmän zombin, myös supervahvan VIP-zombin. Jäljellä oleva aika näkyy palkkina asepaikkojen yläpuolella. Minuutin jälkeen robotti lähtee kotiin ja pelaaja on taas oma hahmonsa. Harjoitusalueella robottia voi kokeilla samoin.
 - Taidot (lapsen toive tulevaisuuteen): versiossa 2 pyörään lisätään taitoja, esim. nopeus, lisäsydän ja pidempi suoja.
 
 ## 5. Zombit

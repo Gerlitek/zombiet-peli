@@ -6,7 +6,7 @@ import { makePairPuzzle, makePuzzle, PAIR_CHOICES, PUZZLE_LEVELS, puzzleBonus } 
 import { pickWeighted } from './random';
 import { MAX_SCORE, score } from './score';
 import { slices, spin } from './wheel';
-import { Combat, addWeapon, newArsenal, updateWeapons } from '../systems/weapons';
+import { Combat, ROBOT_TIME, addWeapon, isRobotForm, newArsenal, updateWeapons } from '../systems/weapons';
 import { makeZombie } from '../systems/zombies';
 
 describe('pickWeighted', () => {
@@ -110,30 +110,42 @@ describe('orbiting blades', () => {
 });
 
 describe('Rudi-Karri robot', () => {
-  // A minimal game: the player stands still, the robot is the only weapon, no key is pressed.
-  function world(zombieAt: { x: number; y: number }) {
+  // A minimal game: the player stands still with only the robot, a VIP zombie (super strong) right next to it.
+  function world() {
     const arsenal = newArsenal();
     addWeapon(arsenal, 'rudikarri');
-    const zombie = makeZombie('normal', zombieAt.x, zombieAt.y, -10, true, rng(3)); // risen long ago, VIP strength
-    const kills: string[] = [];
+    const zombie = makeZombie('giant', 175, 150, -10, true, rng(3)); // risen long ago, VIP strength
+    const kills: string[] = [], gone: number[] = [];
     const c: Combat = {
       clock: 0, dt: 1 / 60, attack: false, px: 160, py: 150, zombies: [zombie],
       hit: (z, damage, weapon) => { z.hp -= damage; if (z.hp <= 0) { kills.push(weapon); c.zombies = c.zombies.filter((o) => o !== z); } },
-      heal: () => {}, shake: () => {},
+      heal: () => {}, shake: () => {}, robotGone: () => gone.push(c.clock),
     };
-    const run = (seconds: number) => { for (let t = 0; t < seconds; t += c.dt) { c.clock = t; updateWeapons(arsenal, c); } };
-    return { kills, run };
+    const run = (seconds: number, press = false) => {
+      const end = c.clock + seconds;
+      for (; c.clock < end; c.clock += c.dt) { c.attack = press; updateWeapons(arsenal, c); press = false; }
+    };
+    return { arsenal, kills, gone, run };
   }
 
-  it('hunts down a zombie standing right on the player, which a plain orbit could never reach', () => {
-    const w = world({ x: 160, y: 150 });
-    w.run(1);
+  it('does nothing by itself: the player is the robot', () => {
+    const w = world();
+    w.run(2);
+    expect(w.kills).toEqual([]);
+  });
+
+  it('kills even a VIP giant with one strike', () => {
+    const w = world();
+    w.run(0.1, true);
     expect(w.kills).toEqual(['rudikarri']);
   });
 
-  it('leaves zombies far from the player alone', () => {
-    const w = world({ x: 300, y: 220 });
+  it('lasts one minute, then the player is back to normal', () => {
+    const w = world();
+    w.run(ROBOT_TIME - 1);
+    expect(isRobotForm(w.arsenal)).toBe(true);
     w.run(2);
-    expect(w.kills).toEqual([]);
+    expect(isRobotForm(w.arsenal)).toBe(false);
+    expect(w.gone).toHaveLength(1);
   });
 });

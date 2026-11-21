@@ -3,7 +3,7 @@ import { W, H } from '../size';
 import { drawCharacter } from '../art/character';
 import { P, css } from '../art/palette';
 import { B, Pen, ell, figure } from '../art/pixels';
-import { BOARD, HORIZON, drawDrop, drawHeart, drawPanel, drawTree, drawTuft } from '../art/scenery';
+import { BOARD, HORIZON, drawCatRobot, drawDrop, drawHeart, drawPanel, drawTree, drawTuft } from '../art/scenery';
 import { fit, label, penFor, zoomCamera } from '../art/ui';
 import { ACHIEVEMENTS, AchievementId } from '../data/achievements';
 import { HEROES, HeroDef, HeroId } from '../data/characters';
@@ -19,7 +19,7 @@ import { addBest, load, unlock } from '../systems/storage';
 import { submitScore, warmUp } from '../systems/api';
 import { currentSession, flush, startSession, track } from '../systems/telemetry';
 import { ATTACK_HINT, attackInput } from '../systems/attack';
-import { Arsenal, Combat, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, newArsenal, updateWeapons } from '../systems/weapons';
+import { Arsenal, Combat, ROBOT_TIME, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, isRobotForm, newArsenal, updateWeapons } from '../systems/weapons';
 import { Tree, Weather } from '../systems/weather';
 import { Field, RISE_TIME, Zombie, drawTrail, drawZombie, isRising, makeZombie, moveZombie } from '../systems/zombies';
 
@@ -218,6 +218,11 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.hp = Math.min(MAX_HP, this.hp + 1);
   }
 
+  robotGone() {
+    this.cameras.main.flash(250, 201, 167, 106);
+    this.say('Rudi-Karri lähti kotiin. Olet taas oma itsesi.');
+  }
+
   shake(power: number) {
     this.cameras.main.shake(power > 0.01 ? 180 : 70, power);
   }
@@ -309,7 +314,12 @@ export class PlayScene extends Phaser.Scene implements Combat {
       done: (id: WeaponId) => {
         addWeapon(this.arsenal, id);
         track('wheel_spun', { wheel, weapon: id, kills: this.kills });
-        if (id === 'rudikarri') this.achieve('rudikarri');
+        if (id === 'rudikarri') {
+          this.achieve('rudikarri');
+          this.cameras.main.flash(300, 201, 167, 106);
+          this.say('Muutuit Rudi-Karri-robotiksi minuutiksi! Isku kaataa kenet vain.');
+          return this.calm();
+        }
         const level = this.arsenal.level[id]!;
         this.say(level > 1 ? `${WEAPONS[id].name} vahvistui tasolle ${level}` : `Uusi ase: ${WEAPONS[id].name}. ${WEAPONS[id].info}`);
         this.calm();
@@ -416,6 +426,10 @@ export class PlayScene extends Phaser.Scene implements Combat {
 
   private drawPlayer(p: Pen) {
     const blink = this.clock < this.invulnerableUntil && Math.floor(this.clock * 12) % 2 === 0;
+    if (isRobotForm(this.arsenal)) { // the hero is the Rudi-Karri robot for a minute
+      const alpha = blink ? 0.35 : 1;
+      return drawCatRobot({ rect: (x, y, w, h, c, a = 1) => p.rect(x, y, w, h, c, a * alpha) }, this.px, this.py, this.clock);
+    }
     const swing = (this.clock - this.arsenal.swingAt) / SWING_TIME, attacking = swing < 1;
     const blades = hasBlades(this.arsenal); // with blades around, the hero waves the arms instead of striking
     drawCharacter(p, Math.round(this.px), Math.round(this.py), this.hero.look, this.clock, {
@@ -482,6 +496,10 @@ export class PlayScene extends Phaser.Scene implements Combat {
     const vip = this.zone === 'vip';
     drawPanel(p, VIP_SIGN.x, 4, VIP_SIGN.w, 13, vip ? P.sick : P.hurt);
     // weapon slots: circle = strike, cross = orbit, square = status
+    if (this.arsenal.robotUntil > this.clock) { // the robot's minute runs out as a bar above the weapon slots
+      drawPanel(p, 5, 216, 62, 4, P.storm);
+      p.rect(6, 217, Math.round((60 * (this.arsenal.robotUntil - this.clock)) / ROBOT_TIME), 2, P.sand);
+    }
     (Object.keys(this.arsenal.level) as WeaponId[]).forEach((id, i) => {
       const def: WeaponDef = WEAPONS[id], x = 5 + i * 15, y = 222;
       drawPanel(p, x, y, 13, 13, P.ice);

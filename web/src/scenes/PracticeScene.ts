@@ -3,13 +3,13 @@ import { W, H } from '../size';
 import { drawCharacter } from '../art/character';
 import { P } from '../art/palette';
 import { B, Pen, ell, figure } from '../art/pixels';
-import { SHORE, drawCat, drawHelicopter, drawPanel, drawTuft } from '../art/scenery';
+import { SHORE, drawCat, drawCatRobot, drawHelicopter, drawPanel, drawTuft } from '../art/scenery';
 import { label, penFor, zoomCamera } from '../art/ui';
 import { HEROES, HeroDef, HeroId } from '../data/characters';
 import { WEAPONS, WeaponDef, WeaponId } from '../data/weapons';
 import { ZombieType } from '../data/zombies';
 import { PuzzleLevel } from '../logic/puzzle';
-import { Arsenal, Combat, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, newArsenal, updateWeapons } from '../systems/weapons';
+import { Arsenal, Combat, SWING_TIME, addWeapon, drawWeapons, gearOf, hasBlades, isRobotForm, newArsenal, updateWeapons } from '../systems/weapons';
 import { ATTACK_HINT, attackInput } from '../systems/attack';
 import { Field, Zombie, drawTrail, drawZombie, makeZombie, moveZombie } from '../systems/zombies';
 
@@ -200,6 +200,7 @@ export class PracticeScene extends Phaser.Scene implements Combat {
   }
 
   private drawHero(p: Pen) {
+    if (isRobotForm(this.arsenal)) return drawCatRobot(p, this.px, this.py, this.clock); // trying the robot: the hero becomes it
     const swing = (this.clock - this.arsenal.swingAt) / SWING_TIME, attacking = swing < 1, blades = hasBlades(this.arsenal);
     drawCharacter(p, Math.round(this.px), Math.round(this.py), this.hero.look, this.clock, {
       still: !this.moving, left: this.facing.left, back: this.facing.back && !attacking,

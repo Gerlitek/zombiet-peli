@@ -1,11 +1,9 @@
 import { P } from '../art/palette';
-import { Pen, limb } from '../art/pixels';
-import { drawCatRobot } from '../art/scenery';
+import { Pen, ell, limb } from '../art/pixels';
 import { WEAPONS, WeaponDef, WeaponId } from '../data/weapons';
 import { Zombie, isRising, knock } from './zombies';
 
 // Nothing attacks by itself: every weapon works when the player presses the attack key.
-// (Only the Rudi-Karri robot acts alone, because it is a robot.)
 export const SWING_TIME = 0.3;  // seconds one swing animation lasts
 const ACTIVE_TIME = 1.6;        // seconds the orbiting blades spin and hurt after one press: long enough to be clearly seen
 const FADE_TIME = 0.3;          // the blades fade out during the last part of that time
@@ -19,17 +17,13 @@ export interface Arsenal {
   punches: number;
   swingAt: number;      // clock of the last attack press: drives the hero's swing animation
   activeUntil: number;  // orbiting blades do damage until this time
-  robot?: Robot;        // the Rudi-Karri robot, once owned
+  robotUntil: number;   // the player is the Rudi-Karri robot until this time (0 = not yet)
 }
 
-// The Rudi-Karri robot circles the player like a blade, but it hunts: when a zombie comes close
-// to the player, the robot dashes to it, kills it and flies back. A short rest between dashes
-// keeps it from clearing the whole field at once. (A plain orbit could not reach zombies that
-// were already next to the player, inside its circle.)
-export interface Robot { x: number; y: number; target: Zombie | null; restUntil: number }
-const HUNT_RANGE = 44;  // the robot goes after zombies this close to the player
-const ROBOT_SPEED = 220; // pixels per second
-const ROBOT_REST = 0.8;  // seconds between dashes; shorter on higher levels
+// Rudi-Karri: the player turns into the two-headed cat robot for a minute. Every strike then kills
+// the nearest zombie at once (damage 999 in data/weapons.ts). After that the robot goes home.
+export const ROBOT_TIME = 60;
+export const isRobotForm = (a: Arsenal) => a.level.rudikarri !== undefined;
 
 // What weapons need from the game. PlayScene implements this.
 export interface Combat {
@@ -41,37 +35,18 @@ export interface Combat {
   hit(z: Zombie, damage: number, weapon: WeaponId): void;
   heal(): void;
   shake(power: number): void;
+  robotGone?(): void;     // the minute as the robot is over
 }
 
-export const newArsenal = (): Arsenal => ({ level: {}, nextAt: {}, fx: {}, angle: {}, punches: 0, swingAt: -9, activeUntil: 0 });
-
-function updateRobot(a: Arsenal, id: WeaponId, c: Combat, near: { z: Zombie; d: number }[]) {
-  const def: WeaponDef = WEAPONS[id];
-  a.angle[id] = (a.angle[id] ?? 0) + c.dt * (def.spin ?? 1);
-  const home = bladePos(a, id, 0, c), homeY = home.y + 9; // the robot stands on the ground: y is its feet, like a zombie's
-  const r = (a.robot ??= { x: home.x, y: homeY, target: null, restUntil: 0 });
-  if (r.target && (r.target.hp <= 0 || !c.zombies.includes(r.target))) r.target = null; // killed by something else
-  if (!r.target && c.clock >= r.restUntil) r.target = near.find((n) => n.d < HUNT_RANGE)?.z ?? null;
-
-  const goal = r.target ?? { x: home.x, y: homeY };
-  const dx = goal.x - r.x, dy = goal.y - r.y, dist = hypot(dx, dy), step = ROBOT_SPEED * c.dt;
-  if (dist <= step) { r.x = goal.x; r.y = goal.y; } else { r.x += (dx / dist) * step; r.y += (dy / dist) * step; }
-
-  if (r.target && hypot(r.target.x - r.x, r.target.y - r.y) < 8) {
-    c.hit(r.target, def.damage, id);
-    r.target = null;
-    r.restUntil = c.clock + ROBOT_REST / a.level[id]!;
-  }
-}
+export const newArsenal = (): Arsenal => ({ level: {}, nextAt: {}, fx: {}, angle: {}, punches: 0, swingAt: -9, activeUntil: 0, robotUntil: 0 });
 
 export function addWeapon(a: Arsenal, id: WeaponId) {
   a.level[id] = (a.level[id] ?? 0) + 1; // the same weapon again = one level higher
 }
 
 const owned = (a: Arsenal) => Object.keys(a.level) as WeaponId[];
-const isRobot = (def: WeaponDef) => def.effect === 'robot';
 // With blades around the hero, an attack waves the arms instead of striking.
-export const hasBlades = (a: Arsenal) => owned(a).some((id) => WEAPONS[id].kind === 'orbit' && !isRobot(WEAPONS[id]));
+export const hasBlades = (a: Arsenal) => owned(a).some((id) => WEAPONS[id].kind === 'orbit');
 const { cos, sin, hypot, PI } = Math;
 
 // What the hero visibly wears or carries because of the owned weapons. Spread into the hero's pose.
@@ -90,6 +65,10 @@ function bladePos(a: Arsenal, id: WeaponId, i: number, c: Combat) {
 }
 
 export function updateWeapons(a: Arsenal, c: Combat) {
+  if (isRobotForm(a)) { // the minute starts on the first frame after the wheel gives the robot
+    a.robotUntil ||= c.clock + ROBOT_TIME;
+    if (c.clock >= a.robotUntil) { delete a.level.rudikarri; a.robotUntil = 0; c.robotGone?.(); }
+  }
   if (c.attack) { a.swingAt = c.clock; a.activeUntil = c.clock + ACTIVE_TIME; }
   const bladesActive = c.clock < a.activeUntil;
   const near = c.zombies
@@ -99,7 +78,6 @@ export function updateWeapons(a: Arsenal, c: Combat) {
 
   for (const id of owned(a)) {
     const def: WeaponDef = WEAPONS[id];
-    if (isRobot(def)) { updateRobot(a, id, c, near); continue; }
     const damage = def.damage ? def.damage + a.level[id]! - 1 : 0;
     const ready = c.clock >= (a.nextAt[id] ?? 0);
 
@@ -169,6 +147,10 @@ const IMPACT: Partial<Record<WeaponId, Impact>> = {
   gloves(p, x, y, age, color) { // a big burst: the zombie flies far
     for (let i = 0; i < 10; i++) { const an = i * 0.63, r = 4 + age * 90; limb(p, x + cos(an) * r * 0.5, y + sin(an) * r * 0.5, x + cos(an) * r, y + sin(an) * r, 1, i % 2 ? P.bone : color, false, 0, 1 - age * 5); }
   },
+  rudikarri(p, x, y, age, color) { // the robot's paw: a big golden burst with sparks
+    for (let i = 0; i < 12; i++) { const an = i * 0.52, r = 3 + age * 110; p.rect(x + cos(an) * r, y + sin(an) * r * 0.7, 2, 2, i % 3 ? color : P.ice, 1 - age * 4); }
+    ell(p, x, y, 4 - age * 15, 3 - age * 12, P.bone, 1 - age * 5);
+  },
   squeeze(p, x, y, age, color) { // two hands press the zombie flat from the sides
     const gap = Math.max(1, 10 - age * 80), a = 1 - age * 4;
     for (const side of [-1, 1]) { p.rect(x + side * gap - 1, y - 4, 2, 9, color, a); p.rect(x + side * (gap + 2) - 1, y - 2, 2, 5, P.bone, a); }
@@ -193,7 +175,6 @@ export function drawWeapons(p: Pen, a: Arsenal, c: Combat) {
       for (let i = 0; i < 10; i++) { const r = 10 + age * 80, an = i * 0.63; p.rect(fx.x + cos(an) * r, fx.y - 6 + sin(an) * r * 0.5, 1, 3, P.iceL, 1 - age * 2); }
     }
     if (def.kind !== 'orbit') continue;
-    if (isRobot(def)) { if (a.robot) drawCatRobot(p, Math.round(a.robot.x), Math.round(a.robot.y), c.clock); continue; }
     if (!bladesActive) continue; // put away between attacks, so they never look like they are working
     const alpha = Math.min(1, (a.activeUntil - c.clock) / FADE_TIME); // full while hurting, fades just before stopping
     if (def.effect === 'tornado') { // blue laser tornado around the player
