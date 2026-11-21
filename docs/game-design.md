@@ -18,7 +18,7 @@ Pelikerta kestää 2 - 4 minuuttia. Lyhyt kierros sopii lapselle, ja onnenpyör�
 | Tapot ennen VIP-rajaa | Mätä metsä. Zombeja nousee sateesta |
 | Tappo 40 (kehityksessä 20) | VIP-kyltti muuttuu punaisesta vihreäksi, salama iskee ja pelaaja siirtyy VIP-aitioon. VIP-pyöräytys |
 | VIP-tapot | VIP-aitio. Zombit ovat supervahvoja. Ensimmäisen VIP-tapon jälkeen aitioon ilmestyy lukkokivi, jonka yllä on nuoli ja alla teksti AARREKIVI (2026-11-17, aiemmin HAJOTELMA: houkuttelevampi, koska kiven takana on aarre). Sen hajotelmat ratkaisemalla pääsee Salamaluolaan (vapaaehtoinen, ks. luku 8) |
-| Viimeinen tappo (100, kehityksessä 40) | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
+| Viimeinen tappo (80, kehityksessä 40) | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
 | Loppuruutu | Pisteet, aika, saavutukset, pistetaulukko, valmis viesti |
 
 Tapporajat ovat yhdessä tiedostossa (`web/src/data/rules.ts`). Kytkin `RELEASE` valitsee rajat: kehitysvaiheessa VIP-aitio 20 tapolla, julkaisussa 40 tapolla. Läpäisy on aina kaksinkertainen VIP-rajaan nähden (40 tai 80). Lapsen alkuperäinen idea oli 5 ja 10. Hän toivoi myöhemmin paljon vaikeampaa pääsyä aitioon, ja 10 tuntui aikuisestakin nopealta, joten julkaisuraja oli ensin 50 (2026-11-17). Omistaja laski sen 40:een (2026-11-21), koska 50 tapon metsä tuntui liian pitkältä. Kehitysvaiheen pienempi raja on testaamista varten. Julkaisussa kytkin käännetään arvoon `true` ja muutos viedään palvelimelle CI:n kautta.
@@ -83,7 +83,7 @@ Ase on yksi rivi dataa: nimi, pyörä (metsä tai VIP), paino arvonnassa, vahink
 | Laser-miekka | VIP | orbit | Kolme päätä, keskellä kristalli. Sininen laser-tornado pelaajan ympärillä | 1 |
 | Siniset jäähanskat | VIP | status | Jäädyttää lähellä olevat zombit jääkuutioon 2 sekunniksi | 1 |
 | Puristushanskat | VIP | strike | Zombi puristuu littanaksi ja on hetken avuton, seuraava osuma tappaa | 1 |
-| Rudi-Karri-robotti | VIP | strike | Pelaaja muuttuu robotiksi minuutiksi, ja isku kaataa minkä tahansa zombin. Lähes mahdoton saada | 1 |
+| Rudi-Karri-robotti | VIP | strike | Pelaaja muuttuu robotiksi minuutiksi, ja laserhäntä ampuu kaukanakin olevan zombin kerralla kumoon. Lähes mahdoton saada | 1 |
 
 Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kaksi pyöräytystä (VIP-pyörä aitioon päästessä ja peruspyörä Salamaluolan arkusta), joten erillistä varustevalikkoa ei tarvita. Sama ase toista kertaa nostaa sen tasoa (vahinko + 1).
 
@@ -98,7 +98,7 @@ Kaikki saadut aseet ovat käytössä yhtä aikaa. Pelikerrassa on enintään kak
 - Arvonta on painotettu ja tehdään asiakaspuolella. Sillä ei ole rahallista arvoa, eikä mitään voi ostaa.
 - Rudi-Karrin siivu on pyörässä hiuksenohut. Mahdollisuus näytetään lukuna `0,00000001 %`. Todellinen todennäköisyys on erillinen parametri: 1 / 10 VIP-pyöräytystä kohti, eli robotti tulee noin joka kymmenennessä pelissä. Näytettävä luku on lapsen päätös, mutta todellinen mahdollisuus ei saa olla mahdoton. Ensin kokeiltiin arvoa 1 / 500, mutta silloin robottia ei nähty kertaakaan.
 - Rudi-Karri on kaksipäinen kissarobotti: toinen pää on Rudi, toinen Karri.
-- Pelaaja muuttuu robotiksi (2026-11-21, korvasi metsästävän apurin): 60 sekunnin ajan pelaaja on itse kaksipäinen kissarobotti, ja jokainen isku on hännän sivallus: robotti kääntää selkänsä lähimpään zombiin, häntä venyy ja kaataa kaikki sillä puolella ulottuvilla olevat zombit, myös supervahvat VIP-zombit. Jäljellä oleva aika näkyy palkkina asepaikkojen yläpuolella. Minuutin jälkeen robotti lähtee kotiin ja pelaaja on taas oma hahmonsa. Harjoitusalueella robottia voi kokeilla samoin.
+- Pelaaja muuttuu robotiksi (2026-11-21, korvasi metsästävän apurin): 60 sekunnin ajan pelaaja on itse kaksipäinen kissarobotti, ja lyönti ampuu laserhännästä säteen lähimpään zombiin enintään 80 pikselin päähän. Säde kaataa minkä tahansa zombin, myös supervahvan VIP-zombin. Robotti on sivulta kuvattu metallikissa, jolla on kaksi päätä (Rudi ja Karri) ja laserhäntä. Jäljellä oleva aika näkyy palkkina asepaikkojen yläpuolella. Minuutin jälkeen robotti lähtee kotiin ja pelaaja on taas oma hahmonsa. Harjoitusalueella robottia voi kokeilla samoin.
 - Taidot (lapsen toive tulevaisuuteen): versiossa 2 pyörään lisätään taitoja, esim. nopeus, lisäsydän ja pidempi suoja.
 
 ## 5. Zombit

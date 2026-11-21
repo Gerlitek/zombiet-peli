@@ -1,5 +1,6 @@
 import { P } from '../art/palette';
-import { Pen, ell, limb } from '../art/pixels';
+import { Pen, limb } from '../art/pixels';
+import { RobotPose } from '../art/scenery';
 import { WEAPONS, WeaponDef, WeaponId } from '../data/weapons';
 import { Zombie, isRising, knock } from './zombies';
 
@@ -24,11 +25,11 @@ export interface Arsenal {
 // the nearest zombie at once (damage 999 in data/weapons.ts). After that the robot goes home.
 export const ROBOT_TIME = 60;
 export const isRobotForm = (a: Arsenal) => a.level.rudikarri !== undefined;
-// The robot strikes with its tail: it turns its back to the zombie and the tail whips out to that side.
-// Walking, it faces the way it goes, so the tail is behind it.
-export function robotPose(a: Arsenal, clock: number, faceLeft: boolean) {
-  const swing = (clock - a.swingAt) / SWING_TIME;
-  return swing < 1 ? { swing, mirror: !faceLeft } : { mirror: faceLeft };
+// The robot faces the way it walks, and the zombie it shoots (strikes turn the hero toward the target).
+// Right after a shot, the laser tail aims at the zombie that was hit.
+export function robotPose(a: Arsenal, clock: number, faceLeft: boolean): RobotPose {
+  const fx = a.fx.rudikarri, age = fx ? clock - fx.at : 9;
+  return { mirror: faceLeft, aim: fx && age < SWING_TIME ? { x: fx.x, y: fx.y - 9, age } : undefined };
 }
 
 // What weapons need from the game. PlayScene implements this.
@@ -90,9 +91,7 @@ export function updateWeapons(a: Arsenal, c: Combat) {
     if (def.kind === 'strike' && c.attack && ready) {
       a.nextAt[id] = c.clock + def.cooldown; // a miss also costs the cooldown
       const inRange = near.filter((n) => n.d < def.range).map((n) => n.z);
-      // The robot's tail sweeps one side: every zombie in reach on the side of the nearest one is hit.
-      const side = (z: Zombie) => Math.sign(z.x - c.px) || 1;
-      const targets = def.area ? inRange : def.effect === 'robot' && inRange.length ? inRange.filter((z) => side(z) === side(inRange[0])) : inRange.slice(0, 1);
+      const targets = def.area ? inRange : inRange.slice(0, 1);
       // The hammer shakes the ground: zombies farther away take a smaller hit and stagger.
       const shaken = def.quake ? near.filter((n) => n.d >= def.range && n.d < def.quake!).map((n) => n.z) : [];
       if (!targets.length && !shaken.length) continue;
@@ -155,9 +154,8 @@ const IMPACT: Partial<Record<WeaponId, Impact>> = {
   gloves(p, x, y, age, color) { // a big burst: the zombie flies far
     for (let i = 0; i < 10; i++) { const an = i * 0.63, r = 4 + age * 90; limb(p, x + cos(an) * r * 0.5, y + sin(an) * r * 0.5, x + cos(an) * r, y + sin(an) * r, 1, i % 2 ? P.bone : color, false, 0, 1 - age * 5); }
   },
-  rudikarri(p, x, y, age, color) { // the robot's paw: a big golden burst with sparks
-    for (let i = 0; i < 12; i++) { const an = i * 0.52, r = 3 + age * 110; p.rect(x + cos(an) * r, y + sin(an) * r * 0.7, 2, 2, i % 3 ? color : P.ice, 1 - age * 4); }
-    ell(p, x, y, 4 - age * 15, 3 - age * 12, P.bone, 1 - age * 5);
+  rudikarri(p, x, y, age) { // where the laser hits: a burst of light (the beam itself is drawn with the robot)
+    for (let i = 0; i < 10; i++) { const an = i * 0.63, r = 2 + age * 70; p.rect(x + cos(an) * r, y + sin(an) * r * 0.7, 2, 1, i % 2 ? P.iceL : P.bone, 1 - age * 5); }
   },
   squeeze(p, x, y, age, color) { // two hands press the zombie flat from the sides
     const gap = Math.max(1, 10 - age * 80), a = 1 - age * 4;

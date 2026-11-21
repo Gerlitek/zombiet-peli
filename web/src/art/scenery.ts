@@ -91,39 +91,44 @@ export function drawVipGround(p: Pen, W: number, H: number) {
   ell(p, 160, 160, 120, 50, P.ice, 0.1);
 }
 
-// Rudi-Karri: a two-headed cat robot. One head is Rudi, the other is Karri, both ragdolls with blue eyes
-// (see drawCat): Rudi has dark ears and a dark mask, Karri grey ears and a white chin. The body is clearly a machine:
-// a metal shell with a lit stripe, rivets, a blinking chest light, an antenna and a segmented tail.
-// The tail is on the left. mirror: the tail is on the right. swing (0..1): the tail whips down at a zombie.
-export function drawCatRobot(p: Pen, x: number, y: number, t: number, o: { mirror?: boolean; swing?: number } = {}) {
+// Rudi-Karri: a robot cat with two heads, seen from the side like drawCat. One head is Rudi (dark ears and mask),
+// the other Karri (grey ears, white chin), both ragdolls with blue eyes. The body is a metal cat: a long shell
+// with a lit stripe, four walking legs and a laser tail. It faces right; mirror: it faces left.
+// aim: the laser tail rises over the back like a scorpion's and fires a beam at that point (age = seconds since the shot).
+export interface RobotPose { mirror?: boolean; aim?: { x: number; y: number; age: number } }
+
+export function drawCatRobot(p: Pen, x: number, y: number, t: number, o: RobotPose = {}) {
   x = R(x); y = R(y);
-  if (o.mirror) { const base = p; p = { rect: (rx, ry, w, h, c, a) => base.rect(2 * x - R(rx) - w + 1, ry, w, h, c, a) }; }
-  const step = R(sin(t * 12)), blink = floor(t * 3) % 2 === 0;
-  // Resting, the tail stands up and sways. In a strike it swings out from up to sideways and long, like a whip.
-  // The tail's angle is measured from straight up toward the left: 0.5 = resting, 1.9 = out sideways and a bit down.
-  const k = o.swing === undefined ? 0 : sin(Math.min(1, o.swing) * Math.PI), len = 9 + k * 8, bx = x - 7, by = y - 6;
-  const tip = (an: number) => ({ x: bx - sin(an) * len, y: by - Math.cos(an) * len });
-  const an = 0.5 + k * 1.4, { x: tx, y: ty } = tip(an), sway = k ? 0 : R(sin(t * 4) * 2);
-  ell(p, x, y, 8, 1, P.ink, 0.4);
-  if (k > 0.3) for (let i = 1; i < 4; i++) { const m = tip(an - i * 0.3); limb(p, bx, by, m.x, m.y, 1, P.iceL, false, 0, 0.5 - i * 0.12); } // motion lines
+  const out = p; // the beam is drawn in world space, outside the mirror
+  if (o.mirror) p = { rect: (rx, ry, w, h, c, a) => out.rect(2 * x - R(rx) - w + 1, ry, w, h, c, a) };
+  const run = sin(t * 14), step = R(run), blink = floor(t * 3) % 2 === 0, firing = o.aim !== undefined;
+  ell(p, x, y, 9, 1, P.ink, 0.4);
+  // Laser tail: resting it curls up behind; firing it arches over the back and points forward.
+  const mid = firing ? { x: x - 9, y: y - 17 } : { x: x - 12, y: y - 11 + R(sin(t * 4)) };
+  const tip = firing ? { x: x - 2, y: y - 22 } : { x: x - 11, y: y - 16 + R(sin(t * 4) * 2) };
   figure(p, [
-    L(bx, by, tx, ty + sway, 2, P.storm, false), // tail
-    B(x - 6, y - 3 + step, 2, 3 - step, P.storm), B(x - 2, y - 3 - step, 2, 3 + step, P.storm), // legs
-    B(x + 1, y - 3 + step, 2, 3 - step, P.storm), B(x + 5, y - 3 - step, 2, 3 + step, P.storm),
-    B(x - 7, y - 9, 15, 7, P.rain), // metal body
-    B(x - 1, y - 12, 3, 3, P.storm), // neck
-    E(x - 5, y - 14, 4, 3, P.bone), B(x - 9, y - 19, 2, 3, P.bark), B(x - 3, y - 19, 2, 3, P.bark), // Rudi: dark ears
-    E(x + 6, y - 14, 4, 3, P.bone), B(x + 2, y - 19, 2, 3, P.storm), B(x + 8, y - 19, 2, 3, P.storm), // Karri: grey ears
+    L(x - 7, y - 7, mid.x, mid.y, 2, P.storm, false), L(mid.x, mid.y, tip.x, tip.y, 2, P.storm, false),
+    B(x - 6, y - 4 + step, 2, 4 - step, P.storm), B(x - 3, y - 4 - step, 2, 4 + step, P.storm), // back legs
+    B(x + 2, y - 4 - step, 2, 4 + step, P.storm), B(x + 5, y - 4 + step, 2, 4 - step, P.storm), // front legs
+    E(x, y - 7, 8, 3, P.rain), // long metal body
+    B(x + 4, y - 11, 2, 3, P.storm), B(x + 9, y - 10, 2, 3, P.storm), // two necks
+    E(x + 3, y - 14, 3, 3, P.bone), B(x + 1, y - 19, 2, 2, P.storm), B(x + 5, y - 19, 2, 2, P.storm), // Karri: grey ears
+    E(x + 10, y - 13, 3, 3, P.bone), B(x + 8, y - 18, 2, 2, P.bark), B(x + 12, y - 18, 2, 2, P.bark), // Rudi: dark ears
   ]);
-  p.rect(x - 6, y - 8, 13, 1, P.iceL); // light on the top of the shell
-  p.rect(x - 6, y - 5, 13, 1, P.storm); // seam
-  p.rect(x - 5, y - 7, 1, 1, P.storm); p.rect(x + 5, y - 7, 1, 1, P.storm); // rivets
-  p.rect(x, y - 7, 2, 2, blink ? P.ice : P.storm); // chest light
-  p.rect(R(tx) - 1, R(ty + sway) - 1, 2, 2, k > 0.3 ? P.bone : P.ice); // lamp at the tip of the tail
-  p.rect(x - 7, y - 15, 4, 2, P.bark); // Rudi's dark mask
-  p.rect(x + 4, y - 15, 4, 2, P.storm); // Karri's grey mask (the chin below stays white)
-  for (const ex of [x - 7, x - 4, x + 4, x + 7]) p.rect(ex, y - 15, 1, 1, P.ice); // blue eyes
-  p.rect(x, y - 21, 1, 4, P.storm); p.rect(x, y - 22, 1, 1, blink ? P.hurt : P.sand); // antenna
+  for (const lx of [x - 6, x - 3, x + 2, x + 5]) p.rect(lx, y - 1, 2, 1, P.ink); // paws
+  p.rect(x - 6, y - 9, 12, 1, P.iceL); // light on the back
+  p.rect(x - 5, y - 6, 1, 1, P.storm); p.rect(x + 3, y - 6, 1, 1, P.storm); // rivets
+  p.rect(x - 1, y - 7, 2, 2, blink ? P.ice : P.storm); // light on the side
+  p.rect(x + 2, y - 15, 4, 2, P.storm); // Karri: grey mask, white chin below
+  p.rect(x + 9, y - 14, 4, 2, P.bark); p.rect(x + 12, y - 12, 1, 1, P.bark); // Rudi: dark mask and nose
+  for (const ex of [x + 2, x + 5, x + 9, x + 12]) p.rect(ex, ex < x + 8 ? y - 15 : y - 14, 1, 1, P.ice); // blue eyes
+  p.rect(tip.x - 1, tip.y - 1, 3, 3, firing || blink ? P.iceL : P.ice); // laser emitter at the tail tip
+  if (o.aim && o.aim.age < 0.15) { // the beam: a bright core in a soft glow, from the tail tip to the zombie
+    const sx = o.mirror ? 2 * x - tip.x : tip.x, a = 1 - o.aim.age / 0.15;
+    limb(out, sx, tip.y, o.aim.x, o.aim.y, 3, P.ice, false, 0, 0.45 * a);
+    limb(out, sx, tip.y, o.aim.x, o.aim.y, 1, P.bone, false, 0, a);
+    ell(out, o.aim.x, o.aim.y, 3, 2, P.iceL, a);
+  }
 }
 
 // ---------- practice area: the sand dunes of Kalajoki (Hiekkasärkät) ----------

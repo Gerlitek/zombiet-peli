@@ -140,12 +140,12 @@ describe('Rudi-Karri robot', () => {
     expect(w.kills).toEqual(['rudikarri']);
   });
 
-  it('the tail sweeps one side: all zombies in reach there fall, the other side is left alone', () => {
+  it('the laser tail reaches farther than a sword, but shoots one zombie at a time', () => {
     const w = world();
-    w.zombies.push(makeZombie('normal', 180, 160, -10, true, rng(4)), makeZombie('normal', 140, 150, -10, true, rng(5)));
+    w.zombies.splice(0, 1, makeZombie('normal', 220, 160, -10, true, rng(4)), makeZombie('normal', 300, 150, -10, true, rng(5)));
     w.run(0.1, true);
-    expect(w.kills).toHaveLength(2);
-    expect(w.zombies.map((z) => z.x)).toEqual([140]);
+    expect(w.kills).toEqual(['rudikarri']);
+    expect(w.zombies.map((z) => z.x)).toEqual([300]); // 140 px away: out of reach
   });
 
   it('lasts one minute, then the player is back to normal', () => {
