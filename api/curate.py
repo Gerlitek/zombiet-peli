@@ -21,7 +21,7 @@ DROPPED = {'nickname'}
 
 # The version of the cleaning rules. Raise it when a rule changes: the nightly run then rebuilds every day
 # whose raw data is still there (30 days) and whose curated file was made with an older version.
-RULES_VERSION = 3
+RULES_VERSION = 4
 
 # Hand-made test sessions use ids like 10000000-0000-4000-8000-000000000042. A real crypto.randomUUID
 # matches this by chance with odds of about 1 in 10^12.
@@ -29,7 +29,7 @@ TEST_SESSION = re.compile(r'^[0-9a-f]{8}-0000-4000-8000-')
 
 # Days left out of the dashboard. Days before LAUNCH_DAY were development tests. SKIP_DAYS is the cleanup tool:
 # if a day ever fills with fake games, add it here and raise RULES_VERSION. The raw data stays as it is.
-LAUNCH_DAY: str | None = None  # e.g. '2026-11-22'
+LAUNCH_DAY: str | None = '2026-11-22'  # first day of real players (UTC); earlier days were tests
 SKIP_DAYS: set[str] = set()
 
 

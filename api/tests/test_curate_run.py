@@ -30,7 +30,8 @@ def event(sid, seq):
                        'version': '0.2.0', 'nickname': 'Hurja-Kissa-42', 'character': 'knight', 'received': '2026-11-19T10:00:01+00:00'})
 
 
-def run(monkeypatch, curated_blobs):
+def run(monkeypatch, curated_blobs, launch_day=None):
+    monkeypatch.setattr(fa.curate, 'LAUNCH_DAY', launch_day)  # these tests use 2026-11-19, before the real launch day
     raw = Container({'events/dt=2026-11-19/a-0.ndjson': ('\n'.join([event(REAL_SID, 0), event(TEST_SID, 0)]).encode(), None)})
     curated = Container(curated_blobs)
     monkeypatch.setattr(fa._blobs, 'get_container_client', lambda name: raw if name == 'raw' else curated)
@@ -58,3 +59,9 @@ def test_a_skipped_day_is_emptied(monkeypatch):
     curated = run(monkeypatch, {})
     summary = json.loads(curated.blobs['summary/dashboard.json'][0])
     assert summary['games']['started'] == 0 and summary['players_recent'] == 0
+
+
+def test_days_before_the_launch_day_are_left_out(monkeypatch):
+    kept = json.loads(run(monkeypatch, {}).blobs['summary/dashboard.json'][0])
+    left_out = json.loads(run(monkeypatch, {}, launch_day='2026-11-20').blobs['summary/dashboard.json'][0])
+    assert kept['games']['started'] == 1 and left_out['games']['started'] == 0
