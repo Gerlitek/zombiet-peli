@@ -14,20 +14,20 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 ```mermaid
 %%{init: {"flowchart": {"htmlLabels": false}}}%%
 flowchart TD
-    Game["&nbsp;Peli selaimessa<br/>&nbsp;&nbsp;"] -->|"&nbsp;tapahtumat&nbsp;"| API
-    GH["&nbsp;GitHub Actions, OIDC<br/>&nbsp;&nbsp;"] -->|"&nbsp;deploy&nbsp;"| API
+    Game["&nbsp;&nbsp;&nbsp;&nbsp;Peli selaimessa&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"] -->|"&nbsp;tapahtumat&nbsp;"| API
+    GH["&nbsp;&nbsp;&nbsp;&nbsp;GitHub Actions&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"] -->|"&nbsp;OIDC deploy&nbsp;"| API
     subgraph Azure["Azure, kaikki Bicepillä"]
-        API["&nbsp;Functions API (Python)<br/>&nbsp;&nbsp;"]
-        Scores[("&nbsp;Table: pisteet<br/>&nbsp;&nbsp;")]
-        Raw[("&nbsp;Blob: raw JSON<br/>&nbsp;&nbsp;")]
-        Night["&nbsp;Yöajo: siivous<br/>&nbsp;&nbsp;"]
-        Cur[("&nbsp;Blob: curated Parquet<br/>&nbsp;&nbsp;")]
+        API["&nbsp;&nbsp;&nbsp;&nbsp;Functions API&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"]
+        Scores[("&nbsp;&nbsp;&nbsp;&nbsp;Table: pisteet&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;")]
+        Raw[("&nbsp;&nbsp;&nbsp;&nbsp;Blob: raw JSON&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;")]
+        Night["&nbsp;&nbsp;&nbsp;&nbsp;Yöajo: siivous&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"]
+        Cur[("&nbsp;&nbsp;&nbsp;&nbsp;Blob: curated Parquet&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;")]
         API --> Scores
         API --> Raw
         Raw --> Night
         Night --> Cur
     end
-    Cur -->|"&nbsp;GET /api/stats&nbsp;"| Dash["&nbsp;Tilastosivu<br/>&nbsp;&nbsp;"]
+    Cur -->|"&nbsp;GET /api/stats&nbsp;"| Dash["&nbsp;&nbsp;&nbsp;&nbsp;Tilastosivu&nbsp;&nbsp;&nbsp;&nbsp;<br/>&nbsp;"]
 ```
 
 Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille sekä lokikatto. Tallennustilaan ei pääse avaimilla, vaan API käyttää hallittua identiteettiä. Perustelut: `docs/architecture.md`.
