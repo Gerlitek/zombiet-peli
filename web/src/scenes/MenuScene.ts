@@ -10,8 +10,8 @@ import { ZOMBIES } from '../data/zombies';
 import { PUZZLE_LEVELS, PuzzleLevel } from '../logic/puzzle';
 import { load, save } from '../systems/storage';
 
-// The levels are shown as sample sums, not as words like "Helppo": players read the words as the difficulty of the zombies.
-const LEVEL_NAMES: Record<PuzzleLevel, string> = { easy: '7 + ?', medium: '38 + ?', hard: '640 + ?', master: '? + ?' };
+// The heading above the choices says they are the tasks of the VIP box, not the difficulty of the zombies.
+const LEVEL_NAMES: Record<PuzzleLevel, string> = { easy: 'Helppo', medium: 'Keski', hard: 'Vaikea', master: 'Mestari' };
 const HERO_IDS = Object.keys(HEROES) as HeroId[];
 // Layout in logical pixels. Cards and buttons can be chosen with keys or by clicking.
 const CARD = { y: 86, w: 84, h: 72, xs: [72, 164] };
