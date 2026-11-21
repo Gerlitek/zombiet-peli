@@ -19,7 +19,7 @@ MAX_PUZZLE = 1000  # the hard level goes up to 1000 (web/src/logic/puzzle.ts)
 NICK_SIZES = (12, 12, 99)  # adjectives, animals, number: the word lists are on the front
 
 # Kills, score and hearts are bounded by the game rules (web/src/data/rules.ts, logic/score.ts).
-MAX_KILLS = 100  # the released game needs 100 kills to win
+MAX_KILLS = 100  # an upper bound with room: the released game needs 80 kills to win
 MAX_SCORE = MAX_KILLS * 100 + 5 * 50 + 300 + 500 + 200
 MIN_WIN_SECONDS = 20
 
