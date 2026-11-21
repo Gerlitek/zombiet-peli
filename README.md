@@ -12,6 +12,11 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 ## Arkkitehtuuri
 
 ```mermaid
+---
+config:
+  flowchart:
+    padding: 20
+---
 flowchart TD
     Game["Browser game"] --> API
     GH["GitHub Actions"] --> API
