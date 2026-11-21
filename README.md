@@ -12,16 +12,7 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 ## Arkkitehtuuri
 
 ```mermaid
----
-config:
-  flowchart:
-    nodeSpacing: 25
-    rankSpacing: 30
-    subGraphTitleMargin:
-      top: 4
-      bottom: 18
----
-flowchart TD
+flowchart LR
     GH["GitHub Actions"]
     subgraph Web["WEB HOST"]
         Game["Browser game"]
@@ -36,6 +27,10 @@ flowchart TD
     GH -->|"OIDC"| API
     Game --> API
     Dash -->|"GET /api/stats"| API
+    %% Invisible spacer: keeps the right edge free for GitHub's zoom buttons
+    Cur ~~~ Space["Curated Parquet"]
+    classDef hidden fill:none,stroke:none,color:transparent
+    class Space hidden
 ```
 
 Peli lähettää pisteet ja tapahtumat API:lle. GitHub Actions julkaisee koodin ja Azure-resurssit OIDC-kirjautumisella. Kaikki Azure-osat (API, tallennus, yöajo) ovat Bicepiä. Tilastosivu lukee yöajon tekemän yhteenvedon osoitteesta `GET /api/stats`.
