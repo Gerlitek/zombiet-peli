@@ -4,7 +4,7 @@
 [![api](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml)
 [![infra](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml)
 
-> **In English:** *Ylläri-Zombiet* means "Surprise Zombies" (the zombies keep surprising you). A small browser game (TypeScript, Phaser 4) built with AI, running on Azure. Guardrails as code
+> **In English:** *Ylläri-Zombiet* means "Surprise Zombies". A small browser game (TypeScript, Phaser 4) built with AI, running on Azure. Guardrails as code
 > (budget, Azure Policy, cost alert, daily caps), a keyless Python API on Azure Functions, raw JSON events refined nightly
 > into a curated Parquet layer, and a static dashboard. Play it at [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop, in Finnish).
 > Docs are in Finnish; code and commits in English.
