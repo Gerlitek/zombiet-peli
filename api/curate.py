@@ -5,8 +5,10 @@ Rules (docs/architecture.md, chapter 4):
 - every raw line is validated again with rules.event, broken lines are counted and skipped
 - the same event sent twice (same session_id and seq) is kept once
 - the nickname is dropped: curated data is kept for good, and the session id is enough for analytics
+- test sessions are dropped (TEST_SESSION): the dashboard shows real games only
 """
 import json
+import re
 from collections import Counter
 from datetime import UTC, datetime
 from statistics import median
@@ -14,6 +16,14 @@ from statistics import median
 import rules
 
 DROPPED = {'nickname'}
+
+# The version of the cleaning rules. Raise it when a rule changes: the nightly run then rebuilds every day
+# whose raw data is still there (30 days) and whose curated file was made with an older version.
+RULES_VERSION = 2
+
+# Hand-made test sessions use ids like 10000000-0000-4000-8000-000000000042. A real crypto.randomUUID
+# matches this by chance with odds of about 1 in 10^12.
+TEST_SESSION = re.compile(r'^[0-9a-f]{8}-0000-4000-8000-')
 
 # Column name -> type. Event fields come from rules._EVENTS, so a new event field needs a column here too
 # (test_every_event_field_has_a_column checks it).
@@ -37,9 +47,9 @@ def _time(text: str) -> datetime:
     return t if t.tzinfo else t.replace(tzinfo=UTC)
 
 
-def clean(blobs: list[str]) -> tuple[list[dict], int]:
-    """Takes the text of the raw blobs of one day. Returns (rows sorted by time, number of rejected lines)."""
-    rows, seen, rejected = [], set(), 0
+def clean(blobs: list[str]) -> tuple[list[dict], int, int]:
+    """Takes the text of the raw blobs of one day. Returns (rows sorted by time, rejected lines, test lines)."""
+    rows, seen, rejected, test = [], set(), 0, 0
     for text in blobs:
         for line in text.splitlines():
             try:
@@ -50,13 +60,16 @@ def clean(blobs: list[str]) -> tuple[list[dict], int]:
             except (ValueError, KeyError, AttributeError, TypeError):  # rules.Invalid is a ValueError
                 rejected += 1
                 continue
+            if TEST_SESSION.match(e['session_id']):
+                test += 1
+                continue
             key = (e['session_id'], e['seq'])
             if key in seen:
                 continue
             seen.add(key)
             rows.append({**{k: v for k, v in e.items() if k not in DROPPED}, 'ts': ts, 'received': received})
     rows.sort(key=lambda r: (r['received'], r['session_id'], r['seq']))
-    return rows, rejected
+    return rows, rejected, test
 
 
 def columns(rows: list[dict]) -> dict[str, list]:

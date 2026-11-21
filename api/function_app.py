@@ -209,20 +209,24 @@ def curate_events(timer: func.TimerRequest) -> None:
     raw, curated = _blobs.get_container_client('raw'), _blobs.get_container_client('curated')
     today = datetime.now(UTC).strftime('%Y-%m-%d')
 
-    def days(container) -> set[str]:  # 'events/dt=2026-11-20/...' -> '2026-11-20'
-        return {name.split('/')[1][3:] for name in container.list_blob_names(name_starts_with='events/dt=')}
+    def day(name: str) -> str:  # 'events/dt=2026-11-20/...' -> '2026-11-20'
+        return name.split('/')[1][3:]
 
-    # Every past day without a curated file: catches up after a stop, and running twice changes nothing.
+    # Every past day whose curated file is missing or made with older rules (curate.RULES_VERSION).
+    # Catches up after a stop, and running twice changes nothing. Days whose raw data has expired keep their file.
+    done = {day(b.name): b.metadata.get('rules') for b in curated.list_blobs(name_starts_with='events/dt=', include=['metadata'])}
+    todo = sorted({day(n) for n in raw.list_blob_names(name_starts_with='events/dt=')})
     schema = curate.arrow_schema(pa)
-    for day in sorted(days(raw) - days(curated)):
-        if day >= today:
+    for d in todo:
+        if d >= today or done.get(d) == str(curate.RULES_VERSION):
             continue
-        blobs = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with=f'events/dt={day}/')]
-        rows, rejected = curate.clean(blobs)
+        blobs = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with=f'events/dt={d}/')]
+        rows, rejected, test = curate.clean(blobs)
         out = pa.BufferOutputStream()
         pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=schema), out)
-        curated.upload_blob(f'events/dt={day}/events.parquet', out.getvalue().to_pybytes(), overwrite=True)
-        log.info('curated %s: %d events, %d rejected', day, len(rows), rejected)
+        curated.upload_blob(f'events/dt={d}/events.parquet', out.getvalue().to_pybytes(), overwrite=True,
+                            metadata={'rules': str(curate.RULES_VERSION)})
+        log.info('curated %s: %d events, %d rejected, %d test', d, len(rows), rejected, test)
 
     rows = []
     for name in curated.list_blob_names(name_starts_with='events/dt='):

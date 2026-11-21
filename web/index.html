@@ -58,11 +58,7 @@
     }
     #game canvas { display: block; image-rendering: pixelated; }
     /* Privacy note: closed by default, small and quiet, but one click away. */
-    /* The page's own links (dashboard, privacy) on one quiet row below the publisher line. */
-    .meta { margin-top: 10px; display: flex; justify-content: flex-end; align-items: baseline; gap: 14px; }
-    .meta > a { font-size: 0.65rem; color: rgba(169, 175, 186, 0.45); text-decoration: none; }
-    .meta > a:hover { color: var(--accent); }
-    .privacy { margin: 0; font-size: 0.65rem; color: var(--text-dim); max-width: 60ch; } /* below the publisher line, so it does not compete with the credit for the idea */
+    .privacy { margin: 10px 0 0 auto; font-size: 0.65rem; color: var(--text-dim); max-width: 60ch; } /* below the publisher line, so it does not compete with the credit for the idea */
     .privacy summary { cursor: pointer; text-align: right; color: rgba(169, 175, 186, 0.45); }
     .privacy ul { margin: 6px 0 0; padding-left: 16px; line-height: 1.45; }
     .credit { margin: 14px 0 0; font-size: 0.9rem; color: var(--text); }
@@ -78,6 +74,9 @@
     footer a { color: rgba(232, 90, 165, 0.65); text-decoration: none; }
     footer a:hover { color: var(--brand); }
     footer a:hover { text-decoration: underline; }
+    /* The dashboard link: on the left in the game's blue, so a child notices it. As bright to the eye as the pink link. */
+    footer .stats { margin-right: auto; color: rgba(124, 200, 242, 0.55); }
+    footer .stats:hover { color: var(--accent); }
     /* Shown instead of the game on touch-only devices (phones, tablets without a keyboard). */
     .touch-note {
       margin: 0 0 12px; padding: 20px; text-align: center;
@@ -116,22 +115,20 @@
     <div id="game"></div>
     <p class="credit">Pelin idean, tarinan ja hahmot on suunnitellut <b>Maujazz</b>.</p>
     <footer>
+      <a class="stats" href="tilastot/">Tilastot</a>
       <span>Toteutus ja julkaisu</span>
       <a href="https://gerlitek.fi">Gerlitek Oy</a>
     </footer>
-    <div class="meta">
-      <a href="tilastot/">Tilastot</a>
-      <details class="privacy">
-        <summary>Tietosuoja</summary>
-        <ul>
-          <li>Selaimeesi tallentuvat arvottu pelinimi, valittu hahmo ja vaikeustaso, saavutukset ja omat parhaat tuloksesi. Ne pysyvät laitteellasi.</li>
-          <li>Pelin lopussa peli lähettää palvelimelle arvotun pelinimen, tuloksen ja pelin tapahtumat (esimerkiksi tapot, aseet ja ajan) sekä satunnaisen tunnisteen, jota ei voi yhdistää sinuun. Tuloksesta syntyy verkkopistetaulukko ja nimettömiä tilastoja. Peliin ei kirjoiteta omaa nimeä eikä muuta vapaata tekstiä. Tapahtumatiedot poistetaan 30 vuorokauden kuluttua.</li>
-          <li>Peli ei käytä evästeitä, kolmannen osapuolen analytiikkaa eikä mainoksia.</li>
-          <li>Pelin ja sen sivun tarjoava palvelin voi, kuten verkkopalvelimet yleensä, kirjata vierailun IP-osoitteen tavallisiin palvelinlokeihin. Peli itse ei lue eikä tallenna IP-osoitteita.</li>
-          <li>Selaimen tiedot saat pois tyhjentämällä sivuston tiedot selaimen asetuksista.</li>
-        </ul>
-      </details>
-    </div>
+    <details class="privacy">
+      <summary>Tietosuoja</summary>
+      <ul>
+        <li>Selaimeesi tallentuvat arvottu pelinimi, valittu hahmo ja vaikeustaso, saavutukset ja omat parhaat tuloksesi. Ne pysyvät laitteellasi.</li>
+        <li>Pelin lopussa peli lähettää palvelimelle arvotun pelinimen, tuloksen ja pelin tapahtumat (esimerkiksi tapot, aseet ja ajan) sekä satunnaisen tunnisteen, jota ei voi yhdistää sinuun. Tuloksesta syntyy verkkopistetaulukko ja nimettömiä tilastoja. Peliin ei kirjoiteta omaa nimeä eikä muuta vapaata tekstiä. Tapahtumatiedot poistetaan 30 vuorokauden kuluttua.</li>
+        <li>Peli ei käytä evästeitä, kolmannen osapuolen analytiikkaa eikä mainoksia.</li>
+        <li>Pelin ja sen sivun tarjoava palvelin voi, kuten verkkopalvelimet yleensä, kirjata vierailun IP-osoitteen tavallisiin palvelinlokeihin. Peli itse ei lue eikä tallenna IP-osoitteita.</li>
+        <li>Selaimen tiedot saat pois tyhjentämällä sivuston tiedot selaimen asetuksista.</li>
+      </ul>
+    </details>
   </main>
   <script type="module" src="/src/main.ts"></script>
 </body>

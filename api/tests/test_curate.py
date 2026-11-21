@@ -19,24 +19,30 @@ def test_every_event_field_has_a_column():
 
 
 def test_duplicates_are_kept_once():
-    rows, rejected = curate.clean([line(), line()])  # the same batch sent twice
+    rows, rejected, _ = curate.clean([line(), line()])  # the same batch sent twice
     assert len(rows) == 1 and rejected == 0
 
 
 def test_broken_lines_are_counted_and_skipped():
-    rows, rejected = curate.clean(['not json', line(zombie_type='dragon'), line(received='x'), line(seq=2)])
+    rows, rejected, _ = curate.clean(['not json', line(zombie_type='dragon'), line(received='x'), line(seq=2)])
     assert [r['seq'] for r in rows] == [2] and rejected == 3
+
+
+def test_test_sessions_are_dropped():
+    test_sid = '10000000-0000-4000-8000-000000000042'
+    rows, rejected, test = curate.clean([line(), line(session_id=test_sid), line(session_id=test_sid, seq=2)])
+    assert [r['session_id'] for r in rows] == [SID] and rejected == 0 and test == 2
 
 
 def test_nickname_is_dropped():
     start = {'event': 'game_started', 'ts': '2026-11-19T10:00:00Z', 'session_id': SID, 'seq': 0, 'version': '0.2.0',
              'nickname': 'Hurja-Kissa-42', 'character': 'knight', 'received': REC}
-    rows, rejected = curate.clean([json.dumps(start)])
+    rows, rejected, _ = curate.clean([json.dumps(start)])
     assert rejected == 0 and 'nickname' not in rows[0]
 
 
 def test_columns_fill_missing_fields_with_none():
-    rows, _ = curate.clean([line()])
+    rows, *_ = curate.clean([line()])
     cols = curate.columns(rows)
     assert set(cols) == set(curate.COLUMNS) and cols['zombie_type'] == ['normal'] and cols['score'] == [None]
     assert cols['ts'][0].tzinfo is not None
@@ -47,7 +53,7 @@ def test_summary_counts_games_and_puzzles():
              'result': 'won', 'kills': 40, 'duration_s': 200, 'hearts_left': 2, 'score': 4000, 'received': REC}
     puzzle = {'event': 'puzzle_answered', 'ts': '2026-11-19T10:03:00Z', 'session_id': SID, 'seq': 2, 'version': '0.2.0',
               'level': 'easy', 'target': 12, 'parts': [7], 'answer': 5, 'correct': True, 'time_ms': 4000, 'received': REC}
-    rows, _ = curate.clean([line(), json.dumps(puzzle), json.dumps(ended)])
+    rows, *_ = curate.clean([line(), json.dumps(puzzle), json.dumps(ended)])
     s = curate.summary(rows)
     assert s['games'] == {'ended': 1, 'won': 1, 'median_duration_s': 200, 'median_kills': 40}
     assert s['days'] == [{'day': '2026-11-19', 'started': 0, 'ended': 1, 'won': 1}]
@@ -67,7 +73,7 @@ def test_parquet_round_trip_keeps_the_summary():
     import pyarrow as pa
     import pyarrow.parquet as pq
 
-    rows, _ = curate.clean([line(), line(seq=2, zombie_type='giant')])
+    rows, *_ = curate.clean([line(), line(seq=2, zombie_type='giant')])
     out = io.BytesIO()
     pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=curate.arrow_schema(pa)), out)
     back = pq.read_table(io.BytesIO(out.getvalue())).to_pylist()
