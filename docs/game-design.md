@@ -144,7 +144,7 @@ Taustataulu on aina näkyvissä, kuten lapsi toivoi:
 
 - **Kuka on vahvin**: kolme parasta pistetaulukosta ja oma sijoitus.
 - **Saavutukset**: merkit pysyvät näkyvillä. Tallennetaan selaimeen.
-- **Viestit**: rullaava nauha. Vain valmiit viestit (esim. "Hyvä peli!", "Varokaa jättiä!"), ei vapaata tekstiä.
+- **Viestit**: nauha saavutusten alla, viesti liukuu sisään ja pysähtyy luettavaksi. Vain valmiit viestit (`data/messages.ts`) (esim. "Hyvä peli!", "Varokaa jättiä!"), ei vapaata tekstiä.
 
 Ennen kuin API on olemassa (vaihe 5), taulu näyttää oman selaimen parhaat tulokset.
 

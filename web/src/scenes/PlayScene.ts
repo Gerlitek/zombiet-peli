@@ -7,6 +7,7 @@ import { BOARD, HORIZON, drawDrop, drawHeart, drawPanel, drawTree, drawTuft } fr
 import { fit, label, penFor, zoomCamera } from '../art/ui';
 import { ACHIEVEMENTS, AchievementId } from '../data/achievements';
 import { HEROES, HeroDef, HeroId } from '../data/characters';
+import { MESSAGES } from '../data/messages';
 import { FAST_WIN, VIP_AT, WIN_AT } from '../data/rules';
 import { WEAPONS, WeaponDef, WeaponId } from '../data/weapons';
 import { ZombieType, spawnWeights } from '../data/zombies';
@@ -34,6 +35,8 @@ const FIELD: Field = { x0: 10, x1: W - 10, y0: HORIZON + 18, y1: H - 6 };
 const POND = { x: 236, y: 195, rx: 42, ry: 12 }; // the dirty pond of the forest background (drawForestGround)
 const SLOW = 0.55; // walking speed in the pond and on a sand zombie's trail
 const VIP_SIGN = { x: 284, w: 31 }; // the sign in the top right corner: red = locked, green = open
+const TICKER = { x: BOARD.x + 158, w: BOARD.w - 166, y: BOARD.y + 34, speed: 40 }; // the message ticker on the VIP board, below the badges
+const TICKER_HOLD = 4; // seconds a message stays still before the next one rolls in
 const STONE = { x: 160, y: 140 }; // its label sits below it: above it is the message banner of the VIP box
 
 type Zone = 'forest' | 'vip';
@@ -84,6 +87,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
   private stoneTag!: Phaser.GameObjects.Text;
   private vipSign!: Phaser.GameObjects.Text;
   private board: Phaser.GameObjects.Text[] = [];
+  private ticker?: { text: Phaser.GameObjects.Text; x: number; next: number; holdUntil: number };
 
   constructor() {
     super('play');
@@ -98,7 +102,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.clock = 0; this.px = W / 2; this.py = 160; this.zombies = []; this.spawns = [];
     this.hp = MAX_HP; this.kills = 0; this.invulnerableUntil = 0; this.nextSpawn = 1.5;
     this.arsenal = newArsenal(); this.puzzleBonus = 0; this.wasHit = false;
-    this.earned = []; this.pending = []; this.board = []; this.bannerUntil = 0; this.messages = []; this.ended = false;
+    this.earned = []; this.pending = []; this.board = []; this.ticker = undefined; this.bannerUntil = 0; this.messages = []; this.ended = false;
     addWeapon(this.arsenal, this.hero.weapon);
 
     this.bg = this.add.image(0, 0, 'bg-forest').setOrigin(0);
@@ -160,8 +164,8 @@ export class PlayScene extends Phaser.Scene implements Combat {
     const best = saved.best.length ? saved.best : [{ nick: this.nick, score: 0 }];
     best.forEach((b, i) => this.board.push(label(this, x, y + 12 + i * 10, `${i + 1} ${b.nick} ${b.score}`, i ? P.rain : P.bone, 8, 0)));
     this.board.push(label(this, x + 150, y, 'SAAVUTUKSET', P.iceL, 10, 0));
-    this.board.push(label(this, x + 150, y + 30, 'Zombit ovat supervahvoja!', P.rain, 8, 0));
     for (const t of this.board) t.setDepth(1);
+    this.ticker = { text: label(this, TICKER.x + TICKER.w, TICKER.y, MESSAGES[0], P.rain, 8, 0).setDepth(1), x: TICKER.x + TICKER.w, next: 1, holdUntil: 0 };
   }
 
   // ---------- player ----------
@@ -431,6 +435,20 @@ export class PlayScene extends Phaser.Scene implements Combat {
     p.rect(x0 + 2, y0 + 2, 2, 2, P.bone); // shine
   }
 
+  // The ticker rolls each message in from the right, holds it so it can be read, then brings the next one.
+  // Only the part inside the ticker area is shown: the crop cuts the right end (crop is in texture pixels).
+  private moveTicker() {
+    const tk = this.ticker!, t = tk.text;
+    tk.x = Math.max(TICKER.x, tk.x - TICKER.speed * this.dt);
+    if (tk.x === TICKER.x && (tk.holdUntil ||= this.clock + TICKER_HOLD) < this.clock) {
+      t.setText(MESSAGES[tk.next++ % MESSAGES.length]);
+      tk.x = TICKER.x + TICKER.w; tk.holdUntil = 0;
+    }
+    t.setX(Math.round(tk.x));
+    const k = t.frame.width / t.width;
+    t.setCrop(0, 0, Math.max(0, TICKER.x + TICKER.w - tk.x) * k, t.frame.height);
+  }
+
   private drawStone(p: Pen) {
     const { x, y } = STONE, glow = 0.5 + Math.sin(this.clock * 3) * 0.5, bob = Math.round(Math.sin(this.clock * 5) * 2);
     ell(p, x, y - 6, 22, 16, P.ice, 0.12 + glow * 0.14);
@@ -472,6 +490,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
       else { p.rect(x + 6, y + 2, 1, 9, def.color); p.rect(x + 2, y + 6, 9, 1, def.color); }
       for (let l = 1; l < this.arsenal.level[id]!; l++) p.rect(x + 1 + l * 2, y + 11, 1, 1, P.sand);
     });
+    if (vip) this.moveTicker();
     if (vip) { // achievement badges on the back board
       const have = this.badges, total = Object.keys(ACHIEVEMENTS).length;
       for (let i = 0; i < total; i++) drawPanel(p, BOARD.x + 158 + i * 13, BOARD.y + 18, 11, 11, i < have ? P.sand : P.storm, i < have ? P.cloud : P.ink);
