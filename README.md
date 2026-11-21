@@ -11,9 +11,23 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 
 ## Arkkitehtuuri
 
-![Arkkitehtuuri: peli, API, raw- ja curated-kerros, yöajo ja tilastosivu](docs/architecture.svg)
-
-Kaavion lähde on Mermaid-tiedostossa `docs/architecture.mmd`.
+```mermaid
+flowchart TD
+    Game["Peli selaimessa"] -->|"tapahtumat"| API
+    GH["GitHub Actions"] -->|"OIDC deploy"| API
+    subgraph Azure["Azure, kaikki Bicepillä"]
+        API["Functions API"]
+        Scores[("Table: pisteet")]
+        Raw[("Blob: raw JSON")]
+        Night["Yöajo: siivous"]
+        Cur[("Blob: curated Parquet")]
+        API --> Scores
+        API --> Raw
+        Raw --> Night
+        Night --> Cur
+    end
+    Cur -->|"GET /api/stats"| Dash["Tilastosivu"]
+```
 
 Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille sekä lokikatto. Tallennustilaan ei pääse avaimilla, vaan API käyttää hallittua identiteettiä. Perustelut: `docs/architecture.md`.
 
