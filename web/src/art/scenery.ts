@@ -91,8 +91,8 @@ export function drawVipGround(p: Pen, W: number, H: number) {
   ell(p, 160, 160, 120, 50, P.ice, 0.1);
 }
 
-// Rudi-Karri: a robot cat with two heads, seen from the side like drawCat. One head is Rudi (dark ears and mask),
-// the other Karri (grey ears, white chin), both ragdolls with blue eyes. The body is a metal cat: a long shell
+// Rudi-Karri: a robot cat with two heads, seen from the side like drawCat. One head is Rudi (brown colorpoint
+// ragdoll), the other Karri (grey mitted ragdoll), both with blue eyes. The body is a metal cat: a long shell
 // with a lit stripe, four walking legs and a laser tail. It faces right; mirror: it faces left.
 // aim: the laser tail rises over the back like a scorpion's and fires a beam at that point (age = seconds since the shot).
 export interface RobotPose { mirror?: boolean; aim?: { x: number; y: number; age: number } }
@@ -112,16 +112,20 @@ export function drawCatRobot(p: Pen, x: number, y: number, t: number, o: RobotPo
     B(x + 2, y - 4 - step, 2, 4 + step, P.storm), B(x + 5, y - 4 + step, 2, 4 - step, P.storm), // front legs
     E(x, y - 7, 8, 3, P.rain), // long metal body
     B(x + 4, y - 11, 2, 3, P.storm), B(x + 9, y - 10, 2, 3, P.storm), // two necks
-    E(x + 3, y - 14, 3, 3, P.bone), B(x + 1, y - 19, 2, 2, P.storm), B(x + 5, y - 19, 2, 2, P.storm), // Karri: grey ears
-    E(x + 10, y - 13, 3, 3, P.bone), B(x + 8, y - 18, 2, 2, P.bark), B(x + 12, y - 18, 2, 2, P.bark), // Rudi: dark ears
+    E(x + 3, y - 14, 3, 3, P.bone), B(x + 1, y - 19, 2, 2, P.storm), B(x + 5, y - 19, 2, 2, P.storm), // Karri: white face, grey ears
+    E(x + 10, y - 13, 3, 3, P.sand), B(x + 8, y - 18, 2, 2, P.bark), B(x + 12, y - 18, 2, 2, P.bark), // Rudi: cream face, brown ears
   ]);
-  for (const lx of [x - 6, x - 3, x + 2, x + 5]) p.rect(lx, y - 1, 2, 1, P.ink); // paws
+  for (const lx of [x - 6, x - 3]) p.rect(lx, y - 1, 2, 1, P.ink); // back paws (the front paws are Karri's white mitts)
   p.rect(x - 6, y - 9, 12, 1, P.iceL); // light on the back
   p.rect(x - 5, y - 6, 1, 1, P.storm); p.rect(x + 3, y - 6, 1, 1, P.storm); // rivets
   p.rect(x - 1, y - 7, 2, 2, blink ? P.ice : P.storm); // light on the side
-  p.rect(x + 2, y - 15, 4, 2, P.storm); // Karri: grey mask, white chin below
-  p.rect(x + 9, y - 14, 4, 2, P.bark); p.rect(x + 12, y - 12, 1, 1, P.bark); // Rudi: dark mask and nose
-  for (const ex of [x + 2, x + 5, x + 9, x + 12]) p.rect(ex, ex < x + 8 ? y - 15 : y - 14, 1, 1, P.ice); // blue eyes
+  // Karri is a grey mitted ragdoll: grey patches round the eyes, a white blaze between them, white chin and white front paws.
+  p.rect(x + 1, y - 16, 2, 2, P.storm); p.rect(x + 4, y - 16, 2, 2, P.storm);
+  p.rect(x + 2, y - 15, 1, 1, P.ice); p.rect(x + 4, y - 15, 1, 1, P.ice);
+  p.rect(x + 2, y - 1, 2, 1, P.bone); p.rect(x + 5, y - 1, 2, 1, P.bone);
+  // Rudi is a brown colorpoint ragdoll: the whole face is a dark brown mask, no white anywhere.
+  p.rect(x + 8, y - 15, 5, 4, P.bark); p.rect(x + 9, y - 16, 3, 1, P.bark);
+  p.rect(x + 9, y - 14, 1, 1, P.ice); p.rect(x + 11, y - 14, 1, 1, P.ice); p.rect(x + 10, y - 12, 1, 1, P.ink);
   p.rect(tip.x - 1, tip.y - 1, 3, 3, firing || blink ? P.iceL : P.ice); // laser emitter at the tail tip
   if (o.aim && o.aim.age < 0.15) { // the beam: a bright core in a soft glow, from the tail tip to the zombie
     const sx = o.mirror ? 2 * x - tip.x : tip.x, a = 1 - o.aim.age / 0.15;
