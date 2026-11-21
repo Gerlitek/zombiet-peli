@@ -112,20 +112,15 @@ export function drawCatRobot(p: Pen, x: number, y: number, t: number, o: RobotPo
     B(x + 2, y - 4 - step, 2, 4 + step, P.storm), B(x + 5, y - 4 + step, 2, 4 - step, P.storm), // front legs
     E(x, y - 7, 8, 3, P.rain), // long metal body
     B(x + 4, y - 11, 2, 3, P.storm), B(x + 9, y - 10, 2, 3, P.storm), // two necks
-    E(x + 3, y - 14, 3, 3, P.bone), B(x + 1, y - 19, 2, 2, P.storm), B(x + 5, y - 19, 2, 2, P.storm), // Karri: white face, grey ears
-    E(x + 10, y - 13, 3, 3, P.sand), B(x + 8, y - 18, 2, 2, P.bark), B(x + 12, y - 18, 2, 2, P.bark), // Rudi: cream face, brown ears
+    ...catHead(x + 3, y - 14, P.storm), // Karri: the same head as the grey mitted cat on the dunes
+    ...catHead(x + 10, y - 13, P.bark), // Rudi: the same head as the brown colorpoint cat
   ]);
   for (const lx of [x - 6, x - 3]) p.rect(lx, y - 1, 2, 1, P.ink); // back paws (the front paws are Karri's white mitts)
   p.rect(x - 6, y - 9, 12, 1, P.iceL); // light on the back
   p.rect(x - 5, y - 6, 1, 1, P.storm); p.rect(x + 3, y - 6, 1, 1, P.storm); // rivets
   p.rect(x - 1, y - 7, 2, 2, blink ? P.ice : P.storm); // light on the side
-  // Karri is a grey mitted ragdoll: grey patches round the eyes, a white blaze between them, white chin and white front paws.
-  p.rect(x + 1, y - 16, 2, 2, P.storm); p.rect(x + 4, y - 16, 2, 2, P.storm);
-  p.rect(x + 2, y - 15, 1, 1, P.ice); p.rect(x + 4, y - 15, 1, 1, P.ice);
-  p.rect(x + 2, y - 1, 2, 1, P.bone); p.rect(x + 5, y - 1, 2, 1, P.bone);
-  // Rudi is a brown colorpoint ragdoll: the whole face is a dark brown mask, no white anywhere.
-  p.rect(x + 8, y - 15, 5, 4, P.bark); p.rect(x + 9, y - 16, 3, 1, P.bark);
-  p.rect(x + 9, y - 14, 1, 1, P.ice); p.rect(x + 11, y - 14, 1, 1, P.ice); p.rect(x + 10, y - 12, 1, 1, P.ink);
+  catFace(p, x + 3, y - 14, P.storm, true); catFace(p, x + 10, y - 13, P.bark, false);
+  p.rect(x + 2, y - 1, 2, 1, P.bone); p.rect(x + 5, y - 1, 2, 1, P.bone); // Karri's white mitts on the front paws
   p.rect(tip.x - 1, tip.y - 1, 3, 3, firing || blink ? P.iceL : P.ice); // laser emitter at the tail tip
   if (o.aim && o.aim.age < 0.15) { // the beam: a bright core in a soft glow, from the tail tip to the zombie
     const sx = o.mirror ? 2 * x - tip.x : tip.x, a = 1 - o.aim.age / 0.15;
@@ -174,6 +169,15 @@ export function drawHelicopter(p: Pen, x: number, y: number, t: number, rotor: n
   p.rect(x - 28, y - 17 + R(Math.sin(t * 30) * 2), 1, 3, P.bone);
 }
 
+// A ragdoll cat's head, shared by the cats and the Rudi-Karri robot so they look the same:
+// a light head with dark ears, a dark mask round the nose, blue eyes and (mitted) a white chin.
+const catHead = (hx: number, hy: number, points: number): Part[] => [E(hx, hy, 3, 2, P.bone), B(hx - 3, hy - 4, 2, 2, points), B(hx + 2, hy - 4, 2, 2, points)];
+function catFace(p: Pen, hx: number, hy: number, points: number, mitted: boolean) {
+  p.rect(hx - 1, hy - 1, 3, 2, points); // mask
+  if (mitted) p.rect(hx, hy + 1, 1, 1, P.bone); // white chin
+  p.rect(hx - 2, hy - 1, 1, 1, P.ice); p.rect(hx + 2, hy - 1, 1, 1, P.ice); // blue eyes
+}
+
 // Ragdoll cat: light fur, darker "points" (face, ears, legs, tail) and blue eyes.
 // mitted = white paws and chin (Karri). Without it the paws are dark too: colorpoint (Rudi).
 export function drawCat(p: Pen, x: number, y: number, t: number, o: { left: boolean; sitting: boolean; points: number; mitted: boolean }) {
@@ -187,10 +191,8 @@ export function drawCat(p: Pen, x: number, y: number, t: number, o: { left: bool
     ? [L(x - 3, y - 1, x - 8, y - 2 + R(sin(t * 3)), 2, o.points, false), E(x - 1, y - 4, 3, 4, P.bone), B(x, y - 1, 1, 1, paw), B(x + 2, y - 1, 1, 1, paw)]
     : [L(x - 5, by, x - 10, by - 3 + R(run), 2, o.points, false), E(x, by, 5, 2, P.bone), ...legs.map((lx) => B(lx, y - 2 - hop, 1, 2, o.points))];
   const hx = x + (o.sitting ? 1 : 5), hy = o.sitting ? y - 10 : by - 3;
-  parts.push(E(hx, hy, 3, 2, P.bone), B(hx - 3, hy - 4, 2, 2, o.points), B(hx + 2, hy - 4, 2, 2, o.points));
+  parts.push(...catHead(hx, hy, o.points));
   figure(pen, parts);
   if (!o.sitting) for (const lx of legs) pen.rect(lx, y - 1 - hop, 1, 1, paw); // the paw is the lowest pixel of the leg
-  pen.rect(hx - 1, hy - 1, 3, 2, o.points); // mask
-  if (o.mitted) pen.rect(hx, hy + 1, 1, 1, P.bone); // white chin
-  pen.rect(hx - 2, hy - 1, 1, 1, P.ice); pen.rect(hx + 2, hy - 1, 1, 1, P.ice); // blue eyes
+  catFace(pen, hx, hy, o.points, o.mitted);
 }
