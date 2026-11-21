@@ -28,8 +28,11 @@ const MAX_HP = 5;
 const MESSAGE_TIME = 4;  // seconds a message stays on screen
 const NOTE_TIME = 1.8;   // achievements are only short notes: they must not cover the game
 const CALM_TIME = 3;     // seconds without new zombies or damage after the wheel or a puzzle
+const HEART_TIME = 8;    // seconds a dropped heart stays on the ground
 const DROP_TIME = 1.2, PUDDLE_TIME = 1; // rain drop falls, puddle grows, then the zombie rises
 const FIELD: Field = { x0: 10, x1: W - 10, y0: HORIZON + 18, y1: H - 6 };
+const POND = { x: 236, y: 195, rx: 42, ry: 12 }; // the dirty pond of the forest background (drawForestGround)
+const SLOW = 0.55; // walking speed in the pond and on a sand zombie's trail
 const VIP_SIGN = { x: 284, w: 31 }; // the sign in the top right corner: red = locked, green = open
 const STONE = { x: 160, y: 140 }; // its label sits below it: above it is the message banner of the VIP box
 
@@ -59,6 +62,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
   private facing = { left: false, back: false }; // the hero turns the way it walks
   private arsenal: Arsenal = newArsenal();
   private spawns: Spawn[] = [];
+  private hearts: { x: number; y: number; until: number }[] = []; // dropped by armed zombies, picked up by walking over
   private nextSpawn = 0;
   private trees: Tree[] = [];
   private tufts: { x: number; y: number }[] = [];
@@ -128,6 +132,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     updateWeapons(this.arsenal, this);
     this.touchDamage();
     this.touchStone();
+    this.touchHearts();
     this.weather.update(this.clock, dt, this.trees);
     this.draw();
   }
@@ -136,7 +141,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
 
   private enterZone(zone: Zone) {
     this.zone = zone;
-    this.zombies = []; this.spawns = [];
+    this.zombies = []; this.spawns = []; this.hearts = [];
     this.stone = { open: false, used: false };
     this.bg.setTexture(`bg-${zone}`);
     const vip = zone === 'vip';
@@ -169,8 +174,15 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.moving = dx !== 0 || dy !== 0;
     if (dx) this.facing = { left: dx < 0, back: false };
     else if (dy) this.facing.back = dy < 0; // walking up shows the back, walking down the face
-    this.px = Phaser.Math.Clamp(this.px + dx * norm * this.hero.speed * dt, FIELD.x0, FIELD.x1);
-    this.py = Phaser.Math.Clamp(this.py + dy * norm * this.hero.speed * dt, FIELD.y0, FIELD.y1);
+    const speed = this.hero.speed * (this.slowed() ? SLOW : 1);
+    this.px = Phaser.Math.Clamp(this.px + dx * norm * speed * dt, FIELD.x0, FIELD.x1);
+    this.py = Phaser.Math.Clamp(this.py + dy * norm * speed * dt, FIELD.y0, FIELD.y1);
+  }
+
+  // The pond and the sand trail are sticky: the hero wades slowly through them.
+  private slowed() {
+    const inPond = this.zone === 'forest' && ((this.px - POND.x) / POND.rx) ** 2 + ((this.py - POND.y) / POND.ry) ** 2 < 1;
+    return inPond || this.zombies.some((z) => z.trail.some((s) => Math.abs(s.x - this.px) < 4 && Math.abs(s.y - this.py) < 3));
   }
 
   private touchDamage() {
@@ -191,12 +203,19 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.nextSpawn = Math.max(this.nextSpawn, this.clock + CALM_TIME);
   }
 
+  private touchHearts() {
+    this.hearts = this.hearts.filter((h) => {
+      if (Math.hypot(h.x - this.px, h.y - this.py) < 10) { this.heal(); return false; }
+      return this.clock < h.until;
+    });
+  }
+
   heal() {
     this.hp = Math.min(MAX_HP, this.hp + 1);
   }
 
-  shake() {
-    this.cameras.main.shake(120, 0.008);
+  shake(power: number) {
+    this.cameras.main.shake(power > 0.01 ? 180 : 70, power);
   }
 
   // ---------- zombies ----------
@@ -250,7 +269,8 @@ export class PlayScene extends Phaser.Scene implements Combat {
     }
     this.kills++;
     track('zombie_killed', { zombie_type: z.type, weapon, zone: this.zone, total_kills: this.kills });
-    if (z.armed || (this.hero.healEvery && this.kills % this.hero.healEvery === 0)) this.heal();
+    if (z.armed) this.hearts.push({ x: z.x, y: z.y, until: this.clock + HEART_TIME }); // the heart falls to the ground: walk over it
+    if (this.hero.healEvery && this.kills % this.hero.healEvery === 0) this.heal();
     this.achieve('first');
     if (z.type === 'giant') this.achieve('giant');
     if (z.type === 'lord') this.achieve('lord');
@@ -365,6 +385,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
       { y: this.py, draw: () => this.drawPlayer(p) },
     ];
     if (this.stone.open) things.push({ y: STONE.y, draw: () => this.drawStone(p) });
+    for (const h of this.hearts) things.push({ y: h.y, draw: () => this.drawDroppedHeart(p, h.x, h.y, h.until - t) });
     things.sort((a, b) => a.y - b.y).forEach((th) => th.draw());
 
     drawWeapons(p, this.arsenal, this);
@@ -398,6 +419,16 @@ export class PlayScene extends Phaser.Scene implements Combat {
       swing: attacking && !blades ? swing : undefined, wave: attacking && blades ? swing : undefined,
       ...gearOf(this.arsenal),
     });
+  }
+
+  // A dropped heart bobs above its shadow and blinks for its last two seconds.
+  private drawDroppedHeart(p: Pen, x: number, y: number, left: number) {
+    if (left < 2 && Math.floor(left * 8) % 2) return;
+    const bob = Math.round(Math.sin(this.clock * 5) * 1.5), x0 = Math.round(x) - 5, y0 = Math.round(y) - 13 + bob;
+    ell(p, x, y, 5, 1, P.ink, 0.4);
+    // The HUD heart at double size, so it is easy to spot on the ground.
+    drawHeart({ rect: (rx, ry, w, h, c, al) => p.rect(x0 + (rx - x0) * 2, y0 + (ry - y0) * 2, w * 2, h * 2, c, al) }, x0, y0, P.hurt);
+    p.rect(x0 + 2, y0 + 2, 2, 2, P.bone); // shine
   }
 
   private drawStone(p: Pen) {

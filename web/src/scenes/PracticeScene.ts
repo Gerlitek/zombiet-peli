@@ -166,8 +166,8 @@ export class PracticeScene extends Phaser.Scene implements Combat {
 
   heal() { /* no hearts in practice */ }
 
-  shake() {
-    this.cameras.main.shake(120, 0.008);
+  shake(power: number) {
+    this.cameras.main.shake(power > 0.01 ? 180 : 70, power);
   }
 
   private draw(landed: boolean) {

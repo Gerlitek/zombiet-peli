@@ -55,7 +55,7 @@ Valikosta pääsee näppäimellä H harjoittelemaan ennen oikeaa peliä. Harjoit
 | Hahmo | Kuvaus | Versio |
 |---|---|---|
 | Ritari | Tumma kypärä, valkoiset silmät, vaaleansininen haarniska, musta ritarin miekka. Peruslyönti miekalla, vahinko 2 | 1 |
-| Minipelaaja | Pieni ja nopea erikoishahmo. Vain lyö nyrkillä, vahinko 1. Parantuu: joka kolmas tappo antaa sydämen takaisin | 1 |
+| Minipelaaja | Pieni ja nopea erikoishahmo. Vain lyö nyrkillä, vahinko 1. Parantuu: joka kahdeksas tappo antaa sydämen takaisin (oli joka kolmas, testaajien mielestä liian nopea) | 1 |
 
 ## 4. Aseet
 
@@ -72,9 +72,9 @@ Ase on yksi rivi dataa: nimi, pyörä (metsä tai VIP), paino arvonnassa, vahink
 | Ase | Pyörä | Käyttäytyminen | Vaikutus | Versio |
 |---|---|---|---|---|
 | Musta miekka / nyrkki | perus | strike | Peruslyönti, aina käytössä | 1 |
-| Superhanskat | metsä | strike | Zombi lentää kauas. Vahinko 3. Joka kolmas osuma antaa sydämen ("vetää helppiä") | 1 |
+| Superhanskat | metsä | strike | Zombi lentää kauas. Vahinko 3. Joka kuudes osuma antaa sydämen ("vetää helppiä") | 1 |
 | 2 mini-katanaa | metsä | orbit | Kaksi terää kiertää. Joka viides sekunti pyörremyrsky, joka työntää zombit pois | 1 |
-| Moukari | metsä | strike | Hidas, osuu kaikkiin lähellä oleviin, tärisyttää ruutua | 1 |
+| Moukari | metsä | strike | Hidas, osuu kaikkiin lähellä oleviin. Maa tärähtää: kauempana olevat zombit saavat pienemmän osuman ja horjuvat (lapsen toive) | 1 |
 | Nuntsakot | metsä | orbit | Nopea ja lyhyt kierto, vahinko 1 | 1 |
 | Jalkapallo | metsä | projectile | Potku lähtee itsestään, pallo kimpoaa zombista toiseen | 2 |
 | Lelut | metsä | helper | Vinkulelu, jonka perään zombit lähtevät hetkeksi | 2 |
@@ -116,7 +116,7 @@ Zombi on yksi rivi dataa: mitat, värit, elämä, nopeus, paino arvonnassa ja ma
 | Ylläri-zombi | Lahjapaketti, josta kurkkii silmäpari | 1 | hyppii | Avautuessaan paljastaa satunnaisen zombin. Tämä on "kaikenlaiset zombit" ja pelin nimi | 1 |
 | Uudet tyypit | Päivityksissä | | | Yksi rivi dataan | 2 + |
 
-Erikoisaseet vain harvoilla: noin joka kahdeksas zombi kantaa asetta (luu, keppi, sateenvarjo). Se ulottuu pidemmälle. Tapettuna se pudottaa sydämen.
+Erikoisaseet vain harvoilla: noin joka kahdeksas zombi kantaa asetta (luu, keppi, sateenvarjo). Se ulottuu pidemmälle. Tapettuna se pudottaa sydämen maahan. Sydän pitää käydä poimimassa kahdeksan sekunnin sisällä.
 
 VIP-aitiossa samat tyypit ovat supervahvoja: elämä x 2, nopeus x 1,4, koko x 1,3 ja vihreä hehku.
 
@@ -131,7 +131,7 @@ Syntyminen: pilvestä putoaa iso pisara, maahan syntyy lätäkkö ja zombi nouse
 | Salamat lyövät puihin ja muualle | Noin viiden sekunnin välein salama. Osuma puuhun sytyttää sen hetkeksi kytemään. Ruutu välähtää |
 | Mätä sammal | Tummanvihreät laikut maassa |
 | Kuivahtaneet puut | Lehdettömät puut. Hahmot kulkevat niiden edestä ja takaa |
-| Likainen vesi | Samea lampi, jossa kelluu roskaa. Hidastaa kaikkia |
+| Likainen vesi | Samea lampi, jossa kelluu roskaa. Hidastaa pelaajaa |
 | Kuiva ruoho | Kellertävät tupsut, jotka huojuvat tuulessa |
 
 Versiossa 2 salama vaikuttaa peliin: maahan iskevä salama näkyy ensin varoitusmerkkinä ja tainnuttaa osuessaan zombit.

@@ -40,7 +40,7 @@ export interface Combat {
   zombies: Zombie[];
   hit(z: Zombie, damage: number, weapon: WeaponId): void;
   heal(): void;
-  shake(): void;
+  shake(power: number): void;
 }
 
 export const newArsenal = (): Arsenal => ({ level: {}, nextAt: {}, fx: {}, angle: {}, punches: 0, swingAt: -9, activeUntil: 0 });
@@ -107,15 +107,24 @@ export function updateWeapons(a: Arsenal, c: Combat) {
       a.nextAt[id] = c.clock + def.cooldown; // a miss also costs the cooldown
       const inRange = near.filter((n) => n.d < def.range).map((n) => n.z);
       const targets = def.area ? inRange : inRange.slice(0, 1);
-      if (!targets.length) continue;
-      a.fx[id] = { at: c.clock, x: targets[0].x, y: targets[0].y };
-      if (def.effect === 'shake') c.shake();
-      if (def.effect === 'heal' && ++a.punches % 3 === 0) c.heal(); // superhanskat "pull health"
+      // The hammer shakes the ground: zombies farther away take a smaller hit and stagger.
+      const shaken = def.quake ? near.filter((n) => n.d >= def.range && n.d < def.quake!).map((n) => n.z) : [];
+      if (!targets.length && !shaken.length) continue;
+      // The hammer hits the ground at the hero's feet, other strikes hit the zombie.
+      a.fx[id] = def.quake ? { at: c.clock, x: c.px, y: c.py } : { at: c.clock, x: targets[0].x, y: targets[0].y };
+      if (def.effect === 'shake') c.shake(0.014);
+      else if (id === 'sword') c.shake(0.004); // a small jolt: the knight's sword feels heavier than a fist
+      if (def.effect === 'heal' && ++a.punches % 6 === 0) c.heal(); // superhanskat "pull health": every sixth blow that lands
       for (const z of targets) {
         knock(z, c.px, c.py, def.knock ?? 0);
         z.stun = c.clock + 0.3;
         c.hit(z, damage, id);
         if (def.effect === 'squash') z.squashed = c.clock + 1.6; // flat and helpless: the next hit kills
+      }
+      for (const z of shaken) {
+        knock(z, c.px, c.py, 60);
+        z.stun = c.clock + 0.6;
+        c.hit(z, Math.max(1, damage - 1), id);
       }
     }
 
@@ -146,14 +155,18 @@ export function updateWeapons(a: Arsenal, c: Combat) {
   }
 }
 
-function ring(p: Pen, x: number, y: number, r: number, color: number, alpha: number) {
-  for (let i = 0; i < 24; i++) p.rect(x + cos((i * PI) / 12) * r, y - 6 + sin((i * PI) / 12) * r * 0.5, 2, 1, color, alpha);
+function ring(p: Pen, x: number, y: number, r: number, color: number, alpha: number, dots = 24) {
+  for (let i = 0; i < dots; i++) p.rect(x + cos((i * 2 * PI) / dots) * r, y - 6 + sin((i * 2 * PI) / dots) * r * 0.5, 2, 1, color, alpha);
 }
 
 export function drawWeapons(p: Pen, a: Arsenal, c: Combat) {
   const bladesActive = c.clock < a.activeUntil;
   for (const id of owned(a)) {
     const def: WeaponDef = WEAPONS[id], fx = a.fx[id], age = fx ? c.clock - fx.at : 9;
+    if (def.quake && fx && age < 0.4) { // the ground shakes: a ring runs out to the edge of the quake
+      ring(p, fx.x, fx.y + 6, 10 + (age / 0.4) * (def.quake - 10), def.color, 1 - age * 2.2, 64);
+      ring(p, fx.x, fx.y + 6, 6 + (age / 0.4) * (def.quake - 20), P.bone, 0.6 - age * 1.5, 48);
+    }
     if (def.kind === 'strike' && fx && age < 0.15) { // impact star
       for (let i = 0; i < 6; i++) p.rect(fx.x + cos(i) * (3 + age * 50), fx.y - 9 + sin(i) * (3 + age * 50), 2, 2, i % 2 ? P.bone : def.color);
     }

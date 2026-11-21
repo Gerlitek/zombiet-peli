@@ -69,8 +69,9 @@ export function knock(z: Zombie, fromX: number, fromY: number, power: number) {
   z.kx += (dx / dist) * k; z.ky += (dy / dist) * k;
 }
 
+// The sand trail slows the hero down (PlayScene.slowed), so it is drawn as clear patches of sand.
 export function drawTrail(p: Pen, z: Zombie) {
-  z.trail.forEach((s, i) => p.rect(s.x - 1, s.y + (i % 2), 2, 1, P.dry));
+  z.trail.forEach((s, i) => { p.rect(s.x - 3, s.y - 1, 7, 3, P.dry); p.rect(s.x - 2 + (i % 3), s.y - 1, 2, 1, P.sand); });
 }
 
 // faceLeft: zombies turn toward the player.
