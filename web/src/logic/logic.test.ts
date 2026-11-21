@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { rng } from '../art/pixels';
 import { WIN_AT } from '../data/rules';
 import { RK_ODDS, WEAPONS } from '../data/weapons';
-import { makePuzzle, PUZZLE_LEVELS, puzzleBonus } from './puzzle';
+import { makePairPuzzle, makePuzzle, PAIR_CHOICES, PUZZLE_LEVELS, puzzleBonus } from './puzzle';
 import { pickWeighted } from './random';
 import { MAX_SCORE, score } from './score';
 import { slices, spin } from './wheel';
@@ -37,7 +37,7 @@ describe('wheel', () => {
 });
 
 describe('puzzle', () => {
-  it.each(PUZZLE_LEVELS)('%s: parts add up to the target and the answer is among three different choices', (level) => {
+  it.each(PUZZLE_LEVELS.filter((lv) => lv !== 'master'))('%s: parts add up to the target and the answer is among three different choices', (level) => {
     const rand = rng(4);
     for (let i = 0; i < 1000; i++) {
       const p = makePuzzle(level, rand);
@@ -47,6 +47,19 @@ describe('puzzle', () => {
       expect(p.choices).toContain(p.answer);
       expect(new Set(p.choices).size).toBe(3);
       expect(p.choices.every((n) => n > 0)).toBe(true);
+    }
+  });
+  it('master: exactly one pair of the five drops adds up to the target', () => {
+    const rand = rng(7);
+    for (let i = 0; i < 1000; i++) {
+      const p = makePairPuzzle(rand);
+      expect(p.pair[0] + p.pair[1]).toBe(p.target);
+      expect(p.choices).toHaveLength(PAIR_CHOICES);
+      expect(new Set(p.choices).size).toBe(PAIR_CHOICES);
+      expect(p.choices.every((n) => n > 0)).toBe(true);
+      const pairs = p.choices.flatMap((x, a) => p.choices.slice(a + 1).filter((y) => x + y === p.target));
+      expect(pairs).toHaveLength(1);
+      expect(p.target).toBeLessThanOrEqual(200);
     }
   });
   it('faster solve gives a bigger bonus, between 100 and 200', () => {

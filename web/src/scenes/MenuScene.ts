@@ -10,11 +10,11 @@ import { ZOMBIES } from '../data/zombies';
 import { PUZZLE_LEVELS, PuzzleLevel } from '../logic/puzzle';
 import { load, save } from '../systems/storage';
 
-const LEVEL_NAMES: Record<PuzzleLevel, string> = { easy: 'Helppo', medium: 'Keski', hard: 'Vaikea' };
+const LEVEL_NAMES: Record<PuzzleLevel, string> = { easy: 'Helppo', medium: 'Keski', hard: 'Vaikea', master: 'Mestari' };
 const HERO_IDS = Object.keys(HEROES) as HeroId[];
 // Layout in logical pixels. Cards and buttons can be chosen with keys or by clicking.
 const CARD = { y: 86, w: 84, h: 72, xs: [72, 164] };
-const PILL = { y: 178, w: 56, h: 18, xs: [70, 132, 194] }; // tall enough for letters like p and j
+const PILL = { y: 178, w: 52, h: 18, xs: [47, 105, 163, 221] }; // tall enough for letters like p and j
 const inside = (px: number, py: number, x: number, y: number, w: number, h: number) => px >= x && px < x + w && py >= y && py < y + h;
 
 export class MenuScene extends Phaser.Scene {

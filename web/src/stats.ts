@@ -28,7 +28,7 @@ export interface Summary {
 }
 
 const COLORS = { accent: '#7CC8F2', brand: '#E85AA5', text: '#E7E8EA', dim: '#A9AFBA', grid: 'rgba(37, 45, 63, 0.6)', surface: '#151923' };
-const LEVELS: Record<string, string> = { easy: 'Helppo', medium: 'Keski', hard: 'Vaikea' };
+const LEVELS: Record<string, string> = { easy: 'Helppo', medium: 'Keski', hard: 'Vaikea', master: 'Mestari' };
 const nameOf = (table: Record<string, { name: string }>) => (id: string) => table[id]?.name ?? id;
 const fmt = (n: number | null | undefined) => (n == null ? '–' : n.toLocaleString('fi-FI')); // older summaries lack some fields
 const pct = (part: number, all: number) => (all ? `${Math.round((100 * part) / all)} %` : '–');

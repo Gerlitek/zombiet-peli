@@ -85,3 +85,19 @@ def test_puzzle_level_is_a_name():
     assert rules.event({**base, 'level': 'hard'})
     with pytest.raises(rules.Invalid):
         rules.event({**base, 'level': 3})
+
+
+def puzzle(**over):
+    base = {'event': 'puzzle_answered', 'ts': '2026-11-19T10:00:00Z', 'session_id': SID, 'seq': 3, 'version': '0.2.0',
+            'level': 'hard', 'target': 1000, 'parts': [640, 250], 'answer': 110, 'correct': True, 'time_ms': 9000}
+    return {**base, **over}
+
+
+@pytest.mark.parametrize('over', [{}, {'level': 'master', 'target': 150, 'parts': [72], 'answer': 78}])
+def test_hard_and_master_puzzles_pass(over):
+    assert rules.event(puzzle(**over))  # the hard level goes up to 1000: a bound of 100 rejected the whole batch
+
+
+def test_puzzle_numbers_are_bounded():
+    with pytest.raises(rules.Invalid):
+        rules.event(puzzle(target=1001))

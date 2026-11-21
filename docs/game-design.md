@@ -177,7 +177,7 @@ Taso valitaan aloitusruudussa, ja peli muistaa sen. Lapsi toivoi myös vaikeita 
 | Helppo | `9 = 4 + ?` | Luvut 20 asti, kaksi osaa |
 | Keski | `74 = 38 + ?` | Luvut 100 asti, kaksi osaa, kymmenylitys |
 | Vaikea | `1000 = 640 + 250 + ?` | Luvut 1000 asti, kolme osaa |
-| Mestari | `? + ? = 150` | Pelaaja kerää kaksi pisaraa viidestä niin, että summa täsmää |
+| Mestari | `? + ? = 150` | Luvut 100 - 200. Pelaaja kerää kaksi pisaraa viidestä niin, että summa täsmää. Muut kolme ovat lähellä oikeita osia (yhden tai kymmenen päässä), joten kokoa arvaamalla ei pääse. Aikaa 60 s |
 
 Väärät vaihtoehdot eivät ole satunnaisia, vaan tyypillisiä virheitä: oikea vastaus plus tai miinus 1, plus tai miinus 10 ja unohdettu muistinumero.
 
@@ -290,6 +290,8 @@ Vain nimimerkki ja satunnainen istuntotunniste. Ei IP-osoitteita eikä henkilöt
 | `cave_entered` | zone, level, duration_s |
 | `achievement_unlocked` | achievement |
 | `game_ended` | result (won, lost), kills, duration_s, hearts_left, score |
+
+Mestari-tasolla `parts` on ensimmäinen kerätty luku ja `answer` toinen.
 
 `puzzle_answered` kertoo dashboardissa, mitkä hajotelmat ovat vaikeita ja kuinka nopeasti ne ratkeavat. Pelikerrasta syntyy noin 20 - 40 tapahtumaa. Ne lähetetään erinä: VIP-aitioon siirryttäessä ja pelin lopussa.
 

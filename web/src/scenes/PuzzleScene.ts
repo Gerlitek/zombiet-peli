@@ -5,24 +5,31 @@ import { P } from '../art/palette';
 import { B, L, ell, figure } from '../art/pixels';
 import { drawDrop, drawPanel } from '../art/scenery';
 import { fit, label, penFor, zoomCamera } from '../art/ui';
-import { Puzzle, PuzzleLevel, makePuzzle, puzzleBonus, puzzleText } from '../logic/puzzle';
+import { PairPuzzle, Puzzle, PuzzleLevel, makePairPuzzle, makePuzzle, pairText, puzzleBonus, puzzleText } from '../logic/puzzle';
 import { track } from '../systems/telemetry';
 
 const WAIT = 1.5; // seconds a result stays before anything else can happen
-const ROUNDS = 3, TIME = 45, DROP_Y = 150, DROP_X = [96, 160, 224], CHEST = { x: 160, y: 124 };
+const ROUNDS = 3, DROP_Y = 150, CHEST = { x: 160, y: 124 };
+// Master has five drops and more time: the player collects two of them.
+const DROP_X = [96, 160, 224], PAIR_X = [48, 104, 160, 216, 272];
+const timeFor = (level: PuzzleLevel) => (level === 'master' ? 60 : 45);
 
 export interface PuzzleData { level: PuzzleLevel; look: Look; speed: number; done: (bonus: number) => void }
 
 // Lock stone: time stops, the player walks into the drop with the missing part.
 // Three correct answers open the Lightning Cave, where a chest waits.
+// Master: the player collects the two drops that add up to the target.
 export class PuzzleScene extends Phaser.Scene {
   private g!: Phaser.GameObjects.Graphics;
   private cfg!: PuzzleData;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private puzzle!: Puzzle;
+  private pair?: PairPuzzle;            // master only
+  private picked: number[] = [];        // master: indexes of the collected drops
+  private xs = DROP_X;
   private alive: boolean[] = [];        // which drops are still there
   private round = 0;
-  private left = TIME;
+  private left = 45;
   private asked = 0;                    // clock when the current puzzle appeared
   private clock = 0;
   private phase: 'puzzle' | 'right' | 'cave' | 'chest' = 'puzzle'; // right = short pause after a correct answer
@@ -43,12 +50,12 @@ export class PuzzleScene extends Phaser.Scene {
     zoomCamera(this);
     this.input.keyboard!.once('keydown-ESC', () => { this.scene.stop('play'); this.scene.start('menu'); }); // Esc: leave the game
     this.cfg = data;
-    this.round = 0; this.left = TIME; this.clock = 0; this.phase = 'puzzle'; this.pos = { x: 160, y: 216 };
+    this.pair = undefined; this.round = 0; this.left = timeFor(data.level); this.xs = data.level === 'master' ? PAIR_X : DROP_X; this.clock = 0; this.phase = 'puzzle'; this.pos = { x: 160, y: 216 };
     this.g = this.add.graphics();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT') as Record<string, Phaser.Input.Keyboard.Key>;
     this.title = label(this, W / 2, 6, '', P.iceL);
     this.question = label(this, W / 2, 46, '', P.bone, 16);
-    this.numbers = DROP_X.map((x) => label(this, x, DROP_Y - 7, '', P.bone, 12));
+    this.numbers = this.xs.map((x) => label(this, x, DROP_Y - 7, '', P.bone, 12));
     // treasure card, shown when the chest opens
     this.card = [label(this, W / 2, 150, 'AARRE', P.sand), label(this, W / 2, 164, 'Yksi sydän ja lisäpyöräytys', P.iceL, 14), label(this, W / 2, 186, '', P.bone), label(this, W / 2, 204, '', P.ice)];
     this.card.forEach((t) => t.setVisible(false).setDepth(20));
@@ -57,15 +64,24 @@ export class PuzzleScene extends Phaser.Scene {
   }
 
   private next() {
-    this.puzzle = makePuzzle(this.cfg.level, Math.random);
-    this.alive = [true, true, true];
+    const level = this.cfg.level;
+    if (level === 'master') this.pair = makePairPuzzle(Math.random);
+    else this.puzzle = makePuzzle(level, Math.random);
+    const choices = this.pair?.choices ?? this.puzzle.choices;
+    this.alive = choices.map(() => true);
+    this.picked = [];
     this.asked = this.clock;
     this.pos = { x: 160, y: 216 };
     this.wrongUntil = 0;
     this.title.setText(`HAJOTELMA ${this.round + 1}/${ROUNDS}`).setColor('#B5E1F8');
     this.phase = 'puzzle';
-    fit(this.question.setText(puzzleText(this.puzzle)).setColor('#E7E8EA'), 136); // long puzzles shrink to fit the stone
-    this.numbers.forEach((t, i) => t.setText(String(this.puzzle.choices[i])).setVisible(true));
+    this.showQuestion();
+    this.numbers.forEach((t, i) => t.setText(String(choices[i])).setVisible(true));
+  }
+
+  private showQuestion() {
+    const text = this.pair ? pairText(this.pair, this.picked.map((i) => this.pair!.choices[i])) : puzzleText(this.puzzle);
+    fit(this.question.setText(text).setColor('#E7E8EA'), 136); // long puzzles shrink to fit the stone
   }
 
   update(_: number, deltaMs: number) {
@@ -89,8 +105,10 @@ export class PuzzleScene extends Phaser.Scene {
     if (this.phase === 'puzzle') {
       this.left -= dt;
       if (this.left <= 0) return this.finish(0); // out of time: the stone closes, no penalty
-      DROP_X.forEach((x, i) => {
-        if (this.alive[i] && Math.hypot(this.pos.x - x, this.pos.y - 8 - DROP_Y) < 14) this.answer(i);
+      this.xs.forEach((x, i) => {
+        if (this.alive[i] && this.phase === 'puzzle' && Math.hypot(this.pos.x - x, this.pos.y - 8 - DROP_Y) < 14) {
+          if (this.pair) this.collect(i); else this.answer(i);
+        }
       });
     } else if (this.phase === 'right' && waited) {
       if (this.round < ROUNDS) this.next(); else this.enterCave();
@@ -98,6 +116,34 @@ export class PuzzleScene extends Phaser.Scene {
       this.openChest();
     }
     this.draw(dx !== 0 || dy !== 0);
+  }
+
+  // Master: the first drop is collected into the sum, the second one decides.
+  private collect(i: number) {
+    const p = this.pair!;
+    this.picked.push(i);
+    this.alive[i] = false;
+    this.numbers[i].setVisible(false);
+    this.showQuestion();
+    if (this.picked.length < 2) return;
+    const [a, b] = this.picked.map((n) => p.choices[n]), correct = a + b === p.target;
+    track('puzzle_answered', { level: 'master', target: p.target, parts: [a], answer: b, correct, time_ms: Math.round((this.clock - this.asked) * 1000) });
+    if (!correct) { // both drops come back, and the stone says what the sum was
+      this.cameras.main.shake(80, 0.005);
+      this.title.setText(`${a} + ${b} = ${a + b}. Kokeile toista paria!`).setColor('#D96B6B');
+      this.wrongUntil = this.clock + 2.5;
+      this.picked = [];
+      this.alive = this.alive.map(() => true);
+      this.numbers.forEach((t) => t.setVisible(true));
+      this.pos = { x: 160, y: 216 }; // back down, so the hero does not stand on a drop
+      this.showQuestion();
+      return;
+    }
+    this.wrongUntil = 0;
+    this.title.setColor('#B5E1F8');
+    this.round++;
+    this.phase = 'right'; this.phaseAt = this.clock;
+    fit(this.question.setText(`Oikein!  ${a} + ${b} = ${p.target}`).setColor('#7CC8F2'), 136);
   }
 
   private answer(i: number) {
@@ -132,7 +178,7 @@ export class PuzzleScene extends Phaser.Scene {
 
   private openChest() {
     this.phase = 'chest'; this.phaseAt = this.clock;
-    this.bonus = puzzleBonus(this.left, TIME);
+    this.bonus = puzzleBonus(this.left, timeFor(this.cfg.level));
     this.card[2].setText(`Nopeusbonus: ${this.bonus} pistettä`);
     this.card.forEach((t) => t.setVisible(true));
     this.time.delayedCall(WAIT * 1000, () => this.card[3].setText('Paina ENTER ja jatka peliä'));
@@ -154,8 +200,8 @@ export class PuzzleScene extends Phaser.Scene {
       p.rect(88, 38, 144, 32, P.ink); p.rect(88, 38, 144, 1, P.ice); p.rect(88, 69, 144, 1, P.ice);
       for (let i = 0; i < ROUNDS; i++) p.rect(148 + i * 9, 76, 6, 3, i < this.round ? P.ice : P.storm);
       drawPanel(p, 110, 20, 100, 6, P.storm);
-      p.rect(111, 21, Math.round((98 * this.left) / TIME), 4, P.ice);
-      DROP_X.forEach((x, i) => {
+      p.rect(111, 21, Math.round((98 * this.left) / timeFor(this.cfg.level)), 4, P.ice);
+      this.xs.forEach((x, i) => {
         if (!this.alive[i]) return;
         const y = DROP_Y + Math.sin(t * 2 + i * 2) * 3;
         ell(p, x, DROP_Y + 22, 9, 2, P.ink, 0.4);
