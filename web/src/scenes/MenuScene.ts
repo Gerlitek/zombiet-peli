@@ -15,7 +15,7 @@ const LEVEL_NAMES: Record<PuzzleLevel, string> = { easy: 'Helppo', medium: 'Kesk
 const HERO_IDS = Object.keys(HEROES) as HeroId[];
 // Layout in logical pixels. Cards and buttons can be chosen with keys or by clicking.
 const CARD = { y: 86, w: 84, h: 72, xs: [72, 164] };
-const PILL = { y: 178, w: 52, h: 18, xs: [47, 105, 163, 221] }; // tall enough for letters like p and j
+const PILL = { y: 179, w: 48, h: 14, xs: [55, 109, 163, 217] }; // small and quiet: the hero and Enter are the main things here
 const inside = (px: number, py: number, x: number, y: number, w: number, h: number) => px >= x && px < x + w && py >= y && py < y + h;
 
 export class MenuScene extends Phaser.Scene {
@@ -54,7 +54,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     label(this, W / 2, 163, 'Tehtävät VIP-aitiossa  ↑  ↓', P.iceL);
-    this.levelLabels = PUZZLE_LEVELS.map((lv, i) => label(this, PILL.xs[i] + PILL.w / 2, PILL.y + 3, LEVEL_NAMES[lv]));
+    this.levelLabels = PUZZLE_LEVELS.map((lv, i) => label(this, PILL.xs[i] + PILL.w / 2, PILL.y + 3, LEVEL_NAMES[lv], P.bone, 8));
 
     const start = label(this, W / 2, 202, 'Paina ENTER ja aloita', P.ice, 12);
     label(this, 106, 222, 'H: harjoittele hiekkasärkillä', P.sand, 8);
