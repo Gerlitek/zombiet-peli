@@ -3,12 +3,14 @@ import type { Summary } from './stats';
 
 export const DEMO: Summary = {
   generated: '2026-11-21T02:30:12+00:00',
+  recent_days: 30,
+  players_recent: 23,
   days: [
     { day: '2026-11-16', started: 4, ended: 3, won: 1 }, { day: '2026-11-17', started: 9, ended: 8, won: 3 },
     { day: '2026-11-18', started: 6, ended: 6, won: 2 }, { day: '2026-11-19', started: 14, ended: 12, won: 5 },
     { day: '2026-11-20', started: 11, ended: 10, won: 6 },
   ],
-  games: { ended: 39, won: 17, median_duration_s: 214, median_kills: 31 },
+  games: { started: 44, started_recent: 44, ended: 39, won: 17, median_duration_s: 214, median_kills: 31 },
   characters: { knight: 24, mini: 20 },
   kills_by_zombie: { normal: 520, kauhu: 260, sand: 190, gift: 120, random: 80, giant: 40, lord: 17 },
   hits_by_zombie: { kauhu: 61, normal: 44, sand: 30, giant: 12, lord: 9 },

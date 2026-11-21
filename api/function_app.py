@@ -5,7 +5,7 @@ import logging
 import os
 import time
 import urllib.request
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import azure.functions as func
 from azure.core import MatchConditions
@@ -231,5 +231,9 @@ def curate_events(timer: func.TimerRequest) -> None:
     rows = []
     for name in curated.list_blob_names(name_starts_with='events/dt='):
         rows += pq.read_table(io.BytesIO(curated.download_blob(name).readall())).to_pylist()
-    curated.upload_blob('summary/dashboard.json', json.dumps(curate.summary(rows)), overwrite=True)
+    # Distinct players of the recent days, from raw (kept 30 days): only the count is stored.
+    since = (datetime.now(UTC) - timedelta(days=curate.RECENT_DAYS)).strftime('%Y-%m-%d')
+    recent = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with='events/dt=') if since <= day(n) < today]
+    summary = curate.summary(rows, players_recent=len(curate.nicknames(recent)))
+    curated.upload_blob('summary/dashboard.json', json.dumps(summary), overwrite=True)
 

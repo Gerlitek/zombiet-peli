@@ -12,8 +12,10 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
 // The shape of curate.summary() in api/curate.py.
 export interface Summary {
   generated: string;
-  days: { day: string; started: number; ended: number; won: number }[];
-  games: { ended: number; won: number; median_duration_s: number | null; median_kills: number | null };
+  recent_days: number;
+  days: { day: string; started: number; ended: number; won: number }[]; // the recent days only
+  players_recent: number | null; // distinct nicknames in the recent days
+  games: { started: number; started_recent: number; ended: number; won: number; median_duration_s: number | null; median_kills: number | null };
   characters: Record<string, number>;
   kills_by_zombie: Record<string, number>;
   hits_by_zombie: Record<string, number>;
@@ -25,7 +27,7 @@ export interface Summary {
 const COLORS = { accent: '#7CC8F2', brand: '#E85AA5', text: '#E7E8EA', dim: '#A9AFBA', grid: 'rgba(37, 45, 63, 0.6)', surface: '#151923' };
 const LEVELS: Record<string, string> = { easy: 'Helppo', medium: 'Keski', hard: 'Vaikea' };
 const nameOf = (table: Record<string, { name: string }>) => (id: string) => table[id]?.name ?? id;
-const fmt = (n: number) => n.toLocaleString('fi-FI');
+const fmt = (n: number | null | undefined) => (n == null ? '–' : n.toLocaleString('fi-FI')); // older summaries lack some fields
 const pct = (part: number, all: number) => (all ? `${Math.round((100 * part) / all)} %` : '–');
 
 Chart.defaults.color = COLORS.dim;
@@ -93,7 +95,7 @@ function counts(title: string, data: Record<string, number>, label: (id: string)
 
 function days(s: Summary) {
   const label = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString('fi-FI', { day: 'numeric', month: 'numeric' });
-  const canvas = card('Pelikerrat päivittäin', ['Päivä', 'Aloitettu', 'Läpäisty'], s.days.map((d) => [label(d.day), d.started, d.won]), true);
+  const canvas = card(`Pelikerrat päivittäin, viimeiset ${s.recent_days} päivää`, ['Päivä', 'Aloitettu', 'Läpäisty'], s.days.map((d) => [label(d.day), d.started, d.won]), true);
   if (!canvas) return;
   new Chart(canvas, {
     type: 'bar',
@@ -139,10 +141,13 @@ function puzzles(s: Summary) {
 }
 
 function render(s: Summary) {
+  s.recent_days ??= 30;
   const g = s.games;
   const duration = g.median_duration_s == null ? '–' : `${Math.floor(g.median_duration_s / 60)}:${String(Math.round(g.median_duration_s % 60)).padStart(2, '0')}`;
-  tile(fmt(g.ended), 'pelattua peliä');
-  tile(pct(g.won, g.ended), 'peleistä läpäisty');
+  tile(fmt(g.started), 'peliä yhteensä');
+  tile(fmt(g.started_recent), `peliä ${s.recent_days} päivän aikana`);
+  tile(fmt(s.players_recent), `eri pelinimeä ${s.recent_days} päivän aikana`);
+  tile(pct(g.won, g.ended), 'päättyneistä peleistä läpäisty');
   tile(duration, 'pelin kesto (mediaani, min:s)');
   tile(g.median_kills == null ? '–' : fmt(g.median_kills), 'tappoa pelissä (mediaani)');
 

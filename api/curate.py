@@ -10,7 +10,7 @@ Rules (docs/architecture.md, chapter 4):
 import json
 import re
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from statistics import median
 
 import rules
@@ -72,13 +72,34 @@ def clean(blobs: list[str]) -> tuple[list[dict], int, int]:
     return rows, rejected, test
 
 
+def nicknames(blobs: list[str]) -> set[str]:
+    """Distinct nicknames in raw blobs (game_started lines of real sessions). Only the count leaves this function:
+    the nicknames themselves are never written to the curated layer, which is kept for good."""
+    names = set()
+    for text in blobs:
+        for line in text.splitlines():
+            try:
+                raw = json.loads(line)
+                raw.pop('received', None)
+                e = rules.event(raw)
+            except (ValueError, KeyError, AttributeError, TypeError):
+                continue
+            if e['event'] == 'game_started' and not TEST_SESSION.match(e['session_id']):
+                names.add(e['nickname'])
+    return names
+
+
 def columns(rows: list[dict]) -> dict[str, list]:
     """Rows -> one list per column, None where the event has no such field (the shape pyarrow wants)."""
     return {name: [r.get(name) for r in rows] for name in COLUMNS}
 
 
-def summary(rows: list[dict]) -> dict:
-    """The small JSON the dashboard reads. Rows of all curated days."""
+RECENT_DAYS = 30  # the daily chart and the player count cover this many days, everything else all time
+
+
+def summary(rows: list[dict], players_recent: int | None = None, today: datetime | None = None) -> dict:
+    """The small JSON the dashboard reads. Rows of all curated days, and the distinct nicknames of the recent days."""
+    since = ((today or datetime.now(UTC)) - timedelta(days=RECENT_DAYS)).strftime('%Y-%m-%d')
     ended = [r for r in rows if r['event'] == 'game_ended']
     puzzles = [r for r in rows if r['event'] == 'puzzle_answered']
     days: dict[str, Counter] = {}
@@ -98,8 +119,12 @@ def summary(rows: list[dict]) -> dict:
 
     return {
         'generated': datetime.now(UTC).isoformat(timespec='seconds'),
-        'days': [{'day': d, 'started': c['started'], 'ended': c['ended'], 'won': c['won']} for d, c in sorted(days.items())],
-        'games': {'ended': len(ended), 'won': sum(r['result'] == 'won' for r in ended),
+        'recent_days': RECENT_DAYS,
+        'days': [{'day': d, 'started': c['started'], 'ended': c['ended'], 'won': c['won']} for d, c in sorted(days.items()) if d >= since],
+        'players_recent': players_recent,
+        'games': {'started': sum(c['started'] for c in days.values()),
+                  'started_recent': sum(c['started'] for d, c in days.items() if d >= since),
+                  'ended': len(ended), 'won': sum(r['result'] == 'won' for r in ended),
                   'median_duration_s': median(r['duration_s'] for r in ended) if ended else None,
                   'median_kills': median(r['kills'] for r in ended) if ended else None},
         'characters': count('game_started', 'character'),

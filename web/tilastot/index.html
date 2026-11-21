@@ -28,7 +28,7 @@
     header a:hover { color: var(--accent); }
     .lead { margin: 0 0 18px; color: var(--text-dim); font-size: 0.85rem; }
     .status { padding: 24px; text-align: center; color: var(--text-dim); background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; }
-    .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+    .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
     .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
     .tile b { display: block; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
     .tile span { font-size: 0.78rem; color: var(--text-dim); }
@@ -57,7 +57,7 @@
       <h1>Tilastot</h1>
       <a href="../">← Takaisin peliin</a>
     </header>
-    <p class="lead">Ylläri-Zombiet lukuina. Luvut lasketaan kerran yössä nimettömistä pelitapahtumista.</p>
+    <p class="lead">Ylläri-Zombiet lukuina. Luvut lasketaan kerran yössä nimettömistä pelitapahtumista. Pelinimiä ei tallenneta tilastoihin, vain niiden määrä.</p>
     <div class="status">Haetaan tilastoja. Palvelin voi herätä hitaasti, jos peliä ei ole hetkeen pelattu.</div>
     <section class="tiles" hidden></section>
     <section class="grid" hidden></section>

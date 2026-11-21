@@ -1,4 +1,5 @@
 import json
+from datetime import UTC, datetime
 
 import curate
 import rules
@@ -54,8 +55,8 @@ def test_summary_counts_games_and_puzzles():
     puzzle = {'event': 'puzzle_answered', 'ts': '2026-11-19T10:03:00Z', 'session_id': SID, 'seq': 2, 'version': '0.2.0',
               'level': 'easy', 'target': 12, 'parts': [7], 'answer': 5, 'correct': True, 'time_ms': 4000, 'received': REC}
     rows, *_ = curate.clean([line(), json.dumps(puzzle), json.dumps(ended)])
-    s = curate.summary(rows)
-    assert s['games'] == {'ended': 1, 'won': 1, 'median_duration_s': 200, 'median_kills': 40}
+    s = curate.summary(rows, today=datetime(2026, 11, 20, tzinfo=UTC))
+    assert s['games'] == {'started': 0, 'started_recent': 0, 'ended': 1, 'won': 1, 'median_duration_s': 200, 'median_kills': 40}
     assert s['days'] == [{'day': '2026-11-19', 'started': 0, 'ended': 1, 'won': 1}]
     assert s['puzzles']['easy'] == {'answered': 1, 'correct': 1, 'median_ms': 4000}
     assert s['kills_by_zombie'] == {'normal': 1}
@@ -78,3 +79,24 @@ def test_parquet_round_trip_keeps_the_summary():
     pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=curate.arrow_schema(pa)), out)
     back = pq.read_table(io.BytesIO(out.getvalue())).to_pylist()
     assert curate.summary(back)['kills_by_zombie'] == curate.summary(rows)['kills_by_zombie'] == {'normal': 1, 'giant': 1}
+
+
+def started(sid, seq, day, nick='Hurja-Kissa-42'):
+    return json.dumps({'event': 'game_started', 'ts': f'{day}T10:00:00Z', 'session_id': sid, 'seq': seq, 'version': '0.2.0',
+                       'nickname': nick, 'character': 'knight', 'received': f'{day}T10:00:01+00:00'})
+
+
+def test_days_chart_covers_recent_days_and_totals_all_time():
+    old, new = '123e4567-e89b-42d3-a456-426614174001', '123e4567-e89b-42d3-a456-426614174002'
+    rows, *_ = curate.clean([started(old, 0, '2026-09-01'), started(new, 0, '2026-11-19')])
+    s = curate.summary(rows, players_recent=1, today=datetime(2026, 11, 20, tzinfo=UTC))
+    assert [d['day'] for d in s['days']] == ['2026-11-19']
+    assert s['games']['started'] == 2 and s['games']['started_recent'] == 1 and s['players_recent'] == 1
+
+
+def test_nicknames_counts_real_players_once():
+    test_sid = '10000000-0000-4000-8000-000000000042'
+    blobs = [started(SID, 0, '2026-11-19'), started(SID, 5, '2026-11-19'),
+             started('123e4567-e89b-42d3-a456-426614174009', 0, '2026-11-19', nick='Ovela-Susi-07'),
+             started(test_sid, 0, '2026-11-19', nick='Rohkea-Ilves-01'), 'not json']
+    assert curate.nicknames(['\n'.join(blobs)]) == {'Hurja-Kissa-42', 'Ovela-Susi-07'}
