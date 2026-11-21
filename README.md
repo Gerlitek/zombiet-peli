@@ -26,8 +26,8 @@ flowchart TD
         Raw --> Night["Nightly cleanup"]
         Night --> Cur[("Curated Parquet")]
     end
-    GH -->|"SSH"| Web
-    GH -->|"OIDC"| Azure
+    GH -->|"SSH"| Game
+    GH -->|"OIDC"| API
     Game --> API
     Dash -->|"GET /api/stats"| API
 ```
