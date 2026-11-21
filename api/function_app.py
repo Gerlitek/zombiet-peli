@@ -18,6 +18,9 @@ import curate
 import rules
 
 log = logging.getLogger(__name__)
+# The Azure SDK logs every HTTP request and response at INFO. That fills Application Insights (ingestion is billed
+# above the free amount) and says nothing new, so only its warnings and errors are kept.
+logging.getLogger('azure').setLevel(logging.WARNING)
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 # Both caps can be lowered with app settings, so the cost brake can be tested without thousands of requests.
