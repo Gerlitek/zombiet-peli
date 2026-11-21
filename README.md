@@ -13,21 +13,16 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 
 ```mermaid
 flowchart TD
-    Game["`Peli selaimessa`"] -->|"`tapahtumat`"| API
-    GH["`GitHub Actions`"] -->|"`OIDC deploy`"| API
-    subgraph Azure["`Azure, kaikki Bicepillä`"]
-        API["`Functions API`"]
-        Scores[("`Table: pisteet`")]
-        Raw[("`Blob: raw JSON`")]
-        Night["`Yöajo: siivous`"]
-        Cur[("`Blob: curated Parquet`")]
-        API --> Scores
-        API --> Raw
-        Raw --> Night
-        Night --> Cur
-    end
-    Cur -->|"`GET /api/stats`"| Dash["`Tilastosivu`"]
+    Game["Peli selaimessa"] --> API
+    GH["GitHub Actions"] --> API
+    API["Functions API"] --> Scores[("Table: pisteet")]
+    API --> Raw[("Raw JSON")]
+    Raw --> Night["Yöajo: siivous"]
+    Night --> Cur[("Curated Parquet")]
+    Cur --> Dash["Tilastosivu"]
 ```
+
+Peli lähettää pisteet ja tapahtumat API:lle. GitHub Actions julkaisee koodin ja Azure-resurssit OIDC-kirjautumisella. Kaikki Azure-osat (API, tallennus, yöajo) ovat Bicepiä. Tilastosivu lukee yöajon tekemän yhteenvedon osoitteesta `GET /api/stats`.
 
 Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille sekä lokikatto. Tallennustilaan ei pääse avaimilla, vaan API käyttää hallittua identiteettiä. Perustelut: `docs/architecture.md`.
 
