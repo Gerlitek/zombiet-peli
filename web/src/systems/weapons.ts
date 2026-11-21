@@ -155,6 +155,26 @@ export function updateWeapons(a: Arsenal, c: Combat) {
   }
 }
 
+// Each strike weapon has its own hit, so the player sees which weapon did it. (x, y) is the middle of the zombie.
+type Impact = (p: Pen, x: number, y: number, age: number, color: number) => void;
+const star: Impact = (p, x, y, age, color) => { // fist and others: a small star
+  for (let i = 0; i < 6; i++) p.rect(x + cos(i) * (3 + age * 50), y + sin(i) * (3 + age * 50), 2, 2, i % 2 ? P.bone : color);
+};
+const IMPACT: Partial<Record<WeaponId, Impact>> = {
+  sword(p, x, y, age) { // a white slash across the zombie
+    const k = Math.min(1, age / 0.08), a = 1 - age * 4;
+    for (let i = 0; i < 12 * k; i++) p.rect(x - 9 + i * 1.5, y - 7 + i * 1.2, 2, 1, i % 3 ? P.bone : P.iceL, a);
+    for (let i = 0; i < 12 * k; i++) p.rect(x - 8 + i * 1.5, y - 6 + i * 1.2, 2, 1, P.rain, a * 0.6);
+  },
+  gloves(p, x, y, age, color) { // a big burst: the zombie flies far
+    for (let i = 0; i < 10; i++) { const an = i * 0.63, r = 4 + age * 90; limb(p, x + cos(an) * r * 0.5, y + sin(an) * r * 0.5, x + cos(an) * r, y + sin(an) * r, 1, i % 2 ? P.bone : color, false, 0, 1 - age * 5); }
+  },
+  squeeze(p, x, y, age, color) { // two hands press the zombie flat from the sides
+    const gap = Math.max(1, 10 - age * 80), a = 1 - age * 4;
+    for (const side of [-1, 1]) { p.rect(x + side * gap - 1, y - 4, 2, 9, color, a); p.rect(x + side * (gap + 2) - 1, y - 2, 2, 5, P.bone, a); }
+  },
+};
+
 function ring(p: Pen, x: number, y: number, r: number, color: number, alpha: number, dots = 24) {
   for (let i = 0; i < dots; i++) p.rect(x + cos((i * 2 * PI) / dots) * r, y - 6 + sin((i * 2 * PI) / dots) * r * 0.5, 2, 1, color, alpha);
 }
@@ -167,10 +187,11 @@ export function drawWeapons(p: Pen, a: Arsenal, c: Combat) {
       ring(p, fx.x, fx.y + 6, 10 + (age / 0.4) * (def.quake - 10), def.color, 1 - age * 2.2, 64);
       ring(p, fx.x, fx.y + 6, 6 + (age / 0.4) * (def.quake - 20), P.bone, 0.6 - age * 1.5, 48);
     }
-    if (def.kind === 'strike' && fx && age < 0.15) { // impact star
-      for (let i = 0; i < 6; i++) p.rect(fx.x + cos(i) * (3 + age * 50), fx.y - 9 + sin(i) * (3 + age * 50), 2, 2, i % 2 ? P.bone : def.color);
-    }
+    if (def.kind === 'strike' && fx && age < 0.2) (IMPACT[id] ?? star)(p, fx.x, fx.y - 9, age, def.color);
     if (def.kind !== 'strike' && fx && age < 0.4) ring(p, fx.x, fx.y, 8 + age * 90, def.color, 1 - age * 2.5);
+    if (def.effect === 'freeze' && fx && age < 0.5) { // ice shards fly out with the ring
+      for (let i = 0; i < 10; i++) { const r = 10 + age * 80, an = i * 0.63; p.rect(fx.x + cos(an) * r, fx.y - 6 + sin(an) * r * 0.5, 1, 3, P.iceL, 1 - age * 2); }
+    }
     if (def.kind !== 'orbit') continue;
     if (isRobot(def)) { if (a.robot) drawCatRobot(p, Math.round(a.robot.x), Math.round(a.robot.y), c.clock); continue; }
     if (!bladesActive) continue; // put away between attacks, so they never look like they are working
