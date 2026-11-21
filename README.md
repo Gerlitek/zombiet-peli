@@ -14,11 +14,11 @@ Projekti on samalla työnäyte pilvikehityksestä: Azure, Bicep, CI/CD ja datake
 ```mermaid
 flowchart LR
     GH["GitHub Actions"]
-    subgraph Web["Web host"]
+    subgraph Web["WEB HOST"]
         Game["Browser game"]
         Dash["Stats page"]
     end
-    subgraph Azure["Azure, all in Bicep"]
+    subgraph Azure["AZURE, ALL IN BICEP"]
         API["Functions API"] --> Scores[("Score table")]
         API --> Raw[("Raw JSON")]
         Raw -->|"nightly cleanup"| Cur[("Curated Parquet")]
