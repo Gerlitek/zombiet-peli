@@ -51,3 +51,10 @@ def test_current_file_is_left_alone(monkeypatch):
     parquet = raw_file.blobs['events/dt=2026-11-19/events.parquet'][0]
     curated = run(monkeypatch, {'events/dt=2026-11-19/events.parquet': (parquet, current)})
     assert curated.blobs['events/dt=2026-11-19/events.parquet'] == (parquet, current)
+
+
+def test_a_skipped_day_is_emptied(monkeypatch):
+    monkeypatch.setattr(fa.curate, 'SKIP_DAYS', {'2026-11-19'})
+    curated = run(monkeypatch, {})
+    summary = json.loads(curated.blobs['summary/dashboard.json'][0])
+    assert summary['games']['started'] == 0 and summary['players_recent'] == 0

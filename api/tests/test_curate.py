@@ -1,17 +1,40 @@
+import io
 import json
 from datetime import UTC, datetime
+
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pytest
 
 import curate
 import rules
 
 SID = '123e4567-e89b-42d3-a456-426614174000'
-REC = '2026-11-19T10:00:05+00:00'
+DAY = '2026-11-19'
 
 
-def line(**over):
-    base = {'event': 'zombie_killed', 'ts': '2026-11-19T10:00:00.000Z', 'session_id': SID, 'seq': 1, 'version': '0.2.0',
-            'zombie_type': 'normal', 'weapon': 'sword', 'zone': 'forest', 'total_kills': 3, 'received': REC}
-    return json.dumps({**base, **over})
+def ev(event, seq, second=0, sid=SID, day=DAY, **fields):
+    """One raw line: an event `second` seconds after 10:00 on `day`."""
+    base = {'event': event, 'ts': f'{day}T10:{second // 60:02d}:{second % 60:02d}Z', 'session_id': sid, 'seq': seq,
+            'version': '0.2.0', 'received': f'{day}T10:30:00+00:00'}
+    return json.dumps({**base, **fields})
+
+
+def start(sid=SID, day=DAY, nick='Hurja-Kissa-42'):
+    return ev('game_started', 0, 0, sid, day, nickname=nick, character='knight')
+
+
+def kill(seq, second, total, sid=SID, zombie='normal'):
+    return ev('zombie_killed', seq, second, sid, zombie_type=zombie, weapon='sword', zone='forest', total_kills=total)
+
+
+def end(seq, second, kills, result='won', sid=SID):
+    return ev('game_ended', seq, second, sid, result=result, kills=kills, duration_s=second, hearts_left=2, score=kills * 100)
+
+
+def game(sid=SID):
+    """A plausible short game: start, two kills, end."""
+    return '\n'.join([start(sid), kill(1, 10, 1, sid), kill(2, 15, 2, sid, 'giant'), end(3, 60, 2, sid=sid)])
 
 
 def test_every_event_field_has_a_column():
@@ -19,47 +42,64 @@ def test_every_event_field_has_a_column():
     assert fields <= set(curate.COLUMNS)
 
 
+def test_a_plausible_game_is_kept_whole():
+    rows, dropped = curate.clean([game()])
+    assert [r['seq'] for r in rows] == [0, 1, 2, 3] and sum(dropped.values()) == 0
+
+
 def test_duplicates_are_kept_once():
-    rows, rejected, _ = curate.clean([line(), line()])  # the same batch sent twice
-    assert len(rows) == 1 and rejected == 0
+    rows, dropped = curate.clean([game(), game()])  # the same batch sent twice
+    assert len(rows) == 4 and sum(dropped.values()) == 0
 
 
 def test_broken_lines_are_counted_and_skipped():
-    rows, rejected, _ = curate.clean(['not json', line(zombie_type='dragon'), line(received='x'), line(seq=2)])
-    assert [r['seq'] for r in rows] == [2] and rejected == 3
+    rows, dropped = curate.clean([game(), 'not json', kill(4, 70, 3, zombie='dragon')])
+    assert len(rows) == 4 and dropped['rejected'] == 2
 
 
 def test_test_sessions_are_dropped():
-    test_sid = '10000000-0000-4000-8000-000000000042'
-    rows, rejected, test = curate.clean([line(), line(session_id=test_sid), line(session_id=test_sid, seq=2)])
-    assert [r['session_id'] for r in rows] == [SID] and rejected == 0 and test == 2
+    rows, dropped = curate.clean([game(), game('10000000-0000-4000-8000-000000000042')])
+    assert {r['session_id'] for r in rows} == {SID} and dropped['test'] == 4
+
+
+@pytest.mark.parametrize('lines', [
+    [kill(1, 10, 1), end(2, 60, 1)],                       # rule 1: no start
+    [start(), kill(1, 10, 1), end(3, 60, 1)],              # rule 2: seq jumps from 1 to 3
+    [start(), kill(1, 30, 1), kill(2, 20, 2)],             # rule 2: time runs backwards
+    [start(), kill(1, 10, 40)],                            # rule 3: 40 kills in 10 seconds
+    [start(), end(1, 10, 30)],                             # rule 3: game_ended claims 30 kills in 10 s
+])
+def test_implausible_sessions_are_dropped(lines):
+    rows, dropped = curate.clean(['\n'.join(lines), game('123e4567-e89b-42d3-a456-426614174001')])
+    assert {r['session_id'] for r in rows} == {'123e4567-e89b-42d3-a456-426614174001'}
+    assert dropped['implausible'] == len(lines)
+
+
+def test_a_fast_but_possible_game_is_kept():
+    rows, _ = curate.clean(['\n'.join([start(), kill(1, 100, 100), end(2, 100, 100)])])  # 100 kills in 100 s
+    assert len(rows) == 3
 
 
 def test_nickname_is_dropped():
-    start = {'event': 'game_started', 'ts': '2026-11-19T10:00:00Z', 'session_id': SID, 'seq': 0, 'version': '0.2.0',
-             'nickname': 'Hurja-Kissa-42', 'character': 'knight', 'received': REC}
-    rows, rejected, _ = curate.clean([json.dumps(start)])
-    assert rejected == 0 and 'nickname' not in rows[0]
+    rows, _ = curate.clean([game()])
+    assert 'nickname' not in rows[0]
 
 
 def test_columns_fill_missing_fields_with_none():
-    rows, *_ = curate.clean([line()])
+    rows, _ = curate.clean([game()])
     cols = curate.columns(rows)
-    assert set(cols) == set(curate.COLUMNS) and cols['zombie_type'] == ['normal'] and cols['score'] == [None]
+    assert set(cols) == set(curate.COLUMNS) and cols['zombie_type'][1] == 'normal' and cols['score'][0] is None
     assert cols['ts'][0].tzinfo is not None
 
 
 def test_summary_counts_games_and_puzzles():
-    ended = {'event': 'game_ended', 'ts': '2026-11-19T10:05:00Z', 'session_id': SID, 'seq': 3, 'version': '0.2.0',
-             'result': 'won', 'kills': 40, 'duration_s': 200, 'hearts_left': 2, 'score': 4000, 'received': REC}
-    puzzle = {'event': 'puzzle_answered', 'ts': '2026-11-19T10:03:00Z', 'session_id': SID, 'seq': 2, 'version': '0.2.0',
-              'level': 'easy', 'target': 12, 'parts': [7], 'answer': 5, 'correct': True, 'time_ms': 4000, 'received': REC}
-    rows, *_ = curate.clean([line(), json.dumps(puzzle), json.dumps(ended)])
-    s = curate.summary(rows, today=datetime(2026, 11, 20, tzinfo=UTC))
-    assert s['games'] == {'started': 0, 'started_recent': 0, 'ended': 1, 'won': 1, 'median_duration_s': 200, 'median_kills': 40}
-    assert s['days'] == [{'day': '2026-11-19', 'started': 0, 'ended': 1, 'won': 1}]
+    puzzle = ev('puzzle_answered', 4, 70, level='easy', target=12, parts=[7], answer=5, correct=True, time_ms=4000)
+    rows, _ = curate.clean([game() + '\n' + puzzle])
+    s = curate.summary(rows, players_recent=1, today=datetime(2026, 11, 20, tzinfo=UTC))
+    assert s['games'] == {'started': 1, 'started_recent': 1, 'ended': 1, 'won': 1, 'median_duration_s': 60, 'median_kills': 2}
+    assert s['days'] == [{'day': DAY, 'started': 1, 'ended': 1, 'won': 1}]
     assert s['puzzles']['easy'] == {'answered': 1, 'correct': 1, 'median_ms': 4000}
-    assert s['kills_by_zombie'] == {'normal': 1}
+    assert s['kills_by_zombie'] == {'normal': 1, 'giant': 1} and s['players_recent'] == 1
     json.dumps(s)  # must be plain JSON
 
 
@@ -68,35 +108,24 @@ def test_summary_of_nothing():
     assert s['games']['ended'] == 0 and s['days'] == []
 
 
+def test_days_chart_covers_recent_days_and_totals_all_time():
+    old = start('123e4567-e89b-42d3-a456-426614174001', '2026-09-01')
+    rows, _ = curate.clean([old, start()])
+    s = curate.summary(rows, today=datetime(2026, 11, 20, tzinfo=UTC))
+    assert [d['day'] for d in s['days']] == [DAY]
+    assert s['games']['started'] == 2 and s['games']['started_recent'] == 1
+
+
+def test_nicknames_counts_real_players_once():
+    other = '123e4567-e89b-42d3-a456-426614174009'
+    blobs = [start(), start(), start(other, nick='Ovela-Susi-07'),
+             start('10000000-0000-4000-8000-000000000042', nick='Rohkea-Ilves-01'), 'not json']
+    assert curate.nicknames(['\n'.join(blobs)]) == {'Hurja-Kissa-42', 'Ovela-Susi-07'}
+
+
 def test_parquet_round_trip_keeps_the_summary():
-    import io
-
-    import pyarrow as pa
-    import pyarrow.parquet as pq
-
-    rows, *_ = curate.clean([line(), line(seq=2, zombie_type='giant')])
+    rows, _ = curate.clean([game()])
     out = io.BytesIO()
     pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=curate.arrow_schema(pa)), out)
     back = pq.read_table(io.BytesIO(out.getvalue())).to_pylist()
     assert curate.summary(back)['kills_by_zombie'] == curate.summary(rows)['kills_by_zombie'] == {'normal': 1, 'giant': 1}
-
-
-def started(sid, seq, day, nick='Hurja-Kissa-42'):
-    return json.dumps({'event': 'game_started', 'ts': f'{day}T10:00:00Z', 'session_id': sid, 'seq': seq, 'version': '0.2.0',
-                       'nickname': nick, 'character': 'knight', 'received': f'{day}T10:00:01+00:00'})
-
-
-def test_days_chart_covers_recent_days_and_totals_all_time():
-    old, new = '123e4567-e89b-42d3-a456-426614174001', '123e4567-e89b-42d3-a456-426614174002'
-    rows, *_ = curate.clean([started(old, 0, '2026-09-01'), started(new, 0, '2026-11-19')])
-    s = curate.summary(rows, players_recent=1, today=datetime(2026, 11, 20, tzinfo=UTC))
-    assert [d['day'] for d in s['days']] == ['2026-11-19']
-    assert s['games']['started'] == 2 and s['games']['started_recent'] == 1 and s['players_recent'] == 1
-
-
-def test_nicknames_counts_real_players_once():
-    test_sid = '10000000-0000-4000-8000-000000000042'
-    blobs = [started(SID, 0, '2026-11-19'), started(SID, 5, '2026-11-19'),
-             started('123e4567-e89b-42d3-a456-426614174009', 0, '2026-11-19', nick='Ovela-Susi-07'),
-             started(test_sid, 0, '2026-11-19', nick='Rohkea-Ilves-01'), 'not json']
-    assert curate.nicknames(['\n'.join(blobs)]) == {'Hurja-Kissa-42', 'Ovela-Susi-07'}

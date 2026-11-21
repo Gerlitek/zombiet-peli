@@ -220,20 +220,21 @@ def curate_events(timer: func.TimerRequest) -> None:
     for d in todo:
         if d >= today or done.get(d) == str(curate.RULES_VERSION):
             continue
-        blobs = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with=f'events/dt={d}/')]
-        rows, rejected, test = curate.clean(blobs)
+        blobs = [] if curate.skipped(d) else [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with=f'events/dt={d}/')]
+        rows, dropped = ([], {'rejected': 0, 'test': 0, 'implausible': 0}) if curate.skipped(d) else curate.clean(blobs)
         out = pa.BufferOutputStream()
         pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=schema), out)
         curated.upload_blob(f'events/dt={d}/events.parquet', out.getvalue().to_pybytes(), overwrite=True,
                             metadata={'rules': str(curate.RULES_VERSION)})
-        log.info('curated %s: %d events, %d rejected, %d test', d, len(rows), rejected, test)
+        log.info('curated %s: %d events, dropped %d rejected, %d test, %d implausible', d, len(rows),
+                 dropped['rejected'], dropped['test'], dropped['implausible'])
 
     rows = []
     for name in curated.list_blob_names(name_starts_with='events/dt='):
         rows += pq.read_table(io.BytesIO(curated.download_blob(name).readall())).to_pylist()
     # Distinct players of the recent days, from raw (kept 30 days): only the count is stored.
     since = (datetime.now(UTC) - timedelta(days=curate.RECENT_DAYS)).strftime('%Y-%m-%d')
-    recent = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with='events/dt=') if since <= day(n) < today]
+    recent = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with='events/dt=') if since <= day(n) < today and not curate.skipped(day(n))]
     summary = curate.summary(rows, players_recent=len(curate.nicknames(recent)))
     curated.upload_blob('summary/dashboard.json', json.dumps(summary), overwrite=True)
 

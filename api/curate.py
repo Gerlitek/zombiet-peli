@@ -6,11 +6,13 @@ Rules (docs/architecture.md, chapter 4):
 - the same event sent twice (same session_id and seq) is kept once
 - the nickname is dropped: curated data is kept for good, and the session id is enough for analytics
 - test sessions are dropped (TEST_SESSION): the dashboard shows real games only
+- implausible sessions are dropped (plausible): the game sends events in a known way, a careless script does not
 """
 import json
 import re
 from collections import Counter
 from datetime import UTC, datetime, timedelta
+from itertools import pairwise
 from statistics import median
 
 import rules
@@ -19,11 +21,47 @@ DROPPED = {'nickname'}
 
 # The version of the cleaning rules. Raise it when a rule changes: the nightly run then rebuilds every day
 # whose raw data is still there (30 days) and whose curated file was made with an older version.
-RULES_VERSION = 2
+RULES_VERSION = 3
 
 # Hand-made test sessions use ids like 10000000-0000-4000-8000-000000000042. A real crypto.randomUUID
 # matches this by chance with odds of about 1 in 10^12.
 TEST_SESSION = re.compile(r'^[0-9a-f]{8}-0000-4000-8000-')
+
+# Days left out of the dashboard. Days before LAUNCH_DAY were development tests. SKIP_DAYS is the cleanup tool:
+# if a day ever fills with fake games, add it here and raise RULES_VERSION. The raw data stays as it is.
+LAUNCH_DAY: str | None = None  # e.g. '2026-11-22'
+SKIP_DAYS: set[str] = set()
+
+
+def skipped(day: str) -> bool:
+    return day in SKIP_DAYS or (LAUNCH_DAY is not None and day < LAUNCH_DAY)
+
+
+# A zombie appears every 2.2 - 2.8 s (web/src/scenes/PlayScene.ts), so a real game cannot kill faster than that.
+# The bound is about twice the spawn rate, so area weapons and the gift zombie never trip it.
+KILLS_AT_START = 5
+KILLS_PER_SECOND = 1.0
+
+
+def plausible(events: list[dict]) -> bool:
+    """One session's events of one day. The three rules (docs/architecture.md, chapter 4):
+    1. it starts with game_started (seq 0): a game cannot end, or anything happen, without a start
+    2. seq runs 0, 1, 2, ... without gaps, and time never runs backwards
+    3. kills come no faster than zombies appear
+    A game that crosses midnight UTC or loses a batch is dropped too. That is rare, and the dashboard can lose it."""
+    events = sorted(events, key=lambda e: e['seq'])
+    if events[0]['event'] != 'game_started' or events[0]['seq'] != 0:
+        return False
+    if [e['seq'] for e in events] != list(range(len(events))) or any(a['ts'] > b['ts'] for a, b in pairwise(events)):
+        return False
+    start = events[0]['ts']
+    for e in events:
+        kills = e.get('total_kills') if e['event'] == 'zombie_killed' else e.get('kills') if e['event'] == 'game_ended' else None
+        if kills is not None and kills > KILLS_AT_START + (e['ts'] - start).total_seconds() * KILLS_PER_SECOND:
+            return False
+        if e['event'] == 'game_ended' and e['kills'] > KILLS_AT_START + e['duration_s'] * KILLS_PER_SECOND:
+            return False
+    return True
 
 # Column name -> type. Event fields come from rules._EVENTS, so a new event field needs a column here too
 # (test_every_event_field_has_a_column checks it).
@@ -47,9 +85,10 @@ def _time(text: str) -> datetime:
     return t if t.tzinfo else t.replace(tzinfo=UTC)
 
 
-def clean(blobs: list[str]) -> tuple[list[dict], int, int]:
-    """Takes the text of the raw blobs of one day. Returns (rows sorted by time, rejected lines, test lines)."""
-    rows, seen, rejected, test = [], set(), 0, 0
+def clean(blobs: list[str]) -> tuple[list[dict], Counter]:
+    """Takes the text of the raw blobs of one day. Returns (rows sorted by time, counts of dropped events:
+    rejected = broken lines, test = test sessions, implausible = sessions that break a plausible() rule)."""
+    rows, seen, dropped = [], set(), Counter()
     for text in blobs:
         for line in text.splitlines():
             try:
@@ -58,18 +97,24 @@ def clean(blobs: list[str]) -> tuple[list[dict], int, int]:
                 e = rules.event(raw)
                 ts = _time(e['ts'])
             except (ValueError, KeyError, AttributeError, TypeError):  # rules.Invalid is a ValueError
-                rejected += 1
+                dropped['rejected'] += 1
                 continue
             if TEST_SESSION.match(e['session_id']):
-                test += 1
+                dropped['test'] += 1
                 continue
             key = (e['session_id'], e['seq'])
             if key in seen:
                 continue
             seen.add(key)
             rows.append({**{k: v for k, v in e.items() if k not in DROPPED}, 'ts': ts, 'received': received})
+    sessions: dict[str, list[dict]] = {}
+    for r in rows:
+        sessions.setdefault(r['session_id'], []).append(r)
+    bad = {sid for sid, events in sessions.items() if not plausible(events)}
+    dropped['implausible'] += sum(len(sessions[sid]) for sid in bad)
+    rows = [r for r in rows if r['session_id'] not in bad]
     rows.sort(key=lambda r: (r['received'], r['session_id'], r['seq']))
-    return rows, rejected, test
+    return rows, dropped
 
 
 def nicknames(blobs: list[str]) -> set[str]:
