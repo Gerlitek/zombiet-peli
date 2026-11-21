@@ -19,8 +19,8 @@ const KNIGHT: Look = {
 
 export const HEROES = {
   knight: { name: 'Ritari', info: 'Vahva musta miekka', look: KNIGHT, speed: 70, weapon: 'sword' },
-  mini: { name: 'Minipelaaja', info: 'Nopea ja parantuu', speed: 92, weapon: 'fist', healEvery: 8,
-    look: { ...KNIGHT, s: 0.68, sword: false, plume: false, headCol: P.ice, shirt: P.iceL, skin: P.iceL, eye: P.ink, pace: 11 } },
+  mini: { name: 'Minipelaaja', info: 'Nopea ja parantuu', speed: 120, weapon: 'fist', healEvery: 8,
+    look: { ...KNIGHT, s: 0.68, sword: false, plume: false, headCol: P.ice, shirt: P.iceL, skin: P.iceL, eye: P.ink, pace: 15 } }, // quick little steps: it runs much faster than the knight
 } satisfies Record<string, HeroDef>;
 
 export type HeroId = keyof typeof HEROES;

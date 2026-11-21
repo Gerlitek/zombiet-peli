@@ -55,7 +55,7 @@ Valikosta pääsee näppäimellä H harjoittelemaan ennen oikeaa peliä. Harjoit
 | Hahmo | Kuvaus | Versio |
 |---|---|---|
 | Ritari | Tumma kypärä, valkoiset silmät, vaaleansininen haarniska, musta ritarin miekka. Peruslyönti miekalla, vahinko 2 | 1 |
-| Minipelaaja | Pieni ja nopea erikoishahmo. Vain lyö nyrkillä, vahinko 1. Parantuu: joka kahdeksas tappo antaa sydämen takaisin (oli joka kolmas, testaajien mielestä liian nopea) | 1 |
+| Minipelaaja | Pieni ja nopea erikoishahmo, lähes kaksi kertaa ritarin nopeus (120 vs 70). Vain lyö nyrkillä, vahinko 1. Parantuu: joka kahdeksas tappo antaa sydämen takaisin (oli joka kolmas, testaajien mielestä liian nopea) | 1 |
 
 ## 4. Aseet
 
