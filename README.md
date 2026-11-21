@@ -21,13 +21,16 @@ flowchart LR
     subgraph Azure["Azure, all in Bicep"]
         API["Functions API"] --> Scores[("Score table")]
         API --> Raw[("Raw JSON")]
-        Raw --> Night["Nightly cleanup"]
-        Night --> Cur[("Curated Parquet")]
+        Raw -->|"nightly cleanup"| Cur[("Curated Parquet")]
     end
     GH -->|"SSH"| Game
     GH -->|"OIDC"| API
     Game --> API
     Dash -->|"GET /api/stats"| API
+    %% Invisible spacer: keeps the right edge free for GitHub's zoom buttons
+    Cur ~~~ Space["Curated Parquet"]
+    classDef hidden fill:none,stroke:none,color:transparent
+    class Space hidden
 ```
 
 Peli lähettää pisteet ja tapahtumat API:lle. GitHub Actions julkaisee koodin ja Azure-resurssit OIDC-kirjautumisella. Kaikki Azure-osat (API, tallennus, yöajo) ovat Bicepiä. Tilastosivu lukee yöajon tekemän yhteenvedon osoitteesta `GET /api/stats`.
