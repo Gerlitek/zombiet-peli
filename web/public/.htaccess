@@ -25,6 +25,8 @@ Options -Indexes
   # connect-src lists the game's own API (Azure Function App). Without it the browser blocks every call to the API.
   Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://func-zombies-6254ydxyfcbzi.azurewebsites.net; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
   Header set X-Content-Type-Options "nosniff"
+  # The browser remembers for a year to use only HTTPS here (HTTP already redirects). Only this subdomain.
+  Header set Strict-Transport-Security "max-age=31536000"
   Header set Referrer-Policy "no-referrer"
 </IfModule>
 
