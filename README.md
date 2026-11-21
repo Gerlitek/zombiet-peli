@@ -20,7 +20,7 @@ flowchart TD
         API["&nbsp;Functions API (Python)&nbsp;"]
         Scores[("&nbsp;Table: pisteet&nbsp;")]
         Raw[("&nbsp;Blob: raw JSON&nbsp;")]
-        Night["&nbsp;Yöajo: puhdistus&nbsp;"]
+        Night["&nbsp;Yöajo: siivous&nbsp;"]
         Cur[("&nbsp;Blob: curated Parquet&nbsp;")]
         API --> Scores
         API --> Raw
