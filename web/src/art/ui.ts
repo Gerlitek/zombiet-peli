@@ -26,8 +26,15 @@ export function fit(text: Phaser.GameObjects.Text, maxWidth: number) {
 }
 
 // Text helper. Text is drawn at the real canvas resolution, not at the pixel art resolution.
+// y is the top of the capital letters. Phaser puts the top of the line box at y, and the font has empty room above the capitals,
+// so the real gap is measured and removed. Without this, text in a box sits too low and touches the bottom edge.
 export function label(scene: Phaser.Scene, x: number, y: number, text: string, color: number = P.bone, size = 10, originX = 0.5) {
-  const pad = Math.ceil(size / 4); // extra room above the text for the dots of Ä and Ö. y still means the top of the letters.
-  return scene.add.text(x, y - pad, text, { fontFamily: 'Inter, system-ui, sans-serif', fontStyle: 'bold', fontSize: `${size}px`, color: css(color), padding: { top: pad } })
+  const pad = Math.ceil(size / 4); // extra room above the text for the dots of Ä and Ö
+  const fontFamily = 'Inter, system-ui, sans-serif';
+  const t = scene.add.text(x, y, text, { fontFamily, fontStyle: 'bold', fontSize: `${size}px`, color: css(color), padding: { top: pad } })
     .setResolution(ZOOM).setOrigin(originX, 0).setDepth(10);
+  const ctx = document.createElement('canvas').getContext('2d')!;
+  ctx.font = `bold ${size}px ${fontFamily}`;
+  const capHeight = ctx.measureText('H').actualBoundingBoxAscent;
+  return t.setY(y - pad - Math.max(0, t.getTextMetrics().ascent - capHeight));
 }
