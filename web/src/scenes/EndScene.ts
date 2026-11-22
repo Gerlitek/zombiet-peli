@@ -20,6 +20,7 @@ export class EndScene extends Phaser.Scene {
 
   create(data: EndData) {
     zoomCamera(this);
+    if (this.scale.isFullscreen) this.scale.stopFullscreen(); // the nickname, board and links are easier to use in the page
     this.input.keyboard!.once('keydown-ESC', () => this.scene.start('menu'));
     // The forest background has no frames of its own, so the text gets its own two panels and nothing overlaps.
     this.add.image(0, 0, 'bg-forest').setOrigin(0).setAlpha(0.3);

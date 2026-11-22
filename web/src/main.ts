@@ -41,9 +41,12 @@ function startGame() {
     height: H * ZOOM,
     pixelArt: true,
     backgroundColor: '#0b0e14',
-    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    // fullscreenTarget: the #game element itself goes full screen (otherwise Phaser wraps the canvas in its own div, and the page's CSS and the FIT scaling do not see the screen size).
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, fullscreenTarget: 'game' },
     scene: [BootScene, MenuScene, StoryScene, PracticeScene, PlayScene, WheelScene, PuzzleScene, EndScene],
   });
+  // The page layout changes when full screen starts or ends: measure again after the browser has laid it out.
+  document.addEventListener('fullscreenchange', () => requestAnimationFrame(() => game.scale.refresh()));
   // Development only: lets tests and the browser console reach the running game.
   if (import.meta.env.DEV) Object.assign(window, { game });
 }

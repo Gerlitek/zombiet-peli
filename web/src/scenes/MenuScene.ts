@@ -125,6 +125,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private start(scene: 'play' | 'practice' = 'play') {
+    // Full screen while playing. This runs inside the key press or click, so the browser allows it. If it is refused, the game plays in the page.
+    if (this.scale.fullscreen.available) this.scale.startFullscreen({ navigationUI: 'hide' });
     this.scene.start(scene, { hero: this.hero, level: this.level, nick: nickText(this.nick) });
   }
 }
