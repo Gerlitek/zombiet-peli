@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { css, P } from './palette';
 import { Pen } from './pixels';
-import { W, H, ZOOM } from '../size';
+import { W, H } from '../size';
 
 // The game draws into a Phaser Graphics object through the Pen interface.
 export function penFor(g: Phaser.GameObjects.Graphics): Pen {
@@ -13,9 +13,15 @@ export function penFor(g: Phaser.GameObjects.Graphics): Pen {
   };
 }
 
+// How many canvas pixels one logical pixel is. Changes when the canvas is resized (full screen, window size).
+const zoomOf = (scene: Phaser.Scene) => scene.scale.width / W;
+
 // Every scene works in logical pixels (320 x 240). The camera zooms that up to the real canvas size.
+// Called in every scene's create and again whenever the canvas size changes: texts are then redrawn at the new resolution.
 export function zoomCamera(scene: Phaser.Scene) {
-  scene.cameras.main.setZoom(ZOOM).centerOn(W / 2, H / 2);
+  const zoom = zoomOf(scene);
+  scene.cameras.main.setZoom(zoom).centerOn(W / 2, H / 2);
+  for (const o of scene.children.list) if (o instanceof Phaser.GameObjects.Text) o.setResolution(zoom);
 }
 
 // Shrinks a text so it is never wider than maxWidth. Call after every setText on texts that sit inside a box.
@@ -32,7 +38,7 @@ export function label(scene: Phaser.Scene, x: number, y: number, text: string, c
   const pad = Math.ceil(size / 4); // extra room above the text for the dots of Ä and Ö
   const fontFamily = 'Inter, system-ui, sans-serif';
   const t = scene.add.text(x, y, text, { fontFamily, fontStyle: 'bold', fontSize: `${size}px`, color: css(color), padding: { top: pad } })
-    .setResolution(ZOOM).setOrigin(originX, 0).setDepth(10);
+    .setResolution(zoomOf(scene)).setOrigin(originX, 0).setDepth(10);
   const ctx = document.createElement('canvas').getContext('2d')!;
   ctx.font = `bold ${size}px ${fontFamily}`;
   const capHeight = ctx.measureText('H').actualBoundingBoxAscent;

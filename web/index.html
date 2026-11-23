@@ -52,11 +52,11 @@
     @media (max-width: 560px) { .howto { columns: 1; } }
     .howto b { color: var(--text); }
     #game {
-      width: 100%; aspect-ratio: 4 / 3; background: var(--surface-1);
+      width: 100%; aspect-ratio: 4 / 3; min-height: 0; background: var(--surface-1);
       border: 2px solid var(--border); border-radius: 14px; overflow: hidden;
       box-shadow: 0 0 0 1px rgba(232, 90, 165, 0.25), 0 18px 60px -20px rgba(232, 90, 165, 0.35);
     }
-    /* Full screen while playing: the game fills the screen, the canvas keeps 4:3 and is centred (Phaser FIT). */
+    /* Full screen while playing: the game fills the screen, the canvas keeps 4:3 and is centred (fitCanvas in main.ts). */
     #game:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; border: 0; border-radius: 0; box-shadow: none; background: #0b0e14; }
     #game canvas { display: block; image-rendering: pixelated; }
     /* Privacy note: closed by default, small and quiet, but one click away. */
