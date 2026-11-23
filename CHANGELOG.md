@@ -2,6 +2,11 @@
 
 Julkaisut ovat GitHubissa: https://github.com/Gerlitek/zombiet-peli/releases
 
+## 1.3.0 (2026-11-23)
+
+- Lyhyempi peli: 25 tappoa VIP-aitioon, 45 tappoa läpäisyyn.
+- Uusi sivu `/tietoa/`: esittely pelistä, sen synnystä, onnenpyörästä ja hajotelmista kuvakaappauksin.
+
 ## 1.2.0 (2026-11-23)
 
 - Peli on terävä koko näytön tilassa. Pelin kankaassa on täsmälleen yhtä monta pikseliä kuin se peittää näytöltä, joten selain ei venytä eikä pienennä sitä.
