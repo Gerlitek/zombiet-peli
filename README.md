@@ -45,6 +45,7 @@ Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille
 
 - `docs/game-design.md`: pelisuunnitelma
 - [Visuaalinen konsepti](https://zombit.gerlitek.fi/konsepti/): hahmojen ja ilmeen suunnittelu, liikkuvat kuvat (lähde `web/public/konsepti/`)
+- [Tietoa pelistä](https://zombit.gerlitek.fi/tietoa/): selite pelistä ja hajotelmista, jaettavaksi esim. koulun opettajille (lähde `web/public/tietoa/`)
 - `docs/architecture.md`: arkkitehtuuri, kustannusrajat ja päätökset
 - `docs/tarina-ja-ulkoasu.md`: lapsen alkuperäiset ideat
 - `CHANGELOG.md`: julkaisujen muutosloki
@@ -53,7 +54,7 @@ Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille
 
 | Kansio | Sisältö |
 |---|---|
-| `web/` | Peli ja tilastosivu: Vite, TypeScript, Phaser 4, Chart.js |
+| `web/` | Peli, tilastosivu ja tietoa-sivu: Vite, TypeScript, Phaser 4, Chart.js |
 | `api/` | API: Azure Functions (Python), pistetaulukko, telemetria ja yöllinen curated-ajo |
 | `infra/` | Azure-resurssit Bicepillä |
 | `azure.yaml` | azd: Azure-puolen provisiointi ja deploy |

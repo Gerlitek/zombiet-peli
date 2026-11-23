@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ylläri-Zombit: tietoa pelistä</title>
+<meta name="description" content="Ylläri-Zombit on pikseligrafiikkapeli, jonka idean, tarinan ja hahmot on suunnitellut Maujazz." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://zombit.gerlitek.fi/tietoa/" />
+<meta property="og:title" content="Ylläri-Zombit: tietoa pelistä" />
+<meta property="og:description" content="Pikseligrafiikkapeli, jonka idean, tarinan ja hahmot on suunnitellut Maujazz." />
+<meta property="og:image" content="https://zombit.gerlitek.fi/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Pikseliritari ja kaksi zombia, otsikkona Ylläri-Zombit" />
+<meta property="og:locale" content="fi_FI" />
+<style>
+  :root {
+    --bg: #0F1115; --surface-1: #151923; --surface-2: #1B2030; --border: #252D3F;
+    --text: #E7E8EA; --text-dim: #A9AFBA; --accent: #7CC8F2;
+    --brand: #E85AA5; /* gerlitek.fi:n pinkki: vain kehys ja tekijätiedot */
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text); font-family: Inter, system-ui, sans-serif; line-height: 1.6;
+    background:
+      radial-gradient(60% 45% at 0% 0%, rgba(232, 90, 165, 0.14), transparent 70%),
+      radial-gradient(55% 45% at 100% 100%, rgba(232, 90, 165, 0.11), transparent 70%),
+      var(--bg);
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, transparent, rgba(232, 90, 165, 0.45) 30%, rgba(232, 90, 165, 0.45) 70%, transparent) 1;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0 0 6px; font-size: 1.9rem; color: var(--accent); }
+  h2 { margin: 40px 0 8px; font-size: 1.2rem; }
+  p { margin: 0 0 14px; color: var(--text-dim); }
+  .lead { font-size: 1.05rem; color: var(--text); }
+  a { color: var(--accent); }
+  code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 0.88em; color: var(--text); }
+  .play { display: inline-block; margin: 6px 0 0; padding: 8px 16px; border: 1px solid var(--accent); border-radius: 8px; text-decoration: none; font-weight: 600; }
+  .play:hover { background: rgba(124, 200, 242, 0.12); }
+  /* Touch-only devices (same test as the game): point to a computer instead of the play button. */
+  .pc-note { display: none; margin: 6px 0 0; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-1); color: var(--text); }
+  @media (hover: none) and (pointer: coarse) { .play { display: none; } .pc-note { display: block; } }
+  figure { margin: 18px 0 0; }
+  figure img { display: block; width: 100%; height: auto; background: #0B0E14; border: 2px solid var(--border); border-radius: 14px; }
+  figcaption { margin-top: 6px; font-size: 0.8rem; color: rgba(169, 175, 186, 0.7); }
+  footer { margin-top: 56px; padding-top: 10px; border-top: 1px solid rgba(37, 45, 63, 0.5); font-size: 0.75rem; color: rgba(169, 175, 186, 0.6); }
+  footer a { color: rgba(232, 90, 165, 0.75); text-decoration: none; }
+  footer a:hover { color: var(--brand); text-decoration: underline; }
+  /* The source code link is grey, like on the game page, so it stays in the background. */
+  footer a.code { color: rgba(169, 175, 186, 0.5); }
+  footer a.code:hover { color: var(--text-dim); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ylläri-Zombit</h1>
+  <p class="lead">Pikseligrafiikkapeli yöstä, sateesta ja zombeista. Pelin idean, tarinan ja hahmot on suunnitellut Maujazz.</p>
+
+  <h2>Peli lyhyesti</h2>
+  <p>Ritari kulkee yön metsässä, ja sateen pisaroista nousee zombeja. Peli pelataan tietokoneella näppäimistöllä ja hiirellä, ja yksi kierros kestää muutaman minuutin. Kun tarpeeksi zombeja on kaatunut, salama vie pelaajan VIP-aitioon, jossa pelin loppuosa pelataan.</p>
+  <figure>
+    <img src="metsa.png" width="1349" height="1012" alt="Pikseliritari myrskyisessä metsässä, ympärillä zombeja" />
+    <figcaption>Kuvakaappaus: yön metsä.</figcaption>
+  </figure>
+
+  <h2>Onnenpyörä</h2>
+  <p>VIP-aitiossa onnenpyörä antaa uuden aseen. Harvinaisin voitto on Rudi-Karri-robotti, joka on nimetty kahden kissan mukaan.</p>
+  <figure>
+    <img src="pyora.png" width="1349" height="1012" alt="Onnenpyörä, jonka vieressä lukee aseet laser-miekka, siniset jäähanskat ja puristushanskat" />
+    <figcaption>Kuvakaappaus: VIP-aition onnenpyörä.</figcaption>
+  </figure>
+
+  <h2>Hajotelmat</h2>
+  <p>VIP-aitiossa on lukkokivi, jossa on lasku, josta puuttuu osa. Pelaaja kävelee oikeaan kolmesta pisarasta. Kolme oikeaa avaa kiven, ja sen takana on Salamaluola aarrearkkuineen. Kivi on vapaaehtoinen, eikä väärä vastaus vie sydäntä. Vaikeustason valitsee pelaaja: helpoimmillaan luvut ovat alle 20, vaikeimmillaan <code>1000 = 640 + 250 + ?</code>.</p>
+  <figure>
+    <img src="hajotelma.png" width="1349" height="1012" alt="Lukkokivi, jossa lukee 6 = 3 + ?, ja sen alla kolme pisaraa luvuilla 3, 4 ja 13" />
+    <figcaption>Kuvakaappaus: lukkokivi ja vastauspisarat VIP-aitiossa.</figcaption>
+  </figure>
+  <p style="margin-top:14px">Hajotelmat ovat vanhemman ehdotus, ja Maujazz hyväksyi ne osaksi peliä.</p>
+
+  <a class="play" style="margin-top:28px" href="../">Avaa peli</a>
+  <p class="pc-note">Peli pelataan tietokoneella. Avaa tämä sivu tietokoneella, niin pääset pelaamaan.</p>
+
+  <footer>
+    Toteutus ja julkaisu: <a href="https://gerlitek.fi">Gerlitek Oy</a> · <a class="code" href="https://github.com/Gerlitek/zombiet-peli">Lähdekoodi</a>
+  </footer>
+</main>
+</body>
+</html>

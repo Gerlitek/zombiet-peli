@@ -6,7 +6,7 @@ Visuaalinen konsepti on tiedostossa `web/public/konsepti/index.html`. Se on julk
 
 ## 1. Idea yhdellä lauseella
 
-Yöllä mädäntyneessä luonnossa sade synnyttää zombeja. Ritari taistelee niitä vastaan, pääsee VIP-aitioon 30 tapon jälkeen ja läpäisee pelin 50 tapolla (kehitysvaiheessa 20 ja 40).
+Yöllä mädäntyneessä luonnossa sade synnyttää zombeja. Ritari taistelee niitä vastaan, pääsee VIP-aitioon 25 tapon jälkeen ja läpäisee pelin 45 tapolla (kehitysvaiheessa 20 ja 40).
 
 ## 2. Yksi pelikerta
 
@@ -16,12 +16,12 @@ Pelikerta kestää 2 - 4 minuuttia. Lyhyt kierros sopii lapselle, ja onnenpyör�
 |---|---|
 | Aloitus | Nimimerkki arvotaan (ks. luku 9), hahmon valinta (Ritari tai Minipelaaja) ja hajotelmien vaikeustaso |
 | Tapot ennen VIP-rajaa | Mätä metsä. Zombeja nousee sateesta |
-| Tappo 30 (kehityksessä 20) | VIP-kyltti muuttuu punaisesta vihreäksi, salama iskee ja pelaaja siirtyy VIP-aitioon. VIP-pyöräytys |
+| Tappo 25 (kehityksessä 20) | VIP-kyltti muuttuu punaisesta vihreäksi, salama iskee ja pelaaja siirtyy VIP-aitioon. VIP-pyöräytys |
 | VIP-tapot | VIP-aitio. Zombit ovat supervahvoja. Ensimmäisen VIP-tapon jälkeen aitioon ilmestyy lukkokivi, jonka yllä on nuoli ja alla teksti AARREKIVI (2026-11-17, aiemmin HAJOTELMA: houkuttelevampi, koska kiven takana on aarre). Sen hajotelmat ratkaisemalla pääsee Salamaluolaan (vapaaehtoinen, ks. luku 8) |
-| Viimeinen tappo (50, kehityksessä 40) | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
+| Viimeinen tappo (45, kehityksessä 40) | Viimeinen zombi on aina Pimeä lordi tai Jätti. Peli läpäisty |
 | Loppuruutu | Pisteet, aika, saavutukset, pistetaulukko, valmis viesti |
 
-Tapporajat ovat yhdessä tiedostossa (`web/src/data/rules.ts`). Kytkin `RELEASE` valitsee rajat: kehitysvaiheessa VIP-aitio 20 tapolla ja läpäisy 40 tapolla, julkaisussa 30 ja 50. Lapsen alkuperäinen idea oli 5 ja 10. Hän toivoi myöhemmin paljon vaikeampaa pääsyä aitioon, ja 10 tuntui aikuisestakin nopealta, joten julkaisuraja oli ensin 50 (2026-11-17). Omistaja laski sen 40:een (2026-11-21), koska 50 tapon metsä tuntui liian pitkältä, ja vielä 30:een ja läpäisyn 50:een (2026-11-22), koska tappoja piti tehdä liikaa. Kehitysvaiheen pienempi raja on testaamista varten. Julkaisussa kytkin käännetään arvoon `true` ja muutos viedään palvelimelle CI:n kautta.
+Tapporajat ovat yhdessä tiedostossa (`web/src/data/rules.ts`). Kytkin `RELEASE` valitsee rajat: kehitysvaiheessa VIP-aitio 20 tapolla ja läpäisy 40 tapolla, julkaisussa 25 ja 45. Lapsen alkuperäinen idea oli 5 ja 10. Hän toivoi myöhemmin paljon vaikeampaa pääsyä aitioon, ja 10 tuntui aikuisestakin nopealta, joten julkaisuraja oli ensin 50 (2026-11-17). Omistaja laski sen 40:een (2026-11-21), koska 50 tapon metsä tuntui liian pitkältä, ja vielä 30:een ja läpäisyn 50:een (2026-11-22), koska tappoja piti tehdä liikaa, ja sitten 25:een ja 45:een (2026-11-23). Kehitysvaiheen pienempi raja on testaamista varten. Julkaisussa kytkin käännetään arvoon `true` ja muutos viedään palvelimelle CI:n kautta.
 
 Häviö: sydämet loppuvat. Loppuruutu näyttää tapot ja tarjoaa uuden pelin.
 
@@ -252,7 +252,7 @@ Versio 2. Sade, ukkonen ja iskuäänet tuotetaan Web Audio API:lla ilman äänit
 |---|---|---|
 | Random, hiekka-, tavallinen, jätti-, Darth Vader -zombi, kaikenlaiset | Luku 5 | 1 |
 | Päivityksissä lisää zombeja | Zombi on rivi dataa | 2 + |
-| VIP-aitio 5 tapon jälkeen, läpi 10 tapolla | Luku 2. Julkaisussa 30 ja 50, kehityksessä 20 ja 40: lapsi halusi aitioon pääsyn vaativan paljon enemmän tappoja | 1 |
+| VIP-aitio 5 tapon jälkeen, läpi 10 tapolla | Luku 2. Julkaisussa 25 ja 45, kehityksessä 20 ja 40: lapsi halusi aitioon pääsyn vaativan paljon enemmän tappoja | 1 |
 | Onnenpyörä, paremmat aseet VIP:ssä | Luku 4 | 1 |
 | Taitoja pyörästä tulevaisuudessa | Luku 4 | 2 |
 | Galaksi-pyssy ja musta aukko, kissarobotti | Luku 4 | 2 |
