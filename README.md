@@ -47,6 +47,7 @@ Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille
 - [Visuaalinen konsepti](https://zombit.gerlitek.fi/konsepti/): hahmojen ja ilmeen suunnittelu, liikkuvat kuvat (lähde `web/public/konsepti/`)
 - `docs/architecture.md`: arkkitehtuuri, kustannusrajat ja päätökset
 - `docs/tarina-ja-ulkoasu.md`: lapsen alkuperäiset ideat
+- `CHANGELOG.md`: julkaisujen muutosloki
 
 ## Rakenne
 
