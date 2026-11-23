@@ -259,7 +259,8 @@ export class PlayScene extends Phaser.Scene implements Combat {
   hit(z: Zombie, damage: number, weapon: WeaponId) {
     // Ignore zombies that are no longer in the game. Without this, one hammer blow that opens the VIP box
     // would go on to hit the forest zombies that were just cleared away, and count them as kills.
-    if (z.hp <= 0 || !this.zombies.includes(z)) return;
+    // After the end nothing counts either: a blow that hits two zombies must not take the kills over WIN_AT.
+    if (this.ended || z.hp <= 0 || !this.zombies.includes(z)) return;
     if (WEAPONS[weapon].kind === 'strike') this.facing = { left: z.x < this.px, back: false }; // turn toward the zombie that is hit
     z.hp -= this.clock < z.squashed ? 999 : damage;
     z.flash = this.clock + 0.08;

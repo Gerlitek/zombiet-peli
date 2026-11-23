@@ -16,6 +16,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
 export interface Summary {
   generated: string;
   recent_days: number;
+  season?: number; // game results, zombies, weapons, achievements and puzzles count this season only; activity counts all games
   days: { day: string; started: number; ended: number; won: number }[]; // the recent days only
   players_recent: number | null; // distinct nicknames in the recent days
   games: { started: number; started_recent: number; ended: number; won: number; median_duration_s: number | null; median_kills: number | null };
@@ -163,7 +164,8 @@ function render(s: Summary) {
   puzzles(s);
 
   const footer = $('footer');
-  footer.textContent = `Päivitetty ${new Date(s.generated).toLocaleString('fi-FI', { dateStyle: 'short', timeStyle: 'short' })}.`;
+  footer.textContent = `Päivitetty ${new Date(s.generated).toLocaleString('fi-FI', { dateStyle: 'short', timeStyle: 'short' })}.`
+    + (s.season ? ` Pelikertojen määrät ovat kaikista peleistä. Muut luvut ovat kaudelta ${s.season} (pelin versio ${s.season}.0.0 ja uudemmat).` : '');
   for (const sel of ['.tiles', '.grid', 'footer']) $(sel).hidden = false;
   $('.status').hidden = true;
 }

@@ -300,7 +300,7 @@ Mestari-tasolla `parts` on ensimmäinen kerätty luku ja `answer` toinen.
 - **Versio 1**: kaikki, missä yllä lukee 1. Toimii kokonaan selaimessa ilman API:a.
 - **Versio 1 verkossa**: pistetaulukko, viestit ja telemetria API:n kautta (arkkitehtuurin vaiheet 5 ja 6).
 - **Versio 2**: ammus- ja apuriaseet, taidot, porukkakoodi, kosketusohjaus, äänet, salaman vaikutus peliin.
-- **Idea: kaudet** (2026-11-19). Pistetaulukko alkaa kauden vaihtuessa tyhjästä, ja vanhat tulokset jäävät talteen. Silloin vanhat huipputulokset eivät tuki listaa vuosiksi, ja samannimisten pelaajien törmäys pysyy epätodennäköisenä. Toteutus on valmiina: taulun `scores` PartitionKey on pelin versio (`v1`), joten uusi kausi on uusi avain. Kauden pituus kysytään lapselta (luku 14).
+- **Kaudet** (idea 2026-11-19, kausi 2 alkoi 2026-11-23 versiossa 2.0.0, kun tapporajat laskivat 45:een eikä kauden 1 kärkeä voinut enää ohittaa). Pistetaulukko alkaa kauden vaihtuessa tyhjästä, ja vanhat tulokset jäävät talteen. Silloin vanhat huipputulokset eivät tuki listaa vuosiksi, ja samannimisten pelaajien törmäys pysyy epätodennäköisenä. Toteutus: taulun `scores` PartitionKey on kausi (`v2`), joten uusi kausi on uusi avain. Kausi on yksi luku (`SEASON`, `api/rules.py`) ja sama kuin pelin version ensimmäinen numero (`web/package.json`). Jos tapporajat muuttuvat, kausi vaihdetaan samassa muutoksessa. Kauden pituus kysytään lapselta (luku 14).
 
 ### Selkeyden periaatteet (pelitestistä 2026-11-16)
 

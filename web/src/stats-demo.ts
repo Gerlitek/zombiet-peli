@@ -4,6 +4,7 @@ import type { Summary } from './stats';
 export const DEMO: Summary = {
   generated: '2026-11-21T02:30:12+00:00',
   recent_days: 30,
+  season: 2,
   players_recent: 23,
   days: [
     { day: '2026-11-16', started: 4, ended: 3, won: 1 }, { day: '2026-11-17', started: 9, ended: 8, won: 3 },

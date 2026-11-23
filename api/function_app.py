@@ -30,7 +30,7 @@ REQUEST_CAP = int(os.environ.get('REQUEST_CAP', '50000'))  # requests per day, v
 # Saving on every request would double the storage calls; a crash or restart must not reset the cap.
 REQUEST_SAVE_EVERY = 100
 SESSION_BATCHES_PER_MINUTE = 10
-GAME_VERSION = 'v1'  # partition key of the score table
+GAME_VERSION = f'v{rules.SEASON}'  # partition key of the score table: a new season starts from an empty table, the old rows stay
 
 _account = os.environ.get('STORAGE_ACCOUNT_NAME', '')
 # The user-assigned identity of the Function App. Locally DefaultAzureCredential falls back to `az login`.

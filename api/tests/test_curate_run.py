@@ -27,7 +27,7 @@ class Container:
 
 def event(sid, seq):
     return json.dumps({'event': 'game_started', 'ts': '2026-11-19T10:00:00Z', 'session_id': sid, 'seq': seq,
-                       'version': '0.2.0', 'nickname': 'Hurja-Kissa-42', 'character': 'knight', 'received': '2026-11-19T10:00:01+00:00'})
+                       'version': '2.0.0', 'nickname': 'Hurja-Kissa-42', 'character': 'knight', 'received': '2026-11-19T10:00:01+00:00'})
 
 
 def run(monkeypatch, curated_blobs, launch_day=None):

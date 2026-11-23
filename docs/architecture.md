@@ -85,7 +85,7 @@ Azure Functions, Python, v2-ohjelmointimalli (dekoraattorit, yksi `function_app.
 
 ### Validointi
 
-Jokainen kenttä tarkistetaan sallittujen arvojen listaa vasten (tapahtuman nimi, zombityyppi, ase, viestin tunniste, nimimerkin indeksit). Vapaata tekstiä ei ole yhdessäkään kentässä. Tuntemattomat kentät hylätään. Tulokselle tehdään uskottavuustarkistus: tapot 0 - 10, pisteet enintään kaavan maksimi, kesto vähintään 20 s läpäisylle.
+Jokainen kenttä tarkistetaan sallittujen arvojen listaa vasten (tapahtuman nimi, zombityyppi, ase, viestin tunniste, nimimerkin indeksit). Vapaata tekstiä ei ole yhdessäkään kentässä. Tuntemattomat kentät hylätään. Tulokselle tehdään uskottavuustarkistus: tapot 0 - 45 (läpäisyraja, `WIN_KILLS`), pisteet enintään kaavan maksimi, kesto vähintään 20 s läpäisylle.
 
 Hyväksytty riski: tuloksen voi silti väärentää, koska peli pyörii selaimessa. Panos on leikkipistetaulu, joten tarkistus riittää. Rivin voi poistaa käsin.
 
@@ -111,7 +111,7 @@ Function App käyttää tallennustiliä hallitulla identiteetillä (managed iden
 
 | Taulu | PartitionKey | RowKey | Kentät |
 |---|---|---|---|
-| `scores` | pelin versio, esim. `v1` | `(999999 - pisteet)` nollilla täytettynä + `_` + session_id | nick (indeksit), score, kills, duration_s, hearts, character, created |
+| `scores` | kausi, esim. `v2` (`SEASON`, `api/rules.py`) | `(999999 - pisteet)` nollilla täytettynä + `_` + session_id | nick (indeksit), score, kills, duration_s, hearts, character, created |
 | `messages` | `all` | käänteinen aikaleima + `_` + session_id | nick, message_id |
 | `limits` | `daily` (kirjoitukset), `requests` (kaikki pyynnöt), `session` (yksi tulos per istunto) | päivämäärä tai session_id | count |
 
@@ -128,7 +128,7 @@ curated/summary/dashboard.json                                  dashboardin valm
 - **raw**: yksi blob per erä, rivi per tapahtuma. API lisää palvelimen aikaleiman. Mitään ei muokata, joten kerroksen voi aina ajaa uudelleen.
 - **curated**: ajastettu funktio `curate_events` (`api/function_app.py`, joka yö 02.30 UTC) käsittelee jokaisen menneen päivän, jolta curated-tiedosto puuttuu. Pysäytyksen jälkeen se käsittelee väliin jääneet päivät, ja uusinta ei muuta mitään. Logiikka on tiedostossa `api/curate.py` testeineen: jokainen rivi validoidaan uudelleen (`rules.event`), kaksoiskappaleet poistetaan avaimella `session_id + seq`, tyypit pakotetaan ja tulos kirjoitetaan yhdeksi leveäksi Parquet-tauluksi päivässä (`pyarrow`, tapahtumatyypille kuulumattomat sarakkeet tyhjiä). Nimimerkki jätetään pois, koska curated säilyy pysyvästi. Testi-istunnot (tunniste muotoa `xxxxxxxx-0000-4000-8000-…`) jätetään pois, jotta dashboard näyttää vain oikeat pelit. Uskottavuussäännöt (`plausible`) hylkäävät koko istunnon, jos 1) se ei ala `game_started`-tapahtumalla, 2) järjestysnumerot hyppivät tai aika kulkee taaksepäin tai 3) tappoja tulee nopeammin kuin zombeja ilmestyy (raja noin kaksinkertainen ilmestymistahtiin nähden). Säännöt pysäyttävät huolimattoman väärennöksen, eivät huolellista: peli pyörii selaimessa, joten täyttä estoa ei ole. Siivous: `SKIP_DAYS` ja `LAUNCH_DAY` tyhjentävät päivän tilastoista, kun versio nostetaan; raw-data säilyy ennallaan. Sääntöjen versio (`RULES_VERSION`) tallennetaan Parquet-tiedoston metatietoihin. Kun sääntö muuttuu, versio nostetaan, ja yöajo tekee uudelleen päivät, joiden raw-data on vielä tallessa.
 - **Muisti**: `pyarrow` tuodaan vain ajastetun funktion sisällä, joten HTTP-pyynnöt eivät lataa sitä. Moduuli jää prosessiin, kunnes tyhjä instanssi sammuu. Jos muisti lähestyy 512 Mt:tä, HTTP-rinnakkaisuus 16 → 8 (luku 10).
-- **dashboard.json**: lasketaan joka yö. Pelikerrat yhteensä koko ajalta, päiväkaavio ja pelikerrat viimeiseltä 30 päivältä. Eri pelinimien määrä 30 päivältä lasketaan raw-kerroksesta, jossa pelinimet ovat vain 30 vrk, ja vain luku tallennetaan. Luku on suuntaa antava: uuden nimen arpominen tai toinen laite näkyy uutena pelaajana. Muut luvut kaikista curated-päivistä: pelikerrat ja läpäisyt päivittäin, kestojen ja tappojen mediaani, hahmot, tapot ja osumat zombityypeittäin, pyörän aseet, saavutukset, hajotelmien oikeat vastaukset ja ratkaisuajan mediaani tasoittain.
+- **dashboard.json**: lasketaan joka yö. Pelikerrat yhteensä koko ajalta, päiväkaavio ja pelikerrat viimeiseltä 30 päivältä. Eri pelinimien määrä 30 päivältä lasketaan raw-kerroksesta, jossa pelinimet ovat vain 30 vrk, ja vain luku tallennetaan. Luku on suuntaa antava: uuden nimen arpominen tai toinen laite näkyy uutena pelaajana. Muut luvut vain nykyiseltä kaudelta (tapahtuman `version`-kentän ensimmäinen numero on kausi), koska tapporajat muuttuivat kausien välillä eivätkä läpäisyprosentit ja mediaanit ole vertailukelpoisia. Parquet-tiedostoissa ovat edelleen kaikki kaudet. Kauden luvut: kestojen ja tappojen mediaani, hahmot, tapot ja osumat zombityypeittäin, pyörän aseet, saavutukset, hajotelmien oikeat vastaukset ja ratkaisuajan mediaani tasoittain.
 - Osiointi `dt=YYYY-MM-DD` on Hive-tyylinen, joten samat tiedostot voi myöhemmin lukea DuckDB:llä, Sparkilla tai Fabricilla ilman muutoksia.
 
 Elinkaarisääntö poistaa raw-kerroksen 30 vuorokauden jälkeen. Curated säilyy. Se ei sisällä henkilötietoja.

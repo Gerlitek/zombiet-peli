@@ -1,5 +1,6 @@
 // Game events for the data pipeline. Schema: docs/game-design.md, chapter 12.
 // Events are batched and sent to the API (systems/api.ts). In dev they are also shown in the console.
+import { version } from '../../package.json';
 import { sendEvents } from './api';
 
 // Privacy: only a random session id and a generated nickname. No personal data.
@@ -21,7 +22,7 @@ export function startSession() {
 }
 
 export function track(event: string, fields: Record<string, string | number | boolean | number[]> = {}) {
-  buffer.push({ event, ts: new Date().toISOString(), session_id: sessionId, seq: seq++, version: '0.2.0', ...fields });
+  buffer.push({ event, ts: new Date().toISOString(), session_id: sessionId, seq: seq++, version, ...fields });
 }
 
 // Called at natural break points (VIP entry, game end, leaving the page). Sends and forgets: the game never waits.

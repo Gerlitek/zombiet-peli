@@ -2,6 +2,14 @@
 
 Julkaisut ovat GitHubissa: https://github.com/Gerlitek/zombiet-peli/releases
 
+## 2.0.0 (2026-11-23)
+
+- Kausi 2: pistetaulukko alkaa tyhjästä, koska tapporajat ovat laskeneet (80 → 50 → 45) eikä vanhoja kärkituloksia voinut enää ohittaa. Kauden 1 tulokset ovat tallessa.
+- Palvelin hyväksyy tulokseen enintään 45 tappoa.
+- Tilastosivu: pelikertojen määrät kaikista peleistä, muut luvut vain kaudelta 2.
+- Tapahtumissa on pelin oikea versionumero (aiemmin aina 0.2.0). Versionumeron ensimmäinen luku on kausi.
+- Korjaus: pelin päättävä isku ei enää voi kirjata tappoja yli läpäisyrajan.
+
 ## 1.3.0 (2026-11-23)
 
 - Lyhyempi peli: 25 tappoa VIP-aitioon, 45 tappoa läpäisyyn.

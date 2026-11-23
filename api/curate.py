@@ -143,16 +143,21 @@ RECENT_DAYS = 30  # the daily chart and the player count cover this many days, e
 
 
 def summary(rows: list[dict], players_recent: int | None = None, today: datetime | None = None) -> dict:
-    """The small JSON the dashboard reads. Rows of all curated days, and the distinct nicknames of the recent days."""
+    """The small JSON the dashboard reads. Rows of all curated days, and the distinct nicknames of the recent days.
+    The event's version is the game version (2.0.0), and its first number is the season."""
     since = ((today or datetime.now(UTC)) - timedelta(days=RECENT_DAYS)).strftime('%Y-%m-%d')
-    ended = [r for r in rows if r['event'] == 'game_ended']
-    puzzles = [r for r in rows if r['event'] == 'puzzle_answered']
     days: dict[str, Counter] = {}
     for r in rows:
         if r['event'] in ('game_started', 'game_ended'):
             day = days.setdefault(r['received'].strftime('%Y-%m-%d'), Counter())
             day['started' if r['event'] == 'game_started' else 'ended'] += 1
             day['won'] += r['event'] == 'game_ended' and r['result'] == 'won'
+
+    # Activity above counts every game. Everything below counts the current season only: the kill limits
+    # changed between seasons, so win rates and medians of different seasons do not belong in one number.
+    rows = [r for r in rows if r['version'].split('.')[0] == str(rules.SEASON)]
+    ended = [r for r in rows if r['event'] == 'game_ended']
+    puzzles = [r for r in rows if r['event'] == 'puzzle_answered']
 
     def count(event: str, field: str) -> dict:
         return dict(Counter(r[field] for r in rows if r['event'] == event).most_common())
@@ -165,6 +170,7 @@ def summary(rows: list[dict], players_recent: int | None = None, today: datetime
     return {
         'generated': datetime.now(UTC).isoformat(timespec='seconds'),
         'recent_days': RECENT_DAYS,
+        'season': rules.SEASON,
         'days': [{'day': d, 'started': c['started'], 'ended': c['ended'], 'won': c['won']} for d, c in sorted(days.items()) if d >= since],
         'players_recent': players_recent,
         'games': {'started': sum(c['started'] for c in days.values()),

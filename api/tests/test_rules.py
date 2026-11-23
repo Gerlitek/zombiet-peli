@@ -63,6 +63,7 @@ def test_valid_score_passes():
 
 @pytest.mark.parametrize('bad', [
     result(score=99999),                 # over the maximum
+    result(score=4600, kills=46),        # more kills than the game has
     result(score=5000, kills=10),        # more than the formula allows
     result(won=True, duration_s=5),      # won too fast
     result(nick=[99, 0, 1]),             # word index out of range

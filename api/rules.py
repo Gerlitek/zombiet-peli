@@ -19,7 +19,13 @@ MAX_PUZZLE = 1000  # the hard level goes up to 1000 (web/src/logic/puzzle.ts)
 NICK_SIZES = (12, 12, 99)  # adjectives, animals, number: the word lists are on the front
 
 # Kills, score and hearts are bounded by the game rules (web/src/data/rules.ts, logic/score.ts).
-MAX_KILLS = 100  # an upper bound with room: the released game needs 50 kills to win
+# The season of the score table and the dashboard. It is also the major version of the game (web/package.json):
+# when a rule change makes old results incomparable (for example the kill limits), raise both and start a new season.
+SEASON = 2
+WIN_KILLS = 45  # the kills needed to win (WIN_AT in web/src/data/rules.ts): a result of this season cannot have more
+# The bound of the events stays wide: curate.py validates old raw lines again with these rules,
+# and season 1 had games of 80 kills. A tighter bound would drop them when a day is rebuilt.
+MAX_KILLS = 100
 MAX_SCORE = MAX_KILLS * 100 + 5 * 50 + 300 + 500 + 200
 MIN_WIN_SECONDS = 20
 
@@ -129,7 +135,7 @@ def score(body):
     if not (isinstance(body, dict) and set(body) == fields):
         raise Invalid('unknown or missing fields')
     out = {'session_id': session_id(body['session_id']), 'nick': nick(body['nick']),
-           'score': _int(body['score'], 0, MAX_SCORE), 'kills': _int(body['kills'], 0, MAX_KILLS),
+           'score': _int(body['score'], 0, MAX_SCORE), 'kills': _int(body['kills'], 0, WIN_KILLS),
            'duration_s': _int(body['duration_s'], 0, 7200), 'hearts': _int(body['hearts'], 0, 5),
            'character': _one_of(body['character'], HEROES), 'won': _bool(body['won'])}
     if out['score'] > out['kills'] * 100 + out['hearts'] * 50 + 300 + 500 + 200:

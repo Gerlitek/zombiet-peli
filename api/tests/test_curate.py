@@ -16,7 +16,7 @@ DAY = '2026-11-19'
 def ev(event, seq, second=0, sid=SID, day=DAY, **fields):
     """One raw line: an event `second` seconds after 10:00 on `day`."""
     base = {'event': event, 'ts': f'{day}T10:{second // 60:02d}:{second % 60:02d}Z', 'session_id': sid, 'seq': seq,
-            'version': '0.2.0', 'received': f'{day}T10:30:00+00:00'}
+            'version': '2.0.0', 'received': f'{day}T10:30:00+00:00'}
     return json.dumps({**base, **fields})
 
 
@@ -101,6 +101,15 @@ def test_summary_counts_games_and_puzzles():
     assert s['puzzles']['easy'] == {'answered': 1, 'correct': 1, 'median_ms': 4000}
     assert s['kills_by_zombie'] == {'normal': 1, 'giant': 1} and s['players_recent'] == 1
     json.dumps(s)  # must be plain JSON
+
+
+def test_an_older_season_counts_as_activity_but_not_in_the_results():
+    old = game('123e4567-e89b-42d3-a456-426614174001').replace('"version": "2.0.0"', '"version": "0.2.0"')
+    rows, _ = curate.clean([old + '\n' + game()])
+    s = curate.summary(rows, today=datetime(2026, 11, 20, tzinfo=UTC))
+    assert s['season'] == rules.SEASON == 2
+    assert s['days'] == [{'day': DAY, 'started': 2, 'ended': 2, 'won': 2}] and s['games']['started'] == 2
+    assert s['games']['ended'] == 1 and s['characters'] == {'knight': 1} and s['kills_by_zombie'] == {'normal': 1, 'giant': 1}
 
 
 def test_summary_of_nothing():
