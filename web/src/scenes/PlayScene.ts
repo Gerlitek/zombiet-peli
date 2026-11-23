@@ -4,7 +4,7 @@ import { drawCharacter } from '../art/character';
 import { P, css } from '../art/palette';
 import { B, Pen, ell, figure } from '../art/pixels';
 import { BOARD, HORIZON, drawCatRobot, drawDrop, drawHeart, drawPanel, drawTree, drawTuft } from '../art/scenery';
-import { fit, label, penFor, zoomCamera } from '../art/ui';
+import { fit, label, moveLabel, penFor, zoomCamera } from '../art/ui';
 import { ACHIEVEMENTS, AchievementId } from '../data/achievements';
 import { HEROES, HeroDef, HeroId } from '../data/characters';
 import { MESSAGES } from '../data/messages';
@@ -416,12 +416,13 @@ export class PlayScene extends Phaser.Scene implements Combat {
     }
     // In the forest messages sit in the sky, off the play area. In the VIP box the board is there, so they sit below it.
     // Set every frame: a message that is still showing when the zone changes must move too.
-    this.banner.setY(this.zone === 'vip' ? HORIZON + 22 : 26);
+    const by = this.zone === 'vip' ? HORIZON + 22 : 26; // the top of the capital letters
+    moveLabel(this.banner, by);
     const show = t < this.bannerUntil;
     this.banner.setVisible(show);
     this.stoneTag.setVisible(this.stone.open);
     const bw = Math.round(this.banner.displayWidth);
-    if (show) drawPanel(p, Math.round(W / 2 - bw / 2) - 6, this.banner.y - 3, bw + 12, 18, P.ice);
+    if (show) drawPanel(p, Math.round(W / 2 - bw / 2) - 6, by - 5, bw + 12, 17, P.ice); // the capitals are about 7 high: 5 above and 5 below
   }
 
   private drawPlayer(p: Pen) {

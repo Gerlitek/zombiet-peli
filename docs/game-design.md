@@ -236,7 +236,7 @@ Vaaleansininen (`#7CC8F2`) on idean tehneen lapsen lempiväri. Se kuuluu peliss�
 - Vasen yläkulma: sydämet ja tappopalkki, jossa on ruutu jokaista tarvittavaa tappoa kohti. VIP-aition ja pelin lopun ruudut on korostettu.
 - Oikea yläkulma: VIP-kyltti, jossa lukee vain VIP. Punainen, kunnes pelaaja pääsee aitioon, sitten vihreä. Kyltissä ei kerrota tarvittavien tappojen määrää.
 - Vasen alakulma: saadut aseet kuvakkeina.
-- Teksti: piirretään täydellä tarkkuudella samalla fontilla kuin sivu (Inter), jotta lapsi saa siitä helposti selvää. Pelin kangas on nelinkertainen (1280 x 960), ja kamera suurentaa 320 x 240 pikselin maailman siihen. Grafiikka pysyy pikselisenä, teksti terävänä.
+- Teksti: piirretään täydellä tarkkuudella samalla fontilla kuin sivu (Inter), jotta lapsi saa siitä helposti selvää. Pelin kankaassa on täsmälleen yhtä monta pikseliä kuin se peittää näytöltä laitepikseleinä (`fitCanvas`, `web/src/main.ts`), myös koko näytön tilassa. Kamera suurentaa 320 x 240 pikselin maailman siihen, eikä selain venytä tai pienennä kangasta. Grafiikka pysyy pikselisenä, teksti terävänä.
 
 ### Sivu pelin ympärillä
 
