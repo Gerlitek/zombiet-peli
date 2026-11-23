@@ -24,6 +24,14 @@ export function zoomCamera(scene: Phaser.Scene) {
   for (const o of scene.children.list) if (o instanceof Phaser.GameObjects.Text) o.setResolution(zoom);
 }
 
+// The colours of the empty edges beside the game in full screen (see #game:fullscreen in index.html): top is above the horizon, bottom below it.
+// A scene whose background reaches the sides sets them, so the picture seems to go on past the game. Without arguments the edges are plain dark again.
+export function edgeColors(top: number = P.ink, bottom: number = P.ink) {
+  const style = document.getElementById('game')!.style;
+  style.setProperty('--edge-top', css(top));
+  style.setProperty('--edge-bottom', css(bottom));
+}
+
 // Shrinks a text so it is never wider than maxWidth. Call after every setText on texts that sit inside a box.
 export function fit(text: Phaser.GameObjects.Text, maxWidth: number) {
   text.setScale(1);

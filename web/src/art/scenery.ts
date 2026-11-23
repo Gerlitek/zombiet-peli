@@ -76,6 +76,32 @@ export function drawForestGround(p: Pen, W: number, H: number) {
   p.rect(222, 199, 3, 2, P.dry); p.rect(251, 192, 2, 2, P.rot);
 }
 
+// A spruce as a flat silhouette: a short trunk and tiers of branches that widen downwards. x is the middle, base the foot.
+export function drawSpruce(p: Pen, x: number, base: number, h: number, c: number, a = 1) {
+  const trunk = Math.max(2, R(h * 0.1)), rows = R(h) - trunk, tiers = Math.max(3, R(h / 10)), tier = rows / tiers;
+  p.rect(R(x) - 1, base - trunk, 2, trunk, c, a);
+  for (let r = 0; r < rows; r++) {
+    const i = Math.floor(r / tier), k = (r % tier) / tier; // which tier, and how far down it
+    const hw = R(1 + i * 1.5 + k * (2.5 + i * 0.7));
+    p.rect(R(x) - hw, base - trunk - rows + r, hw * 2, 1, c, a);
+  }
+}
+
+// The spruce forest beside the game in full screen: grey silhouettes, see-through, so the far row shows behind the near one.
+// The picture repeats sideways: a tree that crosses one edge is drawn again at the other, so the seam does not show.
+export function drawSpruceEdge(p: Pen, w: number, h: number) {
+  const s = rng(31), white = 0xffffff;
+  const row = (n: number, low: number, high: number, sink: number, a: number) => {
+    for (let i = 0; i < n; i++) {
+      const x = ((i + s() * 0.8) / n) * w, th = low + s() * (high - low), base = h + R(s() * sink);
+      for (const dx of [-w, 0, w]) drawSpruce(p, x + dx, base, th, white, a);
+    }
+  };
+  row(9, 120, 170, 0, 0.035); // far
+  row(6, 70, 125, 8, 0.05); // near
+  p.rect(0, h - 6, w, 6, white, 0.04); // the forest floor
+}
+
 export const BOARD = { x: 14, y: 23, w: 292, h: 52 }; // below the hearts, the kill bar and the VIP sign
 
 // Static VIP box background: back board on poles, lit stage floor, light blue rail.

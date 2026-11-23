@@ -4,7 +4,7 @@ import { drawCharacter } from '../art/character';
 import { P, css } from '../art/palette';
 import { B, Pen, ell, figure } from '../art/pixels';
 import { BOARD, HORIZON, drawCatRobot, drawDrop, drawHeart, drawPanel, drawTree, drawTuft } from '../art/scenery';
-import { fit, label, moveLabel, penFor, zoomCamera } from '../art/ui';
+import { edgeColors, fit, label, moveLabel, penFor, zoomCamera } from '../art/ui';
 import { ACHIEVEMENTS, AchievementId } from '../data/achievements';
 import { HEROES, HeroDef, HeroId } from '../data/characters';
 import { MESSAGES } from '../data/messages';
@@ -110,6 +110,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
     this.attackPressed = attackInput(this, this.keys.SPACE);
     this.banner = label(this, W / 2, HORIZON + 22, '', P.iceL);
+    this.events.once('shutdown', () => edgeColors()); // leaving the game: plain edges again
     this.vipSign = label(this, VIP_SIGN.x + VIP_SIGN.w / 2, 6, 'VIP', P.hurt);
     this.stoneTag = label(this, STONE.x, STONE.y + 4, 'AARREKIVI', P.iceL, 8).setVisible(false);
     this.input.keyboard!.once('keydown-ESC', () => { flush(); this.scene.start('menu'); }); // Esc: back to the start screen
@@ -145,6 +146,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
 
   private enterZone(zone: Zone) {
     this.zone = zone;
+    this.showEdges();
     this.zombies = []; this.spawns = []; this.hearts = [];
     this.stone = { open: false, used: false };
     this.bg.setTexture(`bg-${zone}`);
@@ -201,8 +203,14 @@ export class PlayScene extends Phaser.Scene implements Combat {
     if (this.hp <= 0) this.end(false);
   }
 
-  // A quiet moment after an overlay closes: time to read the message and find the hero again.
+  // In full screen the sky and the ground go on past the game's sides, so the game does not look like a box on a black screen.
+  private showEdges() {
+    edgeColors(P.sky, this.zone === 'vip' ? P.sky : P.moss0);
+  }
+
+  // A quiet moment after an overlay closes: time to read the message and find the hero again. The edges come back too.
   private calm() {
+    this.showEdges();
     this.invulnerableUntil = this.clock + CALM_TIME;
     this.nextSpawn = Math.max(this.nextSpawn, this.clock + CALM_TIME);
   }
@@ -309,6 +317,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
   // The wheel is a reward, never the first thing in the game: VIP entry and the two cave chests. The reason is always shown.
   private openWheel(wheel: WheelName, reason: string) {
     this.scene.pause();
+    edgeColors(); // the wheel and the cave darken the game: darken the edges too
     this.scene.launch('wheel', {
       wheel, reason,
       done: (id: WeaponId) => {
@@ -332,6 +341,7 @@ export class PlayScene extends Phaser.Scene implements Combat {
     this.stone = { open: false, used: true };
     const zone = this.zone, level = this.level;
     this.scene.pause();
+    edgeColors(); // the wheel and the cave darken the game: darken the edges too
     this.scene.launch('puzzle', {
       level, look: this.hero.look, speed: this.hero.speed,
       done: (bonus: number) => {

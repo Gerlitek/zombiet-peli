@@ -15,6 +15,7 @@ import { zoomCamera } from './art/ui';
 import { drawCharacter } from './art/character';
 import { css } from './art/palette';
 import { Pen } from './art/pixels';
+import { drawSpruceEdge } from './art/scenery';
 import { HEROES } from './data/characters';
 
 // The logo next to the page title: the knight, drawn by the same code as in the game, standing still.
@@ -26,6 +27,17 @@ function drawLogo() {
   drawCharacter(pen, 20, 45, look, 0, { still: true });
 }
 drawLogo();
+
+// In full screen the game is 4:3 and the screen is wider: the empty edges get a faint spruce forest.
+// It is drawn once into a small picture and handed to the page's CSS, which repeats it behind the game (see #game:fullscreen).
+function drawEdges() {
+  const canvas = document.createElement('canvas'), g = canvas.getContext('2d')!;
+  canvas.width = 150; canvas.height = H;
+  g.fillStyle = '#fff';
+  drawSpruceEdge({ rect: (x, y, w, h, _color, alpha = 1) => { g.globalAlpha = alpha; g.fillRect(Math.round(x), Math.round(y), w, h); } }, canvas.width, H);
+  document.getElementById('game')!.style.setProperty('--edges', `url(${canvas.toDataURL()})`);
+}
+drawEdges();
 
 // Game texts are drawn once into canvases, so the font must be ready before the first scene.
 // If it is slow, the game starts anyway with the fallback font after a second.

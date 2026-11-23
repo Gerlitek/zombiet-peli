@@ -57,7 +57,9 @@
       box-shadow: 0 0 0 1px rgba(232, 90, 165, 0.25), 0 18px 60px -20px rgba(232, 90, 165, 0.35);
     }
     /* Full screen while playing: the game fills the screen, the canvas keeps 4:3 and is centred (fitCanvas in main.ts). */
-    #game:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; border: 0; border-radius: 0; box-shadow: none; background: #0b0e14; }
+    #game:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; border: 0; border-radius: 0; box-shadow: none; image-rendering: pixelated;
+      /* The edges beside the 4:3 game: spruces (drawEdges in main.ts) over the scene's sky and ground colours (edgeColors in ui.ts). 30% is the horizon (72 of 240). */
+      background: var(--edges) center bottom / auto 100% repeat-x, linear-gradient(var(--edge-top, #0b0e14) 30%, var(--edge-bottom, #0b0e14) 30%); }
     #game canvas { display: block; image-rendering: pixelated; }
     /* Privacy note: closed by default, small and quiet, but one click away. */
     .privacy { margin: 10px 0 0 auto; font-size: 0.65rem; color: var(--text-dim); max-width: 60ch; } /* below the publisher line, so it does not compete with the credit for the idea */
