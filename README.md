@@ -47,7 +47,6 @@ Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille
 - [Visuaalinen konsepti](https://zombit.gerlitek.fi/konsepti/): hahmojen ja ilmeen suunnittelu, liikkuvat kuvat (lähde `web/public/konsepti/`)
 - [Tietoa pelistä](https://zombit.gerlitek.fi/tietoa/): esittely pelistä, sen synnystä ja ominaisuuksista kuvakaappauksin (lähde `web/public/tietoa/`)
 - `docs/architecture.md`: arkkitehtuuri, kustannusrajat ja päätökset
-- `docs/tarina-ja-ulkoasu.md`: lapsen alkuperäiset ideat
 - `CHANGELOG.md`: julkaisujen muutosloki
 
 ## Rakenne

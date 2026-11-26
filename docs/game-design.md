@@ -1,6 +1,6 @@
 # Ylläri-Zombit: pelisuunnittelu
 
-Pelin idea, tarina ja hahmot ovat lapsen. Alkuperäiset muistiinpanot ovat tiedostossa `tarina-ja-ulkoasu.md` ja piirrokset kansiossa `private/pics/`, jota ei viedä repoon. Tämä dokumentti kokoaa ne pelattavaksi suunnitelmaksi. Periaate: jokainen lapsen idea toteutetaan jossain muodossa, jotta hän tunnistaa pelin omakseen. Luvun 11 taulukko näyttää, missä kukin idea on.
+Pelin idea, tarina ja hahmot ovat lapsen. Alkuperäisiä muistiinpanoja ja piirroksia ei viedä repoon. Tämä dokumentti kokoaa ne pelattavaksi suunnitelmaksi. Periaate: jokainen lapsen idea toteutetaan jossain muodossa, jotta hän tunnistaa pelin omakseen. Luvun 11 taulukko näyttää, missä kukin idea on.
 
 Visuaalinen konsepti on tiedostossa `web/public/konsepti/index.html`. Se on julkaistu osoitteessa https://zombit.gerlitek.fi/konsepti/ (kuvat liikkuvat).
 
