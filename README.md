@@ -4,9 +4,9 @@
 [![api](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml)
 [![infra](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml)
 
-> **Suomeksi:** Pieni selainpeli, jonka idea, tarina ja hahmot ovat lapsen suunnittelemia. Projekti on samalla työnäyte Azuresta, Bicepistä, CI/CD:stä ja datakerroksista. [Pelaa](https://zombit.gerlitek.fi) tai [lue pelistä](https://zombit.gerlitek.fi/tietoa/).
+> **Suomeksi:** Selainpeli, jonka idea, tarina ja hahmot ovat lapsen suunnittelemia. Taustalla on tuotannossa toimiva Azure-ympäristö: Bicep, CI/CD, datakerrokset ja kustannussuojat. [Pelaa](https://zombit.gerlitek.fi) tai [lue pelistä](https://zombit.gerlitek.fi/tietoa/).
 
-*Ylläri-Zombit* means "Surprise Zombies". It is a small browser game (TypeScript, Phaser 4) built with AI and running on Azure. The idea, story and characters were designed by a child. Play it at [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop). The game and its website are in Finnish, made for a Finnish audience.
+*Ylläri-Zombit* ("Surprise Zombies") is a browser game (TypeScript, Phaser 4) running in production on Azure, with infrastructure as code, CI/CD, layered data and cost guardrails. The idea, story and characters were designed by a child. Play it at [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop). The game and its website are in Finnish, made for a Finnish audience.
 
 The whole environment is code:
 
