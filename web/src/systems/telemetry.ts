@@ -1,4 +1,4 @@
-// Game events for the data pipeline. Schema: docs/game-design.md, chapter 12.
+// Game events for the data pipeline. Schema: docs/game-design.md, chapter 11.
 // Events are batched and sent to the API (systems/api.ts). In dev they are also shown in the console.
 import { version } from '../../package.json';
 import { sendEvents } from './api';

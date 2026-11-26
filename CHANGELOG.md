@@ -1,32 +1,32 @@
-# Muutosloki
+# Changelog
 
-Julkaisut ovat GitHubissa: https://github.com/Gerlitek/zombiet-peli/releases
+Releases are on GitHub: https://github.com/Gerlitek/zombiet-peli/releases
 
 ## 2.0.0 (2026-11-23)
 
-- Kausi 2: pistetaulukko alkaa tyhjästä, koska tapporajat ovat laskeneet (80 → 50 → 45) eikä vanhoja kärkituloksia voinut enää ohittaa. Kauden 1 tulokset ovat tallessa.
-- Palvelin hyväksyy tulokseen enintään 45 tappoa.
-- Tilastosivu: pelikertojen määrät kaikista peleistä, muut luvut vain kaudelta 2.
-- Tapahtumissa on pelin oikea versionumero (aiemmin aina 0.2.0). Versionumeron ensimmäinen luku on kausi.
-- Korjaus: pelin päättävä isku ei enää voi kirjata tappoja yli läpäisyrajan.
+- Season 2: the leaderboard starts empty, because the kill limits have come down (80 → 50 → 45) and the old top results could no longer be beaten. Season 1 results are kept.
+- The server accepts at most 45 kills in a result.
+- Stats page: game counts from all games, other numbers from season 2 only.
+- Events carry the real game version (previously always 0.2.0). The first number of the version is the season.
+- Fix: the blow that ends the game can no longer record kills over the winning limit.
 
 ## 1.3.0 (2026-11-23)
 
-- Lyhyempi peli: 25 tappoa VIP-aitioon, 45 tappoa läpäisyyn.
-- Uusi sivu `/tietoa/`: esittely pelistä, sen synnystä, onnenpyörästä ja hajotelmista kuvakaappauksin.
+- Shorter game: 25 kills to enter the VIP box, 45 kills to win.
+- New page `/tietoa/`: introduces the game, how it came to be, the wheel of fortune and the puzzles, with screenshots.
 
 ## 1.2.0 (2026-11-23)
 
-- Peli on terävä koko näytön tilassa. Pelin kankaassa on täsmälleen yhtä monta pikseliä kuin se peittää näytöltä, joten selain ei venytä eikä pienennä sitä.
-- Kangas mitoitetaan uudelleen, kun koko näyttö alkaa tai loppuu tai ikkunan koko muuttuu. Tekstit piirretään uudelleen uudella tarkkuudella.
-- Pelin alun viestin teksti on laatikon keskellä eikä enää kosketa sen alareunaa.
+- The game is sharp in full screen. The game canvas has exactly as many pixels as it covers on screen, so the browser neither stretches nor shrinks it.
+- The canvas is resized when full screen starts or ends or the window size changes. Texts are redrawn at the new resolution.
+- The text of the start banner is centred in its box and no longer touches the bottom edge.
 
 ## 1.1.0 (2026-11-22)
 
-- Lyhyempi peli: 30 tappoa VIP-aitioon, 50 tappoa läpäisyyn.
-- Peli alkaa koko näytön tilassa valikosta.
-- Laatikoissa olevan tekstin pystysijainti korjattu: y on isojen kirjainten yläreuna.
+- Shorter game: 30 kills to enter the VIP box, 50 kills to win.
+- The game starts in full screen from the menu.
+- Fixed the vertical position of text in boxes: y is the top of the capital letters.
 
 ## 1.0.0 (2026-11-21)
 
-- Ensimmäinen julkaisu: peli, pistetaulukko, telemetria ja tilastosivu osoitteessa https://zombit.gerlitek.fi.
+- First release: game, leaderboard, telemetry and stats page at https://zombit.gerlitek.fi.

@@ -4,16 +4,19 @@
 [![api](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/api.yml)
 [![infra](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml/badge.svg)](https://github.com/Gerlitek/zombiet-peli/actions/workflows/infra.yml)
 
-> **In English:** *Ylläri-Zombit* means "Surprise Zombies". A small browser game (TypeScript, Phaser 4) built with AI, running on Azure. Guardrails as code
-> (budget, Azure Policy, cost alert, daily caps), a keyless Python API on Azure Functions, raw JSON events refined nightly
-> into a curated Parquet layer, and a static dashboard. Play it at [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop, in Finnish).
-> Docs are in Finnish; code and commits in English.
+> **Suomeksi:** Pieni selainpeli, jonka idea, tarina ja hahmot ovat lapsen suunnittelemia. Projekti on samalla työnäyte Azuresta, Bicepistä, CI/CD:stä ja datakerroksista. [Pelaa](https://zombit.gerlitek.fi) tai [lue pelistä](https://zombit.gerlitek.fi/tietoa/).
 
-Pieni selainpeli: taistele zombeja vastaan. Pelin idea, tarina ja hahmot ovat lapsen suunnittelemia.
+*Ylläri-Zombit* means "Surprise Zombies". It is a small browser game (TypeScript, Phaser 4) built with AI and running on Azure. The idea, story and characters were designed by a child. Play it at [zombit.gerlitek.fi](https://zombit.gerlitek.fi) (desktop). The game and its website are in Finnish, made for a Finnish audience.
 
-Peli pyörii Azuressa, ja koko ympäristö on koodina: Bicep, CI/CD ja datakerrokset. Pelin tapahtumat tallentuvat raw-kerrokseen (JSON, poistuu 30 vrk:n jälkeen). Yöajo kirjoittaa niistä curated-kerroksen (Parquet) ja yhteenvedon, jota [tilastosivu](https://zombit.gerlitek.fi/tilastot/) näyttää.
+The whole environment is code:
 
-## Arkkitehtuuri
+- **Infrastructure:** all Azure resources in Bicep, provisioned with GitHub Actions and the Azure Developer CLI.
+- **CI/CD:** OIDC login without stored keys, every deployment behind a manual approval.
+- **Data layers:** game events land in a raw layer (JSON, deleted after 30 days). A nightly job writes a curated layer (Parquet) and the summary shown on the [stats page](https://zombit.gerlitek.fi/tilastot/).
+- **Cost guardrails:** budget, Azure Policy, cost anomaly alert, daily caps on writes and requests, and a log cap.
+- **Security:** no storage account keys, the API uses a managed identity.
+
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -37,42 +40,40 @@ flowchart LR
     class Space hidden
 ```
 
-Peli lähettää pisteet ja tapahtumat API:lle. GitHub Actions julkaisee koodin ja Azure-resurssit OIDC-kirjautumisella. Kaikki Azure-osat (API, tallennus, yöajo) ovat Bicepiä. Tilastosivu lukee yöajon tekemän yhteenvedon osoitteesta `GET /api/stats`.
+The game sends scores and events to the API. The stats page reads the summary made by the nightly job from `GET /api/stats`. The reasoning behind each choice is in [docs/architecture.md](docs/architecture.md).
 
-Kustannussuojat: budjetti, Policy, vuorokausikatot kirjoituksille ja pyynnöille sekä lokikatto. Tallennustilaan ei pääse avaimilla, vaan API käyttää hallittua identiteettiä. Perustelut: `docs/architecture.md`.
+## Documents
 
-## Dokumentit
+- [docs/architecture.md](docs/architecture.md): architecture, cost limits and decisions
+- [docs/game-design.md](docs/game-design.md): game design
+- [CHANGELOG.md](CHANGELOG.md): release history
+- [Visual concept](https://zombit.gerlitek.fi/konsepti/) (in Finnish): characters and look, with animations (source `web/public/konsepti/`)
+- [About the game](https://zombit.gerlitek.fi/tietoa/) (in Finnish): how the game came to be and what it does, with screenshots (source `web/public/tietoa/`)
 
-- `docs/game-design.md`: pelisuunnitelma
-- [Visuaalinen konsepti](https://zombit.gerlitek.fi/konsepti/): hahmojen ja ilmeen suunnittelu, liikkuvat kuvat (lähde `web/public/konsepti/`)
-- [Tietoa pelistä](https://zombit.gerlitek.fi/tietoa/): esittely pelistä, sen synnystä ja ominaisuuksista kuvakaappauksin (lähde `web/public/tietoa/`)
-- `docs/architecture.md`: arkkitehtuuri, kustannusrajat ja päätökset
-- `CHANGELOG.md`: julkaisujen muutosloki
+## Repository layout
 
-## Rakenne
-
-| Kansio | Sisältö |
+| Folder | Contents |
 |---|---|
-| `web/` | Peli, tilastosivu ja tietoa-sivu: Vite, TypeScript, Phaser 4, Chart.js |
-| `api/` | API: Azure Functions (Python), pistetaulukko, telemetria ja yöllinen curated-ajo |
-| `infra/` | Azure-resurssit Bicepillä |
-| `azure.yaml` | azd: Azure-puolen provisiointi ja deploy |
-| `.github/workflows/` | CI/CD: infra, api ja web. Azure-kirjautuminen OIDC:llä, julkaisu hyväksynnän takana |
-| `docs/` | Dokumentit |
+| `web/` | Game, stats page and about page: Vite, TypeScript, Phaser 4, Chart.js |
+| `api/` | API: Azure Functions (Python), score table, telemetry and the nightly curated job |
+| `infra/` | Azure resources in Bicep |
+| `azure.yaml` | azd: provisioning and deployment of the Azure side |
+| `.github/workflows/` | CI/CD: infra, api and web |
+| `docs/` | Documents |
 
-## Kehitys
+## Development
 
 ```
 cd web
 npm install
-npm run dev     # peli osoitteessa http://localhost:5173
-npm test        # yksikkötestit (Vitest)
-npm run build   # tyyppitarkistus ja tuotantoversio kansioon dist/
+npm run dev     # game at http://localhost:5173
+npm test        # unit tests (Vitest)
+npm run build   # type check and production build into dist/
 ```
 
-Tilastosivu kehitystilassa keksityillä luvuilla: http://localhost:5173/tilastot/?demo
+Stats page with made-up numbers in development mode: http://localhost:5173/tilastot/?demo
 
-API (Python 3.12), samat komennot kuin CI:ssä:
+API (Python 3.12), the same commands as in CI:
 
 ```
 cd api
