@@ -13,7 +13,7 @@ The whole environment is code:
 - **Infrastructure:** all Azure resources in Bicep, provisioned with GitHub Actions and the Azure Developer CLI.
 - **CI/CD:** OIDC login without stored keys, every deployment behind a manual approval.
 - **Data layers:** game events land in a raw layer (JSON, deleted after 30 days). A nightly job writes a curated layer (Parquet) and the summary shown on the [stats page](https://zombit.gerlitek.fi/tilastot/).
-- **Cost guardrails:** budget, Azure Policy, cost anomaly alert, daily caps on writes and requests, and a log cap.
+- **Cost guardrails:** budget, Azure Policy, cost anomaly alert, daily caps on writes and requests, and a log cap. Over a daily cap the API stops itself (tested in production on 2026-11-27).
 - **Security:** no storage account keys, the API uses a managed identity.
 
 ## Architecture

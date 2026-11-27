@@ -7,6 +7,7 @@ Releases are on GitHub: https://github.com/Gerlitek/zombiet-peli/releases
 - The leaderboard starts over every New Year (UTC). Old results are kept.
 - The nightly statistics run reads one day at a time, so its memory use no longer grows with the history.
 - API dependencies are pinned to exact versions.
+- The automatic stop over the daily cap was tested in production and works.
 
 ## 2.0.0 (2026-11-23)
 
