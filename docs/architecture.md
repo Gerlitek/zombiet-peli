@@ -285,7 +285,9 @@ Worst cases after the layers (prices to be checked in the price list):
 | Logs | cap 0.1 GB per day, so at most about 3 GB per month, which fits in the monthly free allowance of Log Analytics |
 | Owner account taken over | unlimited. Prevention: MFA. Emergency brakes: `az group delete --name rg-zombies`, cancelling the subscription, an Azure support request at once |
 
-Status on 2026-11-20: the counters and the stop trigger are covered by unit tests, but the stop has not been tested in production under load. Test plan: set a low `REQUEST_CAP` app setting, send requests past the cap, the API must stop, and Cost Management should show zero the next day.
+Tested in production on 2026-11-27 with `REQUEST_CAP=300` and 450 requests: requests 1 to 300 got 200, then 429, the API logged "daily cap reached" and the app went to `Stopped` within a minute. Stray answers from the old instance ended about a minute later.
+
+Restart lesson: after the cap setting was removed and the app started, the API still answered 429 for about ten minutes. The same instance was still alive with the test counter and cap in memory, and neither `az functionapp start`, `restart` nor a settings change replaced it. It went away after a few minutes without traffic, and the next request started a fresh instance (cold start 3.9 s) that answered 200. So after a stop: remove the cause, start the app, and if it still answers 429, wait about ten minutes without traffic.
 
 ## 8. Privacy
 
