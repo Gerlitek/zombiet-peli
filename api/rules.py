@@ -145,6 +145,18 @@ def score(body):
     return out
 
 
+# Rows written before the yearly seasons (2026-11) live in the partition 'v2'. They are the 2026 season.
+_OLD_SEASON_KEYS = {'v2-2026': 'v2'}
+
+
+def season_key(now: datetime) -> str:
+    """The partition of the score table: the season and the year (UTC), for example v2-2027.
+    A new key is an empty leaderboard, so the board starts over every New Year and whenever SEASON is raised.
+    Nothing is deleted: the old rows stay in their own partitions."""
+    key = f'v{SEASON}-{now.year}'
+    return _OLD_SEASON_KEYS.get(key, key)
+
+
 def score_row_key(points, sid):
     """Table Storage returns rows in RowKey order, so the key is built to make the best score come first."""
     return f'{999999 - points:06d}_{sid}'

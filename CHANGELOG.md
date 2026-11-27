@@ -2,6 +2,12 @@
 
 Releases are on GitHub: https://github.com/Gerlitek/zombiet-peli/releases
 
+## Unreleased
+
+- The leaderboard starts over every New Year (UTC). Old results are kept.
+- The nightly statistics run reads one day at a time, so its memory use no longer grows with the history.
+- API dependencies are pinned to exact versions.
+
 ## 2.0.0 (2026-11-23)
 
 - Season 2: the leaderboard starts empty, because the kill limits have come down (80 → 50 → 45) and the old top results could no longer be beaten. Season 1 results are kept.

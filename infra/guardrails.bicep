@@ -26,7 +26,7 @@ param allowedResourceTypes array = [
 
 @description('First day of the anomaly alert schedule. The alert must be renewed before the end date.')
 param anomalyStart string = '2026-11-18T00:00:00Z'
-param anomalyEnd string = '2027-11-18T00:00:00Z'
+param anomalyEnd string = '2031-11-18T00:00:00Z'
 
 // Built-in policy "Allowed resource types". Mode Indexed: resource groups, role
 // assignments and child resources are not evaluated.

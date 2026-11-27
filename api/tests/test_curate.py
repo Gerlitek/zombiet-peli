@@ -1,5 +1,6 @@
 import io
 import json
+from collections import Counter
 from datetime import UTC, datetime
 
 import pyarrow as pa
@@ -95,7 +96,7 @@ def test_columns_fill_missing_fields_with_none():
 def test_summary_counts_games_and_puzzles():
     puzzle = ev('puzzle_answered', 4, 70, level='easy', target=12, parts=[7], answer=5, correct=True, time_ms=4000)
     rows, _ = curate.clean([game() + '\n' + puzzle])
-    s = curate.summary(rows, players_recent=1, today=datetime(2026, 11, 20, tzinfo=UTC))
+    s = curate.summary(curate.tally(rows), players_recent=1, today=datetime(2026, 11, 20, tzinfo=UTC))
     assert s['games'] == {'started': 1, 'started_recent': 1, 'ended': 1, 'won': 1, 'median_duration_s': 60, 'median_kills': 2}
     assert s['days'] == [{'day': DAY, 'started': 1, 'ended': 1, 'won': 1}]
     assert s['puzzles']['easy'] == {'answered': 1, 'correct': 1, 'median_ms': 4000}
@@ -106,23 +107,39 @@ def test_summary_counts_games_and_puzzles():
 def test_an_older_season_counts_as_activity_but_not_in_the_results():
     old = game('123e4567-e89b-42d3-a456-426614174001').replace('"version": "2.0.0"', '"version": "0.2.0"')
     rows, _ = curate.clean([old + '\n' + game()])
-    s = curate.summary(rows, today=datetime(2026, 11, 20, tzinfo=UTC))
+    s = curate.summary(curate.tally(rows), today=datetime(2026, 11, 20, tzinfo=UTC))
     assert s['season'] == rules.SEASON == 2
     assert s['days'] == [{'day': DAY, 'started': 2, 'ended': 2, 'won': 2}] and s['games']['started'] == 2
     assert s['games']['ended'] == 1 and s['characters'] == {'knight': 1} and s['kills_by_zombie'] == {'normal': 1, 'giant': 1}
 
 
 def test_summary_of_nothing():
-    s = curate.summary([])
+    s = curate.summary(curate.tally([]))
     assert s['games']['ended'] == 0 and s['days'] == []
 
 
 def test_days_chart_covers_recent_days_and_totals_all_time():
     old = start('123e4567-e89b-42d3-a456-426614174001', '2026-09-01')
     rows, _ = curate.clean([old, start()])
-    s = curate.summary(rows, today=datetime(2026, 11, 20, tzinfo=UTC))
+    s = curate.summary(curate.tally(rows), today=datetime(2026, 11, 20, tzinfo=UTC))
     assert [d['day'] for d in s['days']] == [DAY]
     assert s['games']['started'] == 2 and s['games']['started_recent'] == 1
+
+
+def test_tally_day_by_day_equals_all_at_once():
+    other = '123e4567-e89b-42d3-a456-426614174001'
+    day1, _ = curate.clean([game()])
+    day2, _ = curate.clean([game(other) + '\n' + ev('puzzle_answered', 4, 70, other, level='easy', target=12, parts=[7], answer=5, correct=False, time_ms=900)])
+    today = datetime(2026, 11, 20, tzinfo=UTC)
+    by_day = curate.summary(curate.tally(day2, curate.tally(day1)), today=today)
+    at_once = curate.summary(curate.tally(day1 + day2), today=today)
+    assert {**by_day, 'generated': ''} == {**at_once, 'generated': ''}
+    assert by_day['games']['ended'] == 2 and by_day['puzzles']['easy'] == {'answered': 1, 'correct': 0, 'median_ms': 900}
+
+
+@pytest.mark.parametrize('values, middle', [([], None), ([5], 5), ([1, 3], 2), ([1, 2, 9], 2), ([4, 4, 4, 8], 4), ([1, 2, 3, 10], 2.5)])
+def test_median_of_a_histogram(values, middle):
+    assert curate._median(Counter(values)) == middle
 
 
 def test_nicknames_counts_real_players_once():
@@ -137,4 +154,4 @@ def test_parquet_round_trip_keeps_the_summary():
     out = io.BytesIO()
     pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=curate.arrow_schema(pa)), out)
     back = pq.read_table(io.BytesIO(out.getvalue())).to_pylist()
-    assert curate.summary(back)['kills_by_zombie'] == curate.summary(rows)['kills_by_zombie'] == {'normal': 1, 'giant': 1}
+    assert curate.summary(curate.tally(back))['kills_by_zombie'] == curate.summary(curate.tally(rows))['kills_by_zombie'] == {'normal': 1, 'giant': 1}

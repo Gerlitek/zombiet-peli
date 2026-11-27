@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 import pytest
 
 import rules
@@ -79,6 +81,12 @@ def test_bad_score_is_rejected(bad):
 def test_best_score_sorts_first():
     keys = [rules.score_row_key(p, SID) for p in (100, 5000, 750)]
     assert min(keys) == rules.score_row_key(5000, SID)
+
+
+def test_leaderboard_starts_over_every_new_year():
+    assert rules.season_key(datetime(2026, 12, 31, 23, 59, tzinfo=UTC)) == 'v2'  # the rows from before yearly seasons
+    assert rules.season_key(datetime(2027, 1, 1, tzinfo=UTC)) == 'v2-2027'
+    assert rules.season_key(datetime(2028, 6, 1, tzinfo=UTC)) == 'v2-2028'
 
 
 def test_puzzle_level_is_a_name():

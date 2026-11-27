@@ -30,7 +30,6 @@ REQUEST_CAP = int(os.environ.get('REQUEST_CAP', '50000'))  # requests per day, v
 # Saving on every request would double the storage calls; a crash or restart must not reset the cap.
 REQUEST_SAVE_EVERY = 100
 SESSION_BATCHES_PER_MINUTE = 10
-GAME_VERSION = f'v{rules.SEASON}'  # partition key of the score table: a new season starts from an empty table, the old rows stay
 
 _account = os.environ.get('STORAGE_ACCOUNT_NAME', '')
 # The user-assigned identity of the Function App. Locally DefaultAzureCredential falls back to `az login`.
@@ -165,7 +164,7 @@ def post_score(req: func.HttpRequest) -> func.HttpResponse:
     except ResourceExistsError:
         return _reply(409)
     _tables.get_table_client('scores').create_entity({
-        'PartitionKey': GAME_VERSION, 'RowKey': rules.score_row_key(s['score'], s['session_id']),
+        'PartitionKey': rules.season_key(datetime.now(UTC)), 'RowKey': rules.score_row_key(s['score'], s['session_id']),
         'nick': json.dumps(s['nick']), 'score': s['score'], 'kills': s['kills'], 'duration_s': s['duration_s'],
         'hearts': s['hearts'], 'character': s['character'], 'won': s['won'],
         'created': datetime.now(UTC).isoformat()})
@@ -176,7 +175,7 @@ def post_score(req: func.HttpRequest) -> func.HttpResponse:
 def get_leaderboard(req: func.HttpRequest) -> func.HttpResponse:
     if _over_request_cap():
         return _reply(429)
-    rows = _tables.get_table_client('scores').query_entities(f"PartitionKey eq '{GAME_VERSION}'", results_per_page=10)
+    rows = _tables.get_table_client('scores').query_entities(f"PartitionKey eq '{rules.season_key(datetime.now(UTC))}'", results_per_page=10)
     top = []
     for row in rows:  # rows come back in RowKey order, so the first ten are the best ten
         top.append({'nick': json.loads(row['nick']), 'score': row['score'], 'kills': row['kills'], 'won': row['won']})
@@ -212,6 +211,9 @@ def curate_events(timer: func.TimerRequest) -> None:
     def day(name: str) -> str:  # 'events/dt=2026-11-20/...' -> '2026-11-20'
         return name.split('/')[1][3:]
 
+    def text(name: str) -> str:
+        return raw.download_blob(name).readall().decode()
+
     # Every past day whose curated file is missing or made with older rules (curate.RULES_VERSION).
     # Catches up after a stop, and running twice changes nothing. Days whose raw data has expired keep their file.
     done = {day(b.name): (b.metadata or {}).get('rules') for b in curated.list_blobs(name_starts_with='events/dt=', include=['metadata'])}
@@ -220,8 +222,9 @@ def curate_events(timer: func.TimerRequest) -> None:
     for d in todo:
         if d >= today or done.get(d) == str(curate.RULES_VERSION):
             continue
-        blobs = [] if curate.skipped(d) else [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with=f'events/dt={d}/')]
-        rows, dropped = ([], {'rejected': 0, 'test': 0, 'implausible': 0}) if curate.skipped(d) else curate.clean(blobs)
+        # A generator: the raw blobs of the day are read one at a time, not all held in memory together.
+        blobs = [] if curate.skipped(d) else (text(n) for n in raw.list_blob_names(name_starts_with=f'events/dt={d}/'))
+        rows, dropped = curate.clean(blobs)
         out = pa.BufferOutputStream()
         pq.write_table(pa.Table.from_pydict(curate.columns(rows), schema=schema), out)
         curated.upload_blob(f'events/dt={d}/events.parquet', out.getvalue().to_pybytes(), overwrite=True,
@@ -229,12 +232,13 @@ def curate_events(timer: func.TimerRequest) -> None:
         log.info('curated %s: %d events, dropped %d rejected, %d test, %d implausible', d, len(rows),
                  dropped['rejected'], dropped['test'], dropped['implausible'])
 
-    rows = []
+    # The summary is built one day file at a time (curate.tally): memory holds one day of rows and the small totals,
+    # so the run does not grow with the history. Reading every file again each night keeps the run stateless.
+    totals = curate.tally([])
     for name in curated.list_blob_names(name_starts_with='events/dt='):
-        rows += pq.read_table(io.BytesIO(curated.download_blob(name).readall())).to_pylist()
+        totals = curate.tally(pq.read_table(io.BytesIO(curated.download_blob(name).readall())).to_pylist(), totals)
     # Distinct players of the recent days, from raw (kept 30 days): only the count is stored.
     since = (datetime.now(UTC) - timedelta(days=curate.RECENT_DAYS)).strftime('%Y-%m-%d')
-    recent = [raw.download_blob(n).readall().decode() for n in raw.list_blob_names(name_starts_with='events/dt=') if since <= day(n) < today and not curate.skipped(day(n))]
-    summary = curate.summary(rows, players_recent=len(curate.nicknames(recent)))
+    recent = (text(n) for n in raw.list_blob_names(name_starts_with='events/dt=') if since <= day(n) < today and not curate.skipped(day(n)))
+    summary = curate.summary(totals, players_recent=len(curate.nicknames(recent)))
     curated.upload_blob('summary/dashboard.json', json.dumps(summary), overwrite=True)
-

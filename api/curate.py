@@ -11,9 +11,9 @@ Rules (docs/architecture.md, chapter 4):
 import json
 import re
 from collections import Counter
+from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from itertools import pairwise
-from statistics import median
 
 import rules
 
@@ -85,7 +85,7 @@ def _time(text: str) -> datetime:
     return t if t.tzinfo else t.replace(tzinfo=UTC)
 
 
-def clean(blobs: list[str]) -> tuple[list[dict], Counter]:
+def clean(blobs: Iterable[str]) -> tuple[list[dict], Counter]:
     """Takes the text of the raw blobs of one day. Returns (rows sorted by time, counts of dropped events:
     rejected = broken lines, test = test sessions, implausible = sessions that break a plausible() rule)."""
     rows, seen, dropped = [], set(), Counter()
@@ -117,7 +117,7 @@ def clean(blobs: list[str]) -> tuple[list[dict], Counter]:
     return rows, dropped
 
 
-def nicknames(blobs: list[str]) -> set[str]:
+def nicknames(blobs: Iterable[str]) -> set[str]:
     """Distinct nicknames in raw blobs (game_started lines of real sessions). Only the count leaves this function:
     the nicknames themselves are never written to the curated layer, which is kept for good."""
     names = set()
@@ -141,32 +141,61 @@ def columns(rows: list[dict]) -> dict[str, list]:
 
 RECENT_DAYS = 30  # the daily chart and the player count cover this many days, everything else all time
 
+# Dashboard charts that count one field of one event: name in the summary -> (event, field).
+_COUNTS = {'characters': ('game_started', 'character'), 'kills_by_zombie': ('zombie_killed', 'zombie_type'),
+           'hits_by_zombie': ('player_hit', 'zombie_type'), 'wheel_weapons': ('wheel_spun', 'weapon'),
+           'achievements': ('achievement_unlocked', 'achievement')}
 
-def summary(rows: list[dict], players_recent: int | None = None, today: datetime | None = None) -> dict:
-    """The small JSON the dashboard reads. Rows of all curated days, and the distinct nicknames of the recent days.
-    The event's version is the game version (2.0.0), and its first number is the season."""
-    since = ((today or datetime.now(UTC)) - timedelta(days=RECENT_DAYS)).strftime('%Y-%m-%d')
-    days: dict[str, Counter] = {}
+
+def tally(rows: list[dict], totals: dict | None = None) -> dict:
+    """Adds rows (one curated day) to the running totals and returns them. The nightly run calls this once per day
+    file, so memory holds one day of rows and these small totals, never the whole history.
+    Values that need a median are kept as histograms (value -> how many times)."""
+    t = totals or {'days': {}, 'ended': 0, 'won': 0, 'duration_s': Counter(), 'kills': Counter(),
+                   'counts': {name: Counter() for name in _COUNTS},
+                   'puzzles': {level: {'answered': 0, 'correct': 0, 'time_ms': Counter()} for level in sorted(rules.LEVELS)}}
     for r in rows:
-        if r['event'] in ('game_started', 'game_ended'):
-            day = days.setdefault(r['received'].strftime('%Y-%m-%d'), Counter())
+        if r['event'] in ('game_started', 'game_ended'):  # activity counts every game of every season
+            day = t['days'].setdefault(r['received'].strftime('%Y-%m-%d'), Counter())
             day['started' if r['event'] == 'game_started' else 'ended'] += 1
             day['won'] += r['event'] == 'game_ended' and r['result'] == 'won'
+        # Everything below counts the current season only: the kill limits changed between seasons,
+        # so win rates and medians of different seasons do not belong in one number.
+        if r['version'].split('.')[0] != str(rules.SEASON):
+            continue
+        for name, (event, field) in _COUNTS.items():
+            if r['event'] == event:
+                t['counts'][name][r[field]] += 1
+        if r['event'] == 'game_ended':
+            t['ended'] += 1
+            t['won'] += r['result'] == 'won'
+            t['duration_s'][r['duration_s']] += 1
+            t['kills'][r['kills']] += 1
+        if r['event'] == 'puzzle_answered':
+            p = t['puzzles'][r['level']]
+            p['answered'] += 1
+            p['correct'] += r['correct']
+            p['time_ms'][r['time_ms']] += 1
+    return t
 
-    # Activity above counts every game. Everything below counts the current season only: the kill limits
-    # changed between seasons, so win rates and medians of different seasons do not belong in one number.
-    rows = [r for r in rows if r['version'].split('.')[0] == str(rules.SEASON)]
-    ended = [r for r in rows if r['event'] == 'game_ended']
-    puzzles = [r for r in rows if r['event'] == 'puzzle_answered']
 
-    def count(event: str, field: str) -> dict:
-        return dict(Counter(r[field] for r in rows if r['event'] == event).most_common())
+def _median(histogram: Counter):
+    """The median of a histogram, without expanding it into a list of every value."""
+    n, seen, low = sum(histogram.values()), 0, None
+    for value in sorted(histogram):
+        seen += histogram[value]
+        if low is None and seen >= (n + 1) // 2:
+            low = value  # the lower of the two middle values (the only one when n is odd)
+        if seen >= n // 2 + 1:
+            return low if low == value else (low + value) / 2
+    return None
 
-    def per_level(level: str) -> dict:
-        own = [p for p in puzzles if p['level'] == level]
-        return {'answered': len(own), 'correct': sum(p['correct'] for p in own),
-                'median_ms': median(p['time_ms'] for p in own) if own else None}
 
+def summary(totals: dict, players_recent: int | None = None, today: datetime | None = None) -> dict:
+    """The small JSON the dashboard reads, from the totals of all curated days (tally) and the number of
+    distinct nicknames of the recent days. The event's version is the game version (2.0.0), and its first number is the season."""
+    since = ((today or datetime.now(UTC)) - timedelta(days=RECENT_DAYS)).strftime('%Y-%m-%d')
+    days = totals['days']
     return {
         'generated': datetime.now(UTC).isoformat(timespec='seconds'),
         'recent_days': RECENT_DAYS,
@@ -175,13 +204,9 @@ def summary(rows: list[dict], players_recent: int | None = None, today: datetime
         'players_recent': players_recent,
         'games': {'started': sum(c['started'] for c in days.values()),
                   'started_recent': sum(c['started'] for d, c in days.items() if d >= since),
-                  'ended': len(ended), 'won': sum(r['result'] == 'won' for r in ended),
-                  'median_duration_s': median(r['duration_s'] for r in ended) if ended else None,
-                  'median_kills': median(r['kills'] for r in ended) if ended else None},
-        'characters': count('game_started', 'character'),
-        'kills_by_zombie': count('zombie_killed', 'zombie_type'),
-        'hits_by_zombie': count('player_hit', 'zombie_type'),
-        'wheel_weapons': count('wheel_spun', 'weapon'),
-        'achievements': count('achievement_unlocked', 'achievement'),
-        'puzzles': {level: per_level(level) for level in sorted(rules.LEVELS)},
+                  'ended': totals['ended'], 'won': totals['won'],
+                  'median_duration_s': _median(totals['duration_s']), 'median_kills': _median(totals['kills'])},
+        **{name: dict(counter.most_common()) for name, counter in totals['counts'].items()},
+        'puzzles': {level: {'answered': p['answered'], 'correct': p['correct'], 'median_ms': _median(p['time_ms'])}
+                    for level, p in totals['puzzles'].items()},
     }

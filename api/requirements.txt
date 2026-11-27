@@ -1,5 +1,9 @@
-azure-functions
-azure-data-tables
-azure-storage-blob
-azure-identity
-pyarrow
+# Exact versions: a deploy installs what was tested, not whatever is newest that day.
+# Dependabot proposes updates once a month (.github/dependabot.yml).
+# azure-functions has two lines: 1.x for the Python 3.12 of the Function App, 2.x for a newer local Python (tests only).
+azure-functions==1.26.0; python_version < "3.13"
+azure-functions==2.4.0; python_version >= "3.13"
+azure-data-tables==12.7.0
+azure-storage-blob==12.31.1
+azure-identity==1.27.0
+pyarrow==26.0.1

@@ -17,7 +17,6 @@ Browser
     POST /api/events ──────────► Blob  raw/      NDJSON, deleted after 30 days
     POST /api/scores ──────────► Table scores
     GET  /api/leaderboard ◄───── Table scores
-    GET/POST /api/messages ◄───► Table messages
     GET  /api/stats ◄─────────── Blob  curated/summary/dashboard.json
     timer, once a day:
         raw/ (JSON) ──► curated/ (Parquet) ──► summary.json
@@ -79,9 +78,10 @@ Azure Functions, Python, v2 programming model (decorators, one `function_app.py`
 | `POST /api/events` | Receives a batch of events and writes it to the raw layer | at most 50 events and 16 kB |
 | `POST /api/scores` | Saves a result | one result per session |
 | `GET /api/leaderboard` | Top 10 | cached 60 s |
-| `GET /api/messages`, `POST /api/messages` | 20 newest ready-made messages, send a new one | a message is an id from a list |
 | `GET /api/stats` | Ready-made JSON for the dashboard | cached 1 h |
 | timer `curate` | raw -> curated -> summary | once a day |
+
+Not built: routes for ready-made messages (`/api/messages`). The game shows its messages from a local list (`web/src/data/messages.ts`). The empty table `messages` is reserved for them.
 
 ### Validation
 
@@ -111,11 +111,13 @@ The Function App uses the storage account with a managed identity. There are no 
 
 | Table | PartitionKey | RowKey | Fields |
 |---|---|---|---|
-| `scores` | season, e.g. `v2` (`SEASON`, `api/rules.py`) | zero-padded `(999999 - score)` + `_` + session_id | nick (indexes), score, kills, duration_s, hearts, character, created |
-| `messages` | `all` | reversed timestamp + `_` + session_id | nick, message_id |
+| `scores` | season and year, e.g. `v2-2027` (`season_key`, `api/rules.py`) | zero-padded `(999999 - score)` + `_` + session_id | nick (indexes), score, kills, duration_s, hearts, character, created |
+| `messages` (reserved, not in use) | `all` | reversed timestamp + `_` + session_id | nick, message_id |
 | `limits` | `daily` (writes), `requests` (all requests), `session` (one result per session) | date or session_id | count |
 
 Table Storage cannot sort. Rows always come back in RowKey order, so a reversed score in the key makes the query "first 10 rows" the leaderboard itself. The same trick with a reversed timestamp gives the newest messages. The key is designed for the query.
+
+**Seasons.** The leaderboard starts over every New Year (UTC) and whenever `SEASON` is raised, because the partition key changes and a new partition is empty. Nothing is deleted. Results written before yearly seasons are in the partition `v2`, which is the 2026 season. Size is not the reason: checked on 2026-11-27, the tables held 146 rows and 32 kB after nine days, and even a full daily cap every day for a year stays under a gigabyte. The query reads the first ten rows of one partition, so its speed does not depend on the row count. The season on the stats page is only the first number of the game version, so its numbers do not start over at New Year.
 
 ### Blob Storage: layers
 
@@ -133,7 +135,7 @@ curated/summary/dashboard.json                                  ready-made aggre
   - Plausibility rules (`plausible`) reject a whole session if 1) it does not start with `game_started`, 2) sequence numbers jump or time runs backwards, or 3) kills come faster than zombies appear (the limit is about twice the spawn rate). The rules stop a careless forgery, not a careful one: the game runs in the browser, so full prevention does not exist.
   - Cleanup: `SKIP_DAYS` and `LAUNCH_DAY` clear a day from the statistics when the version is raised. Raw data stays as it is.
   - The rule version (`RULES_VERSION`) is stored in the Parquet file metadata. When a rule changes, the version is raised, and the nightly job redoes the days whose raw data still exists.
-- **Memory**: `pyarrow` is imported only inside the timer function, so HTTP requests do not load it. The module stays in the process until the idle instance shuts down. If memory approaches 512 MB, lower HTTP concurrency from 16 to 8 (chapter 10).
+- **Memory**: the nightly run reads one day at a time. The summary is built from running totals (`curate.tally`): each day's Parquet file is read, added to the totals and dropped, and medians come from histograms (value -> count). Raw blobs are read one at a time too. Memory therefore holds one day of rows, not the whole history (before 2026-11-27 it held every row of every day, which would have run out of the 512 MB within about a year). Every day file is still downloaded each night, which keeps the run stateless: a few hundred small reads a year. `pyarrow` is imported only inside the timer function, so HTTP requests do not load it. The module stays in the process until the idle instance shuts down. If memory approaches 512 MB, lower HTTP concurrency from 16 to 8 (chapter 10).
 - **dashboard.json**: computed every night.
   - Total games for all time, the daily chart and the games of the last 30 days.
   - The number of distinct player names in 30 days is computed from the raw layer, where names live only 30 days, and only the number is stored. It is indicative: drawing a new name or using another device shows up as a new player.
@@ -230,7 +232,7 @@ On top of the budget:
   - *Allowed resource types*: only the planned types (storage account, Functions plan and Function App, managed identity, Log Analytics, Application Insights, alerts). Virtual machines, AKS, databases, IP addresses and everything else are denied.
   - *Expensive settings*: even allowed types only in their cheapest form. Functions plan only Flex Consumption (`FC1`). Function App at most 1 instance, at most 512 MB, no always ready instances. Storage account only `Standard_LRS`. Log Analytics only `PerGB2018` with a daily cap of exactly 0.1 GB (an equality condition, because a `less`/`greater` comparison fails with a type conflict when the field is an integer such as -1 for unlimited; found on 2026-11-18, the policy failed safely and blocked the deployment).
   - The policy is at subscription level, so the CI identity (Contributor on the resource group only) cannot change it. A new resource type is added to the policy first and to Bicep after that.
-- **Cost anomaly alert** (`guardrails.bicep`, Cost Management, free). It notices a sudden change faster than the percentage limit of a monthly budget. The alert has an end date and is renewed yearly.
+- **Cost anomaly alert** (`guardrails.bicep`, Cost Management, free). It notices a sudden change faster than the percentage limit of a monthly budget. The alert has an end date (2031-11-18, `anomalyEnd`) and must be renewed before it.
 - **Automatic stop**, built at the same time as the Function App, not later. The API keeps two daily counters in the `limits` table: writes (`DAILY_CAP`, 5,000) and all requests (`REQUEST_CAP`, 50,000). The request counter is saved every 100 requests, so a restart does not reset it (it used to live only in memory, and an instance crashed with large requests reset the cap). The host rejects bodies over 32 kB (`FUNCTIONS_REQUEST_BODY_SIZE_LIMIT`) before the code runs. When a counter passes its cap, the API shuts itself down (the managed identity may only stop it). If the owner starts the API again the same day, it answers 429 until midnight UTC unless the counter row is deleted. This does not depend on the delay in cost data. The game keeps working offline, and the owner restarts the API by hand.
 - **Manual emergency brake**: `az functionapp stop`.
 
@@ -291,7 +293,7 @@ Players may be children.
 
 - Only a generated nickname (word list indexes) and a random session id are stored. There is no free text anywhere, so personal data cannot end up in the data by accident.
 - No IP addresses: the API neither reads nor stores them.
-- Application Insights: server telemetry only. The browser gets no Application Insights script. The service masks the IP address by default (`0.0.0.0`) but derives a location (city, country) from it first. The setting `DisableIpMasking` is not turned on, and clearing the location fields is still to be investigated.
+- Application Insights: server telemetry only. The browser gets no Application Insights script. The service masks the IP address by default (`0.0.0.0`) but derives a location (city, country) from it first. The setting `DisableIpMasking` is not turned on. The city and country stay in the request rows for 30 days (decided 2026-11-27: left as it is, because a city alone identifies nobody, and removing it would need a new resource type, a data collection rule with a transformation).
 - No cookies, no third-party analytics, no external fonts or scripts.
 - The page has a short privacy notice in plain language: what is stored and why.
 
